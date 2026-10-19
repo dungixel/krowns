@@ -164,6 +164,7 @@
       const ty = clamp(ay - ph * 0.35, 64, Math.max(64, V.H - ph - 12));
       const P = V.panel;
       if (!P.shown) { P.x = tx; P.y = ty; P.shown = true; }
+      else if (panelEl.matches(':hover')) { /* hold still while being read, so hover tips stay put */ }
       else { const k = 1 - Math.exp(-dt * 0.0028); P.x += (tx - P.x) * k; P.y += (ty - P.y) * k; }
       panelEl.style.transform = `translate3d(${P.x.toFixed(1)}px,${P.y.toFixed(1)}px,0)`;
     }

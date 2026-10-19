@@ -18,7 +18,7 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 .logo { display: inline-block; color: #e3c565; margin-bottom: 6px; }
 .logo .ic { margin: 0 auto; }
 #start h1 { margin: 0; font-size: 56px; letter-spacing: 0.04em; font-weight: 600; }
-.tag { margin: 10px 0 34px; color: var(--soft); font-size: 17px; }
+.tagline { margin: 10px 0 34px; color: var(--soft); font-size: 17px; }
 .big-btn {
   background: #fff; border: 1.5px solid var(--ink); border-radius: 999px; padding: 13px 34px;
   font-size: 17px; letter-spacing: 0.02em; transition: background 0.15s, color 0.15s, transform 0.1s;
