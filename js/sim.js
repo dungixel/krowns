@@ -174,7 +174,7 @@
   function freeSpotNear(w, x, y, r) {
     for (let i = 0; i < 40; i++) {
       const nx = clamp(x + w.rng.int(-r, r), 0, w.w - 1), ny = clamp(y + w.rng.int(-r, r), 0, w.h - 1);
-      if (!w.occ.has(ny * w.w + nx)) return [nx, ny];
+      if (tileFree(w, nx, ny)) return [nx, ny];
     }
     return null;
   }
@@ -188,6 +188,7 @@
       seed, rng, w: opts.w || 64, h: opts.h || 40, time: 0,
       units: new Map(), kingdoms: new Map(), animals: [],
       events: [], chronicle: [], occ: new Map(), alive: [], aggress: [],
+      struct: new Set(), animalAt: new Map(),   // castles and fields; animals: one thing per grid square
       usedNames: new Set(), nextId: 1, nextKid: 1, nextAid: 1, maxPop: opts.maxPop || 60,
       stats: { births: 0, deaths: {} }, usedHues: [],
     };
@@ -222,8 +223,10 @@
     const size = r < 0.55 ? 1 : r < 0.85 ? 2 : 3;
     for (let t = 0; t < 20; t++) {
       const x = rng.int(1, w.w - 2), y = rng.int(1, w.h - 2);
-      if (w.occ.has(y * w.w + x)) continue;
-      w.animals.push({ id: w.nextAid++, x, y, px: x, py: y, size, hp: size === 1 ? 2 : size === 2 ? 4 : 7, food: size, alive: true, cd: rng.int(0, 3) });
+      if (!tileFree(w, x, y)) continue;
+      const a = { id: w.nextAid++, x, y, px: x, py: y, size, hp: size === 1 ? 2 : size === 2 ? 4 : 7, food: size, alive: true, cd: rng.int(0, 3) };
+      w.animals.push(a);
+      w.animalAt.set(y * w.w + x, a);
       return;
     }
   }
@@ -234,8 +237,12 @@
       if (!a.alive) continue;
       if (a.cd > 0) { a.cd--; continue; }
       a.cd = w.rng.int(1, 3);
-      const nx = clamp(a.x + w.rng.int(-1, 1), 0, w.w - 1), ny = clamp(a.y + w.rng.int(-1, 1), 0, w.h - 1);
-      a.x = nx; a.y = ny;
+      const nx = a.x + w.rng.int(-1, 1), ny = a.y + w.rng.int(-1, 1);
+      if ((nx !== a.x || ny !== a.y) && tileFree(w, nx, ny)) {
+        w.animalAt.delete(a.y * w.w + a.x);
+        a.x = nx; a.y = ny;
+        w.animalAt.set(ny * w.w + nx, a);
+      }
     }
     w.animals = w.animals.filter((a) => a.alive);
     if (w.time % 12 === 0 && w.animals.length < target) spawnAnimal(w);
@@ -243,7 +250,12 @@
 
   // ------------------------------------------------------------ movement
   const inBounds = (w, x, y) => x >= 0 && y >= 0 && x < w.w && y < w.h;
-  const tileFree = (w, x, y) => inBounds(w, x, y) && !w.occ.has(y * w.w + x);
+  // A square can hold one unit, one animal or one structure, never two things.
+  const tileFree = (w, x, y) => {
+    if (!inBounds(w, x, y)) return false;
+    const key = y * w.w + x;
+    return !w.occ.has(key) && !w.struct.has(key) && !w.animalAt.has(key);
+  };
   function moveUnit(w, u, x, y) {
     w.occ.delete(u.y * w.w + u.x);
     u.x = x; u.y = y;
@@ -407,6 +419,15 @@
       need: {}, counts: {}, siege: 0, founded: w.time,
     };
     w.kingdoms.set(id, k);
+    const castleKey = cy * w.w + cx;
+    const squatter = w.animalAt.get(castleKey);   // an animal standing there steps aside
+    if (squatter) {
+      w.animalAt.delete(castleKey);
+      const spot = freeSpotNear(w, cx, cy, 3);
+      if (spot) { squatter.x = squatter.px = spot[0]; squatter.y = squatter.py = spot[1]; w.animalAt.set(spot[1] * w.w + spot[0], squatter); }
+      else squatter.alive = false;
+    }
+    w.struct.add(castleKey);
     for (const m of members) joinKingdom(w, m, k, true);
     refreshNeeds(w, k);
     for (const m of w.rng.shuffle(members.slice())) { evaluateRole(w, m, true); refreshNeeds(w, k); }
@@ -453,6 +474,11 @@
     } else k.ruler = null;
   }
 
+  function removeStructures(w, k) {
+    w.struct.delete(k.cy * w.w + k.cx);
+    for (const p of k.farms) w.struct.delete(p.y * w.w + p.x);
+  }
+
   function dissolveKingdom(w, k, why) {
     chron(w, `The Kingdom of {k:${k.id}} has fallen. ${why || ''}`.trim());
     for (const id of [...k.members]) {
@@ -461,6 +487,7 @@
     }
     for (const o of w.kingdoms.values()) { o.wars.delete(k.id); o.rel.delete(k.id); o.warSince.delete(k.id); }
     w.usedHues = w.usedHues.filter((h) => h !== k.color.hue);
+    removeStructures(w, k);
     w.kingdoms.delete(k.id);
     w.events.push({ type: 'fell', k: k.id });
     // keep it findable by name in old chronicle lines
@@ -475,7 +502,7 @@
     for (const id of k.members) { const m = getU(w, id); if (m && m.role) counts[m.role]++; }
     const war = k.wars.size > 0;
     const food = foodPoints(k);
-    const farmShare = food > n * 10 ? 0.15 : food < n * 3 ? 0.42 : 0.3;
+    const farmShare = food > n * 10 ? 0.15 : food < n * 3 ? 0.45 : 0.32;
     const huntShare = food > n * 10 ? 0.08 : 0.15;
     const target = {
       farmer: Math.max(1, Math.ceil(n * farmShare)),
@@ -486,7 +513,7 @@
       poet: n >= 7 ? 1 : 0,
     };
     // staying fed matters more than anything: farmers and hunters weigh heavily
-    const weight = { farmer: 1.5, hunter: 1.1, cook: 0.8, swordsman: war ? 1.2 : 0.7, mage: 0.7, poet: 0.6 };
+    const weight = { farmer: food < n * 3 ? 2.2 : 1.5, hunter: 1.1, cook: 0.8, swordsman: war ? 1.2 : 0.7, mage: 0.7, poet: 0.6 };
     for (const r of ROLE_KEYS) {
       const t = target[r];
       k.need[r] = t === 0 ? -0.9 : clamp((t - counts[r]) / t, -0.4, 1.2) * weight[r];
@@ -513,7 +540,7 @@
       k.rel.set(o.id, rel);
       if (!k.wars.has(o.id) && !o.wars.has(k.id) && w.time - k.lastWarEnd > 100 && w.time - o.lastWarEnd > 100) {
         const soldiers = (k.counts.swordsman || 0) + (k.counts.mage || 0);
-        if (rel < -35 && (temp >= 10 || rel < -60) && k.members.size >= 4 && o.members.size >= 3 && soldiers >= 1 && (!candidate || rel < candidate.rel)) candidate = { o, rel };
+        if (rel < -35 && (temp >= 10 || rel < -60) && k.members.size >= 6 && o.members.size >= 5 && soldiers >= 1 && (!candidate || rel < candidate.rel)) candidate = { o, rel };
       }
       if (k.wars.has(o.id)) {
         const since = w.time - (k.warSince.get(o.id) || 0);
@@ -559,7 +586,7 @@
         if (p.state === 'growing') {
           const o = getU(w, p.owner);
           const bonus = o && o.alive ? clamp(power(o, 'farming') * 0.25, 0, 12) : 0;
-          p.growth += 1 / (38 - bonus);
+          p.growth += 1 / (32 - bonus);
           if (p.growth >= 1) { p.growth = 1; p.state = 'ready'; }
         }
       }
@@ -602,6 +629,7 @@
     }
     for (const o of w.kingdoms.values()) { o.wars.delete(k.id); o.rel.delete(k.id); o.warSince.delete(k.id); }
     w.usedHues = w.usedHues.filter((h) => h !== k.color.hue);
+    removeStructures(w, k);
     w.kingdoms.delete(k.id);
     w.fallen = w.fallen || new Map();
     w.fallen.set(k.id, k);
@@ -697,7 +725,7 @@
       if (foodPoints(k) < 1 && u.hunger <= 2) hard += 1;
       if (ruler && ruler !== u && aff(u, ruler.id) < -30) hard += 1;
       const l = u.iv.loyalty / 31;
-      const p = hard ? Math.pow(1 - l, 1.5) * 0.35 * hard : 0.002 * (1 - l);
+      const p = hard ? Math.pow(1 - l, 1.5) * 0.35 * hard : 0.0007 * (1 - l);
       if (rng.chance(p)) defect(w, u, k);
     } else {
       // free units look for a kingdom to join
@@ -901,6 +929,7 @@
     w.events.push({ type: 'hit', x: a.x, y: a.y });
     if (a.hp <= 0) {
       a.alive = false;
+      if (w.animalAt.get(a.y * w.w + a.x) === a) w.animalAt.delete(a.y * w.w + a.x);
       const limit = u.role === 'hunter' ? 7 : 4;
       u.pocket = Math.min(limit, u.pocket + a.food);
     }
@@ -1213,11 +1242,12 @@
     for (let t = 0; t < 30; t++) {
       const a = w.rng.range(0, Math.PI * 2), r = w.rng.range(3, 9);
       const x = clamp(Math.round(k.cx + Math.cos(a) * r), 1, w.w - 2), y = clamp(Math.round(k.cy + Math.sin(a) * r), 1, w.h - 2);
-      let ok = cheb(x, y, k.cx, k.cy) >= 3;
+      let ok = cheb(x, y, k.cx, k.cy) >= 3 && !w.struct.has(y * w.w + x) && !w.animalAt.has(y * w.w + x);
       for (const o of w.kingdoms.values()) for (const f of o.farms) if (cheb(x, y, f.x, f.y) < 2) ok = false;
       if (!ok) continue;
       p = { x, y, owner: u.id, state: 'empty', growth: 0 };
       k.farms.push(p);
+      w.struct.add(y * w.w + x);
       return p;
     }
     return null;
@@ -1238,7 +1268,7 @@
       goal(w, u, 'harvest', 'harvest');
       if (goNear(w, u, plot.x, plot.y, 1) === 'arrived') {
         plot.state = 'empty'; plot.growth = 0;
-        u.carry.bread = 3 + Math.floor(power(u, 'farming') / 12);
+        u.carry.bread = 4 + Math.floor(power(u, 'farming') / 10);
         train(w, u, 'farming', 1.0);
         cost(u, 3);
       } else cost(u, 1);

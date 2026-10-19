@@ -14,6 +14,8 @@
   $('logo').innerHTML = icon('crown', 44, 'filled');
   $('btn-sound').innerHTML = icon('volume', 18);
   $('btn-fit').innerHTML = icon('arrows-maximize', 18);
+  $('btn-zin').innerHTML = icon('zoom-in', 18);
+  $('btn-zout').innerHTML = icon('zoom-out', 18);
   $('btn-new').innerHTML = icon('refresh', 18);
   $('btn-history').innerHTML = icon('messages', 18);
   setPaused(false);
@@ -38,6 +40,8 @@
   $('btn-s2').addEventListener('click', () => setSpeed(2));
   $('btn-s4').addEventListener('click', () => setSpeed(4));
   $('btn-fit').addEventListener('click', () => view && view.fit());
+  $('btn-zin').addEventListener('click', () => view && view.zoomBy(1.45));
+  $('btn-zout').addEventListener('click', () => view && view.zoomBy(1 / 1.45));
   $('btn-sound').addEventListener('click', toggleSound);
   histEl_click();
   function histEl_click() {
@@ -61,6 +65,12 @@
     else if (e.key === '2') setSpeed(2);
     else if (e.key === '3') setSpeed(4);
     else if (e.key === 'f' || e.key === 'F') view.fit();
+    else if (e.key === '+' || e.key === '=') view.zoomBy(1.45);
+    else if (e.key === '-' || e.key === '_') view.zoomBy(1 / 1.45);
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); view.pan(110, 0); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); view.pan(-110, 0); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); view.pan(0, 110); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); view.pan(0, -110); }
     else if (e.key === 'm' || e.key === 'M') toggleSound();
     else if (e.key === 'Escape') view.select(null);
   });

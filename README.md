@@ -15,12 +15,15 @@ Every unit is born with hidden stats (like IVs in Pokémon) and grows hidden tra
 | | |
 |---|---|
 | Click a unit or a castle | See who they are (the panel follows them) |
-| Scroll / drag | Zoom / move around |
+| Scroll, pinch, or + / - | Smooth zoom toward the pointer |
+| Drag, or arrow keys | Move around the map |
 | Space | Pause |
 | 1 / 2 / 3 | Normal / 2x / 4x speed |
 | F | Show the whole world |
 | M | Sound on / off |
 | Clock-bubble button, bottom left | The history of the world |
+
+The map is a soft grid. Everything sits on whole squares: a unit takes one step (one square) per second, and castles, fields and animals each fill exactly one square. Nothing can walk through them.
 
 Names in blue-ish text inside the panel are clickable and jump to that unit.
 

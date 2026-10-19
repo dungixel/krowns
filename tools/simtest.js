@@ -38,7 +38,18 @@ for (const seed of seeds) {
       if (u.kingdom != null && !w.kingdoms.get(u.kingdom).members.has(u.id)) fail(`${u.name} not in member set`);
       if (u.partner != null) { const p = w.units.get(u.partner); if (!p || p.partner !== u.id) fail(`${u.name} partner mismatch`); }
       if (!w.occ.get(u.y * w.w + u.x) || w.occ.get(u.y * w.w + u.x) !== u) fail(`occupancy mismatch ${u.name}`);
+      if (w.animalAt.has(u.y * w.w + u.x)) fail(`${u.name} shares a square with an animal`);
     }
+    const aspots = new Set();
+    for (const a of w.animals) {
+      if (!a.alive) continue;
+      const key = a.y * w.w + a.x;
+      if (aspots.has(key)) fail(`two animals on one square ${a.x},${a.y}`);
+      aspots.add(key);
+      if (w.struct.has(key)) fail('animal inside a structure');
+      if (w.animalAt.get(key) !== a) fail('animal map mismatch');
+    }
+    for (const k of w.kingdoms.values()) if (!w.struct.has(k.cy * w.w + k.cx)) fail(`castle of ${k.name} not registered`);
     for (const k of w.kingdoms.values()) {
       for (const id of k.members) { const m = w.units.get(id); if (!m || !m.alive || m.kingdom !== k.id) fail(`kingdom ${k.name} bad member ${id}`); }
       if (k.ruler != null && !k.members.has(k.ruler)) fail(`ruler of ${k.name} not a member`);

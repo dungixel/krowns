@@ -22,6 +22,7 @@
       sel: null, hover: null, bubbles: new Map(), fx: [], marks: [], bubbleMode: 'all',
       panel: { x: 0, y: 0, shown: false, parts: { head: '', desc: '', life: '' } },
       lastDraw: 0, onSelect: null, drag: null, paused: false,
+      zoom: { target: 1, ax: 0, ay: 0 }, hoverTile: null, userMoved: false,
     };
     // -------------------------------------------------- panel skeleton
     panelEl.innerHTML = '<div class="p-head"></div><div class="p-body"><div class="p-desc"></div><div class="p-life"></div></div>';
@@ -56,7 +57,7 @@
       V.W = globalThis.innerWidth; V.H = globalThis.innerHeight;
       canvas.width = Math.floor(V.W * V.dpr); canvas.height = Math.floor(V.H * V.dpr);
       canvas.style.width = V.W + 'px'; canvas.style.height = V.H + 'px';
-      if (V.world) { const old = V.fitScale; computeFit(); if (Math.abs(V.cam.s - old) < 1e-6) fit(); }
+      if (V.world) { computeFit(); if (V.userMoved) clampCam(); else fit(); }
     }
     function computeFit() {
       const w = V.world;
@@ -65,10 +66,43 @@
     function fit() {
       const w = V.world; if (!w) return;
       computeFit();
-      V.cam.s = V.fitScale;
+      V.cam.s = V.fitScale; V.zoom.target = V.fitScale;
       V.cam.x = (V.W - w.w * TS * V.cam.s) / 2;
       V.cam.y = (V.H - w.h * TS * V.cam.s) / 2 + 24;
+      V.userMoved = false;
     }
+    // ---- camera: zoom glides toward the pointer, like a tactics-game map
+    const maxScale = () => 96 / TS;            // about 96 pixels per tile when fully zoomed in
+    const minScale = () => V.fitScale * 0.6;
+    function clampCam() {
+      const w = V.world; if (!w) return;
+      const s = TS * V.cam.s, ww = w.w * s, wh = w.h * s, m = 140;
+      V.cam.x = clamp(V.cam.x, m - ww, V.W - m);
+      V.cam.y = clamp(V.cam.y, m - wh, V.H - m);
+    }
+    function zoomTo(scale, ax, ay) {
+      V.zoom.target = clamp(scale, minScale(), maxScale());
+      V.zoom.ax = ax; V.zoom.ay = ay; V.userMoved = true;
+    }
+    function zoomBy(f) {
+      let ax = V.W / 2, ay = V.H / 2;
+      if (V.sel && V.sel.type === 'unit' && V.world) {
+        const u = V.world.units.get(V.sel.id);
+        if (u && u._sx != null) { ax = u._sx; ay = u._sy; }
+      }
+      zoomTo(V.zoom.target * f, ax, ay);
+    }
+    function applyScale(ns) {
+      const c = V.cam, z = V.zoom, k = ns / c.s;
+      c.x = z.ax - (z.ax - c.x) * k; c.y = z.ay - (z.ay - c.y) * k; c.s = ns;
+      clampCam();
+    }
+    function stepZoom(dt) {
+      const z = V.zoom, c = V.cam;
+      if (Math.abs(z.target - c.s) < 1e-4) { if (c.s !== z.target) applyScale(z.target); return; }
+      applyScale(c.s + (z.target - c.s) * (1 - Math.exp(-dt * 0.016)));
+    }
+    function pan(dx, dy) { V.cam.x += dx; V.cam.y += dy; V.userMoved = true; clampCam(); }
     const sx = (tx) => V.cam.x + (tx + 0.5) * TS * V.cam.s;
     const sy = (ty) => V.cam.y + (ty + 0.5) * TS * V.cam.s;
 
@@ -296,22 +330,80 @@
       const dt = V.lastDraw ? Math.min(100, now - V.lastDraw) : 16;
       V.lastDraw = now;
       const t = now / 1000;
+      stepZoom(dt);
       const s = TS * V.cam.s;
       const a01 = clamp(alpha, 0, 1);
       const e = 0.55 * a01 + 0.45 * ease(a01);   // glide between tiles, with a soft start and stop
       ctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
       ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, V.W, V.H);
 
+      // soft grid, one square per step a unit can take (fades out when zoomed far away)
+      if (s >= 6) {
+        const fade = clamp((s - 6) / 14, 0, 1);
+        const i0 = clamp(Math.floor(-V.cam.x / s), 0, w.w), i1 = clamp(Math.ceil((V.W - V.cam.x) / s), 0, w.w);
+        const j0 = clamp(Math.floor(-V.cam.y / s), 0, w.h), j1 = clamp(Math.ceil((V.H - V.cam.y) / s), 0, w.h);
+        const top = Math.max(V.cam.y, 0), bot = Math.min(V.cam.y + w.h * s, V.H);
+        const left = Math.max(V.cam.x, 0), right = Math.min(V.cam.x + w.w * s, V.W);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = i0; i <= i1; i++) { if (i % 8 === 0) continue; const x = Math.round(V.cam.x + i * s) + 0.5; ctx.moveTo(x, top); ctx.lineTo(x, bot); }
+        for (let j = j0; j <= j1; j++) { if (j % 8 === 0) continue; const y = Math.round(V.cam.y + j * s) + 0.5; ctx.moveTo(left, y); ctx.lineTo(right, y); }
+        ctx.strokeStyle = `rgba(60,60,90,${0.055 * fade})`; ctx.stroke();
+        // every 8th line a touch stronger, to help the eye on a big map
+        ctx.beginPath();
+        for (let i = i0; i <= i1; i++) { if (i % 8) continue; const x = Math.round(V.cam.x + i * s) + 0.5; ctx.moveTo(x, top); ctx.lineTo(x, bot); }
+        for (let j = j0; j <= j1; j++) { if (j % 8) continue; const y = Math.round(V.cam.y + j * s) + 0.5; ctx.moveTo(left, y); ctx.lineTo(right, y); }
+        ctx.strokeStyle = `rgba(60,60,90,${0.1 * fade})`; ctx.stroke();
+      }
       // world edge
-      ctx.strokeStyle = '#efefef'; ctx.lineWidth = 1;
+      ctx.strokeStyle = '#e6e6e8'; ctx.lineWidth = 1;
       ctx.strokeRect(V.cam.x, V.cam.y, w.w * s, w.h * s);
 
-      // territories
+      // the tile under the pointer, and the tile of the selected unit
+      const tileBox = (tx, ty, fill, stroke) => {
+        const x = V.cam.x + tx * s, y = V.cam.y + ty * s, r = Math.min(5, s * 0.18);
+        ctx.beginPath(); ctx.roundRect(x + 1, y + 1, s - 2, s - 2, r);
+        if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+        if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke(); }
+      };
+      if (V.hoverTile && s >= 6) tileBox(V.hoverTile.x, V.hoverTile.y, 'rgba(60,60,90,0.045)', 'rgba(60,60,90,0.16)');
+      if (V.sel && V.sel.type === 'unit') {
+        const su = w.units.get(V.sel.id);
+        if (su && su.alive) {
+          const sk = su.kingdom != null ? w.kingdoms.get(su.kingdom) : null;
+          tileBox(su.x, su.y, sk ? `hsla(${sk.color.hue},65%,72%,0.28)` : 'rgba(120,120,120,0.14)', sk ? `hsla(${sk.color.hue},50%,50%,0.55)` : 'rgba(90,90,90,0.4)');
+        }
+      }
+
+      // territories: whole grid squares around each castle, with a soft edge
       for (const k of w.kingdoms.values()) {
-        const r = (6 + k.members.size * 0.55) * s;
-        ctx.beginPath(); ctx.arc(sx(k.cx), sy(k.cy), r, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(${k.color.hue},70%,80%,0.17)`; ctx.fill();
-        ctx.setLineDash([3, 7]); ctx.strokeStyle = `hsla(${k.color.hue},55%,62%,0.38)`; ctx.lineWidth = 1.2; ctx.stroke(); ctx.setLineDash([]);
+        const rad = 6 + k.members.size * 0.55, R = Math.ceil(rad), r2 = rad * rad;
+        const inside = (dx, dy) => dx * dx + dy * dy <= r2;
+        const hue = k.color.hue;
+        ctx.fillStyle = `hsla(${hue},70%,80%,0.17)`;
+        ctx.beginPath();
+        for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+          if (!inside(dx, dy)) continue;
+          const tx = k.cx + dx, ty = k.cy + dy;
+          if (tx < 0 || ty < 0 || tx >= w.w || ty >= w.h) continue;
+          const x = V.cam.x + tx * s, y = V.cam.y + ty * s;
+          if (x > V.W || y > V.H || x + s < 0 || y + s < 0) continue;
+          ctx.rect(x, y, s, s);
+        }
+        ctx.fill();
+        ctx.beginPath();
+        for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+          if (!inside(dx, dy)) continue;
+          const tx = k.cx + dx, ty = k.cy + dy;
+          if (tx < 0 || ty < 0 || tx >= w.w || ty >= w.h) continue;
+          const x = V.cam.x + tx * s, y = V.cam.y + ty * s;
+          if (x > V.W || y > V.H || x + s < 0 || y + s < 0) continue;
+          if (!inside(dx - 1, dy)) { ctx.moveTo(x, y); ctx.lineTo(x, y + s); }
+          if (!inside(dx + 1, dy)) { ctx.moveTo(x + s, y); ctx.lineTo(x + s, y + s); }
+          if (!inside(dx, dy - 1)) { ctx.moveTo(x, y); ctx.lineTo(x + s, y); }
+          if (!inside(dx, dy + 1)) { ctx.moveTo(x, y + s); ctx.lineTo(x + s, y + s); }
+        }
+        ctx.strokeStyle = `hsla(${hue},55%,62%,0.55)`; ctx.lineWidth = 1.4; ctx.stroke();
       }
       // farms
       for (const k of w.kingdoms.values()) {
@@ -327,14 +419,17 @@
           }
         }
       }
-      // capitals
+      // capitals: one square each
       for (const k of w.kingdoms.values()) {
         const x = sx(k.cx), y = sy(k.cy);
-        drawIcon('building-castle', x, y, s * 1.9, k.color.dark);
+        ctx.beginPath(); ctx.roundRect(x - s / 2 + 1, y - s / 2 + 1, s - 2, s - 2, Math.min(6, s * 0.2));
+        ctx.fillStyle = `hsla(${k.color.hue},60%,84%,0.9)`; ctx.fill();
+        ctx.strokeStyle = k.color.line; ctx.lineWidth = 1.5; ctx.stroke();
+        drawIcon('building-castle', x, y, s * 0.82, k.color.dark);
         ctx.fillStyle = k.color.dark; ctx.font = `600 ${Math.max(9, Math.min(13, s * 0.5))}px ui-sans-serif, system-ui, sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-        ctx.fillText(k.name, x, y + s * 1.0);
-        if (k.wars.size) drawIcon('swords', x + s * 1.2, y - s * 0.8, s * 0.9, '#d9534f');
+        ctx.fillText(k.name, x, y + s * 0.5 + 3);
+        if (k.wars.size) drawIcon('swords', x + s * 0.62, y - s * 0.62, Math.max(10, s * 0.6), '#d9534f');
       }
       // gravestones
       V.marks = V.marks.filter((m) => now - m.t0 < 9000);
@@ -416,45 +511,66 @@
       }
       if (best) return best;
       for (const k of w.kingdoms.values()) {
-        if (Math.hypot(sx(k.cx) - px, sy(k.cy) - py) < s * 1.2) return { type: 'kingdom', id: k.id };
+        if (Math.abs(sx(k.cx) - px) < s * 0.6 && Math.abs(sy(k.cy) - py) < s * 0.6) return { type: 'kingdom', id: k.id };
       }
       return null;
     }
 
-    function zoomAt(px, py, factor) {
-      const c = V.cam;
-      const ns = clamp(c.s * factor, V.fitScale * 0.7, V.fitScale * 7);
-      const k = ns / c.s;
-      c.x = px - (px - c.x) * k; c.y = py - (py - c.y) * k; c.s = ns;
-    }
-
     canvas.addEventListener('wheel', (ev) => {
       ev.preventDefault();
-      zoomAt(ev.clientX, ev.clientY, ev.deltaY < 0 ? 1.12 : 1 / 1.12);
+      const dy = clamp(ev.deltaY * (ev.deltaMode === 1 ? 16 : 1), -160, 160);
+      zoomTo(V.zoom.target * Math.exp(-dy * (ev.ctrlKey ? 0.012 : 0.0016)), ev.clientX, ev.clientY);
     }, { passive: false });
+
+    const pointers = new Map();
+    let pinch = null;
+    const tileAt = (px, py) => {
+      const s = TS * V.cam.s, tx = Math.floor((px - V.cam.x) / s), ty = Math.floor((py - V.cam.y) / s);
+      return V.world && tx >= 0 && ty >= 0 && tx < V.world.w && ty < V.world.h ? { x: tx, y: ty } : null;
+    };
     canvas.addEventListener('pointerdown', (ev) => {
       canvas.setPointerCapture(ev.pointerId);
-      V.drag = { x: ev.clientX, y: ev.clientY, cx: V.cam.x, cy: V.cam.y, moved: false };
+      pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (pointers.size === 2) {
+        const [a, b] = [...pointers.values()];
+        pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, s: V.zoom.target };
+        if (V.drag) V.drag.moved = true;
+      } else if (pointers.size === 1) {
+        V.drag = { x: ev.clientX, y: ev.clientY, cx: V.cam.x, cy: V.cam.y, moved: false };
+      }
     });
     canvas.addEventListener('pointermove', (ev) => {
+      if (pointers.has(ev.pointerId)) pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (pinch && pointers.size === 2) {
+        const [a, b] = [...pointers.values()];
+        zoomTo(pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, (a.x + b.x) / 2, (a.y + b.y) / 2);
+        if (V.drag) V.drag.moved = true;
+        return;
+      }
       if (V.drag) {
         const dx = ev.clientX - V.drag.x, dy = ev.clientY - V.drag.y;
         if (Math.abs(dx) + Math.abs(dy) > 4) V.drag.moved = true;
-        if (V.drag.moved) { V.cam.x = V.drag.cx + dx; V.cam.y = V.drag.cy + dy; }
+        if (V.drag.moved) { V.cam.x = V.drag.cx + dx; V.cam.y = V.drag.cy + dy; V.userMoved = true; clampCam(); }
       } else {
         const h = pick(ev.clientX, ev.clientY);
         V.hover = h && h.type === 'unit' ? h.id : null;
+        V.hoverTile = tileAt(ev.clientX, ev.clientY);
         canvas.style.cursor = h ? 'pointer' : 'default';
       }
     });
-    canvas.addEventListener('pointerup', (ev) => {
+    const release = (ev) => {
+      pointers.delete(ev.pointerId);
+      if (pointers.size < 2) pinch = null;
+      if (pointers.size > 0) return;
       const d = V.drag; V.drag = null;
-      if (d && !d.moved) {
-        const h = pick(ev.clientX, ev.clientY);
+      if (d && !d.moved && ev.type === 'pointerup') {
         K.audio.sfx('click', 1);
-        select(h);
+        select(pick(ev.clientX, ev.clientY));
       }
-    });
+    };
+    canvas.addEventListener('pointerup', release);
+    canvas.addEventListener('pointercancel', release);
+    canvas.addEventListener('pointerleave', () => { if (!V.drag) { V.hover = null; V.hoverTile = null; } });
     panelEl.addEventListener('click', (ev) => {
       const t = ev.target.closest('.p-x');
       if (t) { select(null); return; }
@@ -464,6 +580,7 @@
     panelEl.addEventListener('wheel', (ev) => ev.stopPropagation(), { passive: true });
     globalThis.addEventListener('resize', resize);
 
+    V.zoomBy = zoomBy; V.pan = pan;
     V.resize = resize; V.fit = fit; V.setWorld = setWorld; V.draw = draw; V.handleEvents = handleEvents;
     V.select = select; V.TS = TS;
     resize();
