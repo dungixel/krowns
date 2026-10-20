@@ -1,7 +1,7 @@
 // GENERATED from the Notion page "krowns 1.0" by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-20T14:01:43.055Z",
+ "generatedAt": "2026-10-20T14:19:26.221Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -89,7 +89,16 @@ globalThis.Krowns.data = {
    "lae",
    "leo",
    "lu",
-   "li"
+   "li",
+   "pi",
+   "po",
+   "pu",
+   "ga",
+   "ge",
+   "gi",
+   "go",
+   "gu",
+   "dae"
   ],
   "names.syllablesMin": 2,
   "names.syllablesMax": 3,
@@ -280,7 +289,37 @@ globalThis.Krowns.data = {
   "farm.farmersPerFarm": 3,
   "farm.openFieldMultiplier": 0.5,
   "pocket.capacity": 6,
-  "torch.shadowLength": 0.7
+  "torch.shadowLength": 0.7,
+  "names.twoSyllableChance": 33,
+  "names.threeSyllableChance": 33,
+  "names.twoWithEndingChance": 33,
+  "names.endingConsonants": [
+   "s",
+   "n",
+   "r",
+   "l"
+  ],
+  "names.banned": [
+   "buyate",
+   "tula",
+   "peo",
+   "pedo",
+   "put",
+   "puss",
+   "pene",
+   "pija",
+   "pito",
+   "pipi",
+   "cono",
+   "cona",
+   "caca",
+   "cago",
+   "culo",
+   "teta",
+   "nig",
+   "meo",
+   "mear"
+  ]
  },
  "colors": {
   "shadow.purple": "#957fae",
