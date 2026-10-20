@@ -21,7 +21,7 @@
   function randomSpawnTile(W, hostile, def) {
     for (let i = 0; i < 30; i++) {
       const x = W.rng.int(1, W.w - 2), y = W.rng.int(1, W.h - 2);
-      if (!sim.tileFree(W, x, y) && !(def.flies && W.occ[y * W.w + x] === 0)) continue;
+      if (!sim.tileFree(W, x, y) && !(def.flies && W.blk[y * W.w + x] === 0)) continue;
       if (hostile && sim.kingdomAt(W, x, y)) continue;
       return [x, y];
     }

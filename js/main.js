@@ -25,7 +25,7 @@
     ui.select(null);
     const W = game.W;
     R.resize();
-    R.view.S = R.fitScale(26);
+    R.view.S = R.fitScale(52);
     R.centerOn(W.view.startX, W.view.startY);
     game.acc = 0; game.last = performance.now();
     $('start').classList.remove('show');
@@ -45,6 +45,7 @@
       while (game.acc >= sim.STEP && n < 60) { sim.step(W, sim.STEP); game.acc -= sim.STEP; n++; }
       if (n >= 60) game.acc = 0;
     }
+    R.frac = game.speed > 0 ? Math.min(game.acc, sim.STEP) : 0;
     K.audio.newFrame();
     R.draw(W, now / 1000);
     W.events.length = 0;
@@ -156,7 +157,7 @@
     game.setSpeed(1);
     requestAnimationFrame(frame);
     // a quiet little world in the background of the start screen
-    if (!game.W) { game.W = sim.newGame({ seed: 7 }); R.world = game.W; R.view.S = R.fitScale(26); R.centerOn(game.W.view.startX, game.W.view.startY); for (let i = 0; i < 50; i++) sim.step(game.W, sim.STEP); }
+    if (!game.W) { game.W = sim.newGame({ seed: 7 }); R.world = game.W; R.view.S = R.fitScale(52); R.centerOn(game.W.view.startX, game.W.view.startY); for (let i = 0; i < 50; i++) sim.step(game.W, sim.STEP); }
   }
   window.addEventListener('DOMContentLoaded', boot);
 })();

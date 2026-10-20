@@ -14,7 +14,7 @@ function check() {
   for (const u of W.units) {
     if (u.x < 0 || u.y < 0 || u.x >= W.w || u.y >= W.h) errs.push('out of bounds ' + u.name);
     if (!u.hop && W.unitAt[u.y * W.w + u.x] !== u.id) errs.push('unitAt mismatch ' + u.name + ' ' + u.x + ',' + u.y + ' has ' + W.unitAt[u.y * W.w + u.x] + ' job ' + u.job + ' task ' + (u.task && u.task.type));
-    if (W.occ[u.y * W.w + u.x] !== 0) errs.push('unit inside obstacle ' + u.name + ' occ=' + W.occ[u.y * W.w + u.x]);
+    if (W.blk[u.y * W.w + u.x] !== 0) errs.push('unit inside obstacle ' + u.name + ' occ=' + W.occ[u.y * W.w + u.x]);
     for (const v of [u.hearts, u.energy, u.hunger, u.evilGood]) if (!Number.isFinite(v)) errs.push('NaN on ' + u.name);
     const rd = (v) => Math.abs(v * 10 - Math.round(v * 10)) < 1e-6;
     for (const k of sim.IV_KEYS) if (!rd(u.iv[k]) || Math.abs(u.iv[k] * 2 - Math.round(u.iv[k] * 2)) > 1e-6) errs.push('IV not 0.5 step ' + k + ' ' + u.iv[k]);

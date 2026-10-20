@@ -8,20 +8,32 @@
     opts = opts || {};
     const W = sim.createWorld(opts);
     const rng = W.rng;
-    const n = S('world.startUnits', 10), R = S('world.startClusterRadius', 9);
-    const m = Math.ceil(R) + 6;
-    const cx = rng.int(m, W.w - 1 - m), cy = rng.int(m, W.h - 1 - m);
-    for (let i = 0; i < n; i++) {
-      let spot = null;
-      for (let tries = 0; tries < 80 && !spot; tries++) {
-        const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R;
-        const x = Math.round(cx + Math.cos(a) * r), y = Math.round(cy + Math.sin(a) * r);
-        if (sim.tileFree(W, x, y)) spot = [x, y];
-      }
-      if (!spot) spot = sim.freeTileNear(W, cx, cy, 12, rng);
-      if (!spot) continue;
-      sim.createUnit(W, { x: spot[0], y: spot[1], job: 'villager', ageDays: rng.range(S('unit.adultAgeDays', 2) + 0.5, S('unit.adultAgeDays', 2) + 3), female: i % 2 === 0 });
+    // several small groups of jobless people, far enough from each other that each can found its own kingdom
+    const groups = S('world.startGroups', 4), size = S('world.startGroupSize', 5), R = S('world.startClusterRadius', 3);
+    const m = Math.ceil(R) + 10;
+    let spacing = S('world.startGroupSpacing', 24);
+    const centers = [];
+    for (let tries = 0; centers.length < groups && tries < 600; tries++) {
+      if (tries % 100 === 99) spacing *= 0.85;
+      const x = rng.int(m, W.w - 1 - m), y = rng.int(m, W.h - 1 - m);
+      if (centers.every((c) => Math.hypot(c[0] - x, c[1] - y) >= spacing)) centers.push([x, y]);
     }
+    while (centers.length < groups) centers.push([rng.int(m, W.w - 1 - m), rng.int(m, W.h - 1 - m)]);
+    let i = 0;
+    for (const [cx0, cy0] of centers) {
+      for (let j = 0; j < size; j++, i++) {
+        let spot = null;
+        for (let tries = 0; tries < 80 && !spot; tries++) {
+          const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R;
+          const x = Math.round(cx0 + Math.cos(a) * r), y = Math.round(cy0 + Math.sin(a) * r);
+          if (sim.tileFree(W, x, y)) spot = [x, y];
+        }
+        if (!spot) spot = sim.freeTileNear(W, cx0, cy0, 12, rng);
+        if (!spot) continue;
+        sim.createUnit(W, { x: spot[0], y: spot[1], job: 'villager', ageDays: rng.range(S('unit.adultAgeDays', 2) + 0.5, S('unit.adultAgeDays', 2) + 3), female: i % 2 === 0 });
+      }
+    }
+    const cx = Math.round(centers.reduce((a, c) => a + c[0], 0) / centers.length), cy = Math.round(centers.reduce((a, c) => a + c[1], 0) / centers.length);
     W.view.startX = cx; W.view.startY = cy;
     sim.recomputeKmap(W);
     return W;

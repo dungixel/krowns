@@ -1,28 +1,28 @@
 // GENERATED from the Notion page "krowns 1.0" by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-20T13:29:17.183Z",
+ "generatedAt": "2026-10-20T13:49:56.809Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
-  "world.startUnits": 10,
-  "world.startClusterRadius": 9,
+  "world.startGroupSize": 5,
+  "world.startClusterRadius": 3,
   "world.treeDensity": 0.08,
   "world.treeMaxDensity": 0.11,
   "world.treeRegrowEverySeconds": 4,
-  "world.grassDetailDensity": 0.1,
+  "world.grassDetailDensity": 0.24,
   "world.animalSpawnEverySeconds": 8,
   "world.animalMax": 28,
-  "time.minutesPerSecond": 10,
+  "time.minutesPerSecond": 5,
   "time.startHour": 8,
   "time.sleepStartHour": 21,
   "time.sleepEndHour": 6,
   "time.nightStartHour": 20,
   "time.nightEndHour": 5.5,
   "time.eventEarliestHour": 9,
-  "unit.hopSeconds": 0.32,
+  "unit.hopSeconds": 0.5,
   "unit.runMultiplier": 1.5,
-  "unit.hopHeightPx": 3,
+  "unit.hopHeightPx": 2,
   "unit.talkRadius": 4,
   "unit.adultAgeDays": 2,
   "unit.chatChancePerSecond": 0.05,
@@ -164,7 +164,7 @@ globalThis.Krowns.data = {
   "eg.deepVengeanceBelow": -6,
   "eg.crimeWitnessEvilGood": -3,
   "eg.crimeChancePerSecond": 0.004,
-  "kingdom.proclaimNeighbors": 5,
+  "kingdom.proclaimNeighbors": 4,
   "kingdom.proclaimRadius": 6,
   "kingdom.proclaimChancePerSecond": 0.03,
   "kingdom.minGapBetweenBorders": 3,
@@ -193,8 +193,8 @@ globalThis.Krowns.data = {
   "joker.followDistance": 3,
   "joker.tellKingChance": 0.8,
   "innkeeper.foodBonus": 1.2,
-  "learn.selfSeconds": 150,
-  "learn.mentorSeconds": 60,
+  "learn.selfDays": 3,
+  "learn.mentorDays": 1,
   "learn.nonFamilyMentorChance": 0.8,
   "family.maxChildren": 3,
   "family.pairChancePerSecond": 0.03,
@@ -259,7 +259,21 @@ globalThis.Krowns.data = {
    6,
    8
   ],
-  "eg.relaxPerDay": 1
+  "eg.relaxPerDay": 1,
+  "time.displayStepMinutes": 5,
+  "unit.thinkPauseMin": 1,
+  "unit.thinkPauseMax": 3.5,
+  "torch.housesPerTorch": 3,
+  "torch.lightRadiusTiles": 4.5,
+  "torch.glowStrength": 0.7,
+  "shadow.lean": 0.9,
+  "shadow.length": 0.4,
+  "shadow.nightOpacity": 0.35,
+  "world.startGroups": 4,
+  "world.startGroupSpacing": 24,
+  "wall.keepWood": 10,
+  "learn.diversityPerExisting": 0.6,
+  "learn.knightPriority": 4
  },
  "colors": {
   "shadow.purple": "#957fae",
@@ -426,8 +440,8 @@ globalThis.Krowns.data = {
    "cls": "Contributor",
    "dps": 1,
    "range": 5,
-   "sprite": "base",
-   "tint": "#8fbf7a",
+   "sprite": "bandit",
+   "tint": "",
    "icon": "target-arrow",
    "color": "#a8d5a2",
    "ambition": 3,
@@ -437,7 +451,7 @@ globalThis.Krowns.data = {
    "work": "hunt",
    "variantOf": "",
    "guessed": true,
-   "description": "Hunts the animals that appear across the map and brings the meat to the chest of the kingdom. NEEDS A SPRITE: for now it is the base sprite tinted green."
+   "description": "Hunts the animals that appear across the map and brings the meat to the chest of the kingdom. Uses the bandit sprite."
   },
   "knight": {
    "id": "knight",
@@ -605,6 +619,7 @@ globalThis.Krowns.data = {
    "weight": 5,
    "nightOnly": false,
    "flies": false,
+   "facesLeft": true,
    "status": "",
    "statusChance": 0,
    "guessed": true,
@@ -622,6 +637,7 @@ globalThis.Krowns.data = {
    "weight": 4,
    "nightOnly": false,
    "flies": false,
+   "facesLeft": false,
    "status": "",
    "statusChance": 0,
    "guessed": true,
@@ -639,6 +655,7 @@ globalThis.Krowns.data = {
    "weight": 3,
    "nightOnly": false,
    "flies": false,
+   "facesLeft": false,
    "status": "",
    "statusChance": 0,
    "guessed": true,
@@ -656,6 +673,7 @@ globalThis.Krowns.data = {
    "weight": 2,
    "nightOnly": false,
    "flies": false,
+   "facesLeft": false,
    "status": "poison",
    "statusChance": 0.3,
    "guessed": true,
@@ -673,6 +691,7 @@ globalThis.Krowns.data = {
    "weight": 4,
    "nightOnly": true,
    "flies": true,
+   "facesLeft": false,
    "status": "",
    "statusChance": 0,
    "guessed": true,
@@ -765,6 +784,40 @@ globalThis.Krowns.data = {
    "iconColor": "#c98f5a",
    "description": "Appears right next to the castle when a kingdom is made. Everyone puts what belongs to the kingdom here. Click it to see what is inside. It can be raided."
   },
+  "torch": {
+   "id": "torch",
+   "name": "Torch",
+   "kind": "Light",
+   "sprite": "",
+   "color": "#e0a35a",
+   "label": "",
+   "w": 1,
+   "h": 1,
+   "hearts": 6,
+   "wood": 0,
+   "gold": 0,
+   "buildSeconds": 0,
+   "icon": "flame",
+   "iconColor": "#ffb04a",
+   "description": "Gives light at dusk and at night. Kingdoms put torches at the corners of the castle, in front of the theater and the coliseum, and next to some houses. (No drawing yet: placeholder flame.)"
+  },
+  "wall": {
+   "id": "wall",
+   "name": "Wall",
+   "kind": "Structure",
+   "sprite": "",
+   "color": "#b9b6c2",
+   "label": "",
+   "w": 1,
+   "h": 1,
+   "hearts": 8,
+   "wood": 2,
+   "gold": 0,
+   "buildSeconds": 8,
+   "icon": "wall",
+   "iconColor": "#b9b6c2",
+   "description": "Blacksmiths use spare wood of the kingdom to build walls along the border, one piece at a time. A few gaps (gates) stay open so units can still walk in and out. Walls have hearts, can be damaged in wars and are repaired by blacksmiths. (No drawing yet: placeholder stone block.)"
+  },
   "tree": {
    "id": "tree",
    "name": "Tree",
@@ -854,12 +907,12 @@ globalThis.Krowns.data = {
  "animations": {
   "grass_sway": {
    "stretch": 2,
-   "period": 4,
+   "period": 8,
    "height": 0,
    "extra": {
     "cyclesBeforeSpeedChange": 3,
-    "periodMin": 2.5,
-    "periodMax": 6
+    "periodMin": 5,
+    "periodMax": 11
    }
   },
   "breathe": {
@@ -870,8 +923,8 @@ globalThis.Krowns.data = {
   },
   "hop": {
    "stretch": 1,
-   "period": 0.32,
-   "height": 3,
+   "period": 0.5,
+   "height": 2,
    "extra": {}
   },
   "talk": {
@@ -900,6 +953,15 @@ globalThis.Krowns.data = {
    "height": 0,
    "extra": {
     "lying": true
+   }
+  },
+  "tree_sway": {
+   "stretch": 1.5,
+   "period": 4,
+   "height": 0,
+   "extra": {
+    "periodMin": 2.5,
+    "periodMax": 5.5
    }
   },
   "tree_fade": {

@@ -73,19 +73,22 @@
     const def = K.struct(type);
     const w = def.w, h = def.h;
     for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) sim.removeTree(W, xx, yy);
-    relocateOccupants(W, x, y, w, h);
+    // units can walk behind the upper half of a structure: only its lower rows block them
+    const walkRows = def.kind === 'Light' || h < 2 ? 0 : Math.floor(h / 2);
+    relocateOccupants(W, x, y + walkRows, w, h - walkRows);
     const s = {
       id: W.nextId++, type, kingdom: kid, x, y, w, h, hearts: o.building ? 1 : def.hearts, maxHearts: def.hearts,
       building: !!o.building, progress: 0, buildSeconds: def.buildSeconds || 1, family: o.family || 0, stock: 0, hurtAt: -99,
     };
-    for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) W.occ[yy * W.w + xx] = s.id;
+    s.walkRows = walkRows;
+    for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) { W.occ[yy * W.w + xx] = s.id; W.blk[yy * W.w + xx] = yy - y >= walkRows ? 1 : 0; }
     W.structures.set(s.id, s);
     sim.emit(W, 'structure', { id: s.id, type });
     return s;
   }
   function destroyStructure(W, s, why) {
     if (!W.structures.has(s.id)) return;
-    for (let yy = s.y; yy < s.y + s.h; yy++) for (let xx = s.x; xx < s.x + s.w; xx++) if (W.occ[yy * W.w + xx] === s.id) W.occ[yy * W.w + xx] = 0;
+    for (let yy = s.y; yy < s.y + s.h; yy++) for (let xx = s.x; xx < s.x + s.w; xx++) if (W.occ[yy * W.w + xx] === s.id) { W.occ[yy * W.w + xx] = 0; W.blk[yy * W.w + xx] = 0; }
     W.structures.delete(s.id);
     const k = W.kingdoms.get(s.kingdom);
     if (s.type === 'house') {
@@ -227,7 +230,7 @@
     k.citizens.clear();
     for (const s of Array.from(W.structures.values())) if (s.kingdom === k.id && s.type !== 'castle') destroyStructure(W, s, 'dissolved');
     const castle = W.structures.get(k.castleId);
-    if (castle) { for (let yy = castle.y; yy < castle.y + castle.h; yy++) for (let xx = castle.x; xx < castle.x + castle.w; xx++) if (W.occ[yy * W.w + xx] === castle.id) W.occ[yy * W.w + xx] = 0; W.structures.delete(castle.id); }
+    if (castle) { for (let yy = castle.y; yy < castle.y + castle.h; yy++) for (let xx = castle.x; xx < castle.x + castle.w; xx++) if (W.occ[yy * W.w + xx] === castle.id) { W.occ[yy * W.w + xx] = 0; W.blk[yy * W.w + xx] = 0; } W.structures.delete(castle.id); }
     for (const f of W.families.values()) if (f.kingdom === k.id) { f.kingdom = 0; f.houseId = 0; }
     if (k.war) sim.endWar && sim.endWar(W, k.war, true);
     W.kingdoms.delete(k.id);
@@ -282,7 +285,7 @@
     if (active) {
       const def = K.struct(active.type);
       if (k.chest.wood >= (def.wood || 0) && k.chest.gold >= (def.gold || 0)) {
-        const spot = findSpot(W, k, active.type, active.type === 'house' ? 3 : 4);
+        const spot = active.type === 'wall' ? wallSpot(W, k) : findSpot(W, k, active.type, active.type === 'house' ? 3 : 4);
         if (!spot) { k.orders.splice(k.orders.indexOf(active), 1); return; }
         k.chest.wood -= def.wood || 0; k.chest.gold -= def.gold || 0;
         const s = createStructure(W, active.type, k.id, spot[0], spot[1], { building: true, family: active.family });
@@ -303,6 +306,52 @@
       const empty = [...W.structures.values()].find((s) => s.type === 'house' && s.kingdom === k.id && !s.building && !(W.families.get(s.family) && W.families.get(s.family).members.size));
       if (empty) { empty.family = f.id; f.houseId = empty.id; return; }
       k.orders.push({ type: 'house', family: f.id });
+      return;
+    }
+    // with nothing else to build, blacksmiths wall the border of the kingdom with spare wood
+    const wd = K.data.structures.wall;
+    if (wd && smith >= 1 && !k.orders.some((o) => o.type === 'wall' && !o.structId) && k.chest.wood >= (wd.wood || 0) + S('wall.keepWood', 10)) k.orders.push({ type: 'wall' });
+  }
+  // a free tile on the border that is not part of a gate; next to the existing wall when there is one
+  function wallSpot(W, k) {
+    const gate = k.id % 8, tau = Math.PI * 2;
+    const cands = [];
+    for (const e of W.edges) {
+      if (e.k !== k.id || W.occ[e.y * W.w + e.x] !== 0 || W.unitAt[e.y * W.w + e.x]) continue;
+      const bin = Math.floor(((Math.atan2(e.y + 0.5 - k.cy, e.x + 0.5 - k.cx) + Math.PI) / tau) * 32) % 32;
+      if (bin % 8 === gate) continue;                       // gates stay open so units can walk in and out
+      cands.push(e);
+    }
+    if (!cands.length) return null;
+    const walls = [...W.structures.values()].filter((x) => x.type === 'wall' && x.kingdom === k.id);
+    const next = cands.filter((e) => walls.some((w) => Math.abs(w.x - e.x) <= 1 && Math.abs(w.y - e.y) <= 1));
+    const pick = W.rng.pick(next.length ? next : cands);
+    return [pick.x, pick.y];
+  }
+  // ------------------------------------------------------------------ torches: light around the castle, the theater, the coliseum and some houses
+  function torchUpdate(W, k) {
+    if (!K.data.structures.torch) return;
+    const have = new Set();
+    for (const t of W.structures.values()) if (t.type === 'torch' && t.kingdom === k.id) have.add(t.slotKey);
+    k.torchFail = k.torchFail || new Set();
+    const want = [];
+    const corners = (st, tag, front) => {
+      const pts = [[st.x - 1, st.y + st.h], [st.x + st.w, st.y + st.h]];
+      if (!front) pts.push([st.x - 1, st.y - 1], [st.x + st.w, st.y - 1]);
+      pts.forEach((p, i) => want.push({ key: tag + st.id + ':' + i, x: p[0], y: p[1] }));
+    };
+    const castle = W.structures.get(k.castleId);
+    if (castle) corners(castle, 'c', false);
+    for (const id of [k.theaterId, k.coliseumId]) { const st = id && W.structures.get(id); if (st && !st.building) corners(st, 'a', true); }
+    const every = Math.max(1, S('torch.housesPerTorch', 3));
+    const houses = [...W.structures.values()].filter((h) => h.type === 'house' && h.kingdom === k.id && !h.building).sort((a, b) => a.id - b.id);
+    houses.forEach((h, i) => { if (i % every === 0) want.push({ key: 'h' + h.id + ':0', x: h.x + h.w, y: h.y + h.h }); });
+    for (const w of want) {
+      if (have.has(w.key) || k.torchFail.has(w.key)) continue;
+      if (!sim.inb(W, w.x, w.y) || W.occ[w.y * W.w + w.x] > 0 || kingdomAt(W, w.x, w.y) !== k.id) { k.torchFail.add(w.key); continue; }
+      const t = createStructure(W, 'torch', k.id, w.x, w.y);
+      t.slotKey = w.key;
+      return;                                  // one at a time
     }
   }
   function finishBuilding(W, s) {
@@ -329,6 +378,7 @@
       const r = radiusFor(W, k);
       if (Math.round(r * 2) !== Math.round(k.radius * 2)) { k.radius = r; recomputeKmap(W); }
       updateOrders(W, k);
+      torchUpdate(W, k);
       // leaving
       const baseLeave = S('kingdom.leaveChancePerDay', 0.05) + (sim.isTyrantKing(W, k) ? S('kingdom.leaveTyrantBonus', 0.2) : 0);
       for (const u of citizens(W, k)) {

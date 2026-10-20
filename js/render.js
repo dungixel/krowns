@@ -1,5 +1,6 @@
 // Krowns - drawing. EVERY pixel of the game is the same size: sprites are 16x16 and are only ever drawn at a whole-number
-// zoom (1x, 2x, 3x ... device pixels per game pixel), at whole-number positions, with image smoothing off.
+// zoom (1x, 2x, 3x ... device pixels per game pixel) with image smoothing off. Positions and animations are NOT snapped to the
+// pixel grid: everything glides and stretches smoothly, each sprite is treated like a normal picture.
 (function () {
   const K = (globalThis.Krowns = globalThis.Krowns || {});
   const S = K.S;
@@ -14,7 +15,7 @@
   }
   R.loadAssets = async function (base, version) {
     const v = version ? '?v=' + version : '';
-    const names = ['archer', 'axeman', 'bard', 'base', 'bat', 'blacksmith', 'chest', 'farmer', 'joker', 'king', 'knight', 'mage', 'merchant', 'pig', 'prince', 'rat', 'slime', 'snake', 'spearman', 'tree', 'witch'];
+    const names = ['archer', 'axeman', 'bard', 'base', 'bandit', 'bat', 'blacksmith', 'chest', 'farmer', 'joker', 'king', 'knight', 'mage', 'merchant', 'pig', 'prince', 'rat', 'slime', 'snake', 'spearman', 'tree', 'witch'];
     await Promise.all(names.map(async (n) => { images[n] = await loadImage(base + 'assets/sprites/' + n + '.png' + v); }));
     images.grassDetail = await loadImage(base + 'assets/world/grass-detail.png' + v);
     images.grassMap = await loadImage(base + 'assets/world/grass-map.png' + v);
@@ -76,6 +77,7 @@
   // ------------------------------------------------------------------ state of the view
   R.view = { cx: 0, cy: 0, S: 3, w: 800, h: 600, dpr: 1, ox: 0, oy: 0 };
   R.hover = null; R.selected = null; R.follow = false;
+  R.frac = 0;           // simulated seconds that have passed since the last simulation step (for smooth motion between steps)
   let canvas, ctx, lastT = 0, frameDt = 0.016;
   let items = [];
   const zoomSteps = () => S('render.zoomSteps', [1, 2, 3, 4, 6, 8]);
@@ -108,13 +110,25 @@
     v.cx = wx - (ax - v.w / 2) / s; v.cy = wy - (ay - v.h / 2) / s;
     clampCamera();
   };
+  // zoom glides to the next whole-number step (pixels are all the same size once it rests)
   R.zoomStep = function (dir, ax, ay) {
-    const steps = zoomSteps();
-    let i = steps.indexOf(R.view.S);
-    if (i < 0) i = 0;
+    const steps = zoomSteps(), v = R.view;
+    const cur = R.zoomAnim ? R.zoomAnim.target : v.S;
+    let i = 0, bd = 1e9;
+    steps.forEach((x, k) => { const d = Math.abs(x - cur); if (d < bd) { bd = d; i = k; } });
     i = clamp(i + dir, 0, steps.length - 1);
-    R.setScale(steps[i], ax, ay);
+    const axx = ax === undefined ? v.w / 2 : ax, ayy = ay === undefined ? v.h / 2 : ay;
+    R.zoomAnim = { target: steps[i], ax: axx, ay: ayy, wx: (axx - v.ox) / v.S, wy: (ayy - v.oy) / v.S };
   };
+  function advanceZoom(dt) {
+    const z = R.zoomAnim, v = R.view;
+    if (!z) return;
+    let S1 = v.S + (z.target - v.S) * (1 - Math.exp(-dt * 11));
+    if (Math.abs(S1 - z.target) < 0.01) { S1 = z.target; R.zoomAnim = null; }
+    v.S = S1;
+    v.cx = z.wx - (z.ax - v.w / 2) / S1; v.cy = z.wy - (z.ay - v.h / 2) / S1;
+    clampCamera();
+  }
   function clampCamera() {
     const v = R.view, W = R.world;
     if (!W) return;
@@ -131,39 +145,77 @@
   const syOf = (wy) => wy * V.S + V.oy;
 
   // draws `img` (16x16 or any size) with its bottom edge at world y = wyBottom, left edge at world x = wx.
-  // `extra` duplicates the middle row that many times (a stretch of whole pixels); `crop` cuts rows off the top.
+  // `extra` (any fractional number) stretches the middle row, so the sprite grows smoothly upward; `crop` cuts rows off the top.
   function blit(img, wx, wyBottom, o) {
     o = o || {};
     const s = V.S, iw = img.width, ih = img.height;
     const crop = o.crop || 0, extra = o.extra || 0;
     const rows = ih - crop;
     const totalH = rows + extra;
-    const dx = sxOf(wx), dyTop = syOf(wyBottom - totalH);
+    const dx = sxOf(wx), top = syOf(wyBottom - totalH);
     if (o.alpha !== undefined && o.alpha !== 1) ctx.globalAlpha = o.alpha;
     if (o.flip) { ctx.save(); ctx.translate(dx + iw * s, 0); ctx.scale(-1, 1); }
     const x0 = o.flip ? 0 : dx;
-    if (extra <= 0) ctx.drawImage(img, 0, crop, iw, rows, x0, dyTop, iw * s, rows * s);
+    if (Math.abs(extra) < 0.002) ctx.drawImage(img, 0, crop, iw, rows, x0, Math.round(top), iw * s, Math.round(top + rows * s) - Math.round(top));
     else {
       const m = crop + Math.floor(rows / 2);
       const topRows = m - crop;
-      if (topRows > 0) ctx.drawImage(img, 0, crop, iw, topRows, x0, dyTop, iw * s, topRows * s);
-      ctx.drawImage(img, 0, m, iw, 1, x0, dyTop + topRows * s, iw * s, (1 + extra) * s);
+      const y0 = Math.round(top), y1 = Math.round(top + topRows * s), y2 = Math.round(top + (topRows + 1 + extra) * s), y3 = Math.round(top + totalH * s);
+      if (topRows > 0 && y1 > y0) ctx.drawImage(img, 0, crop, iw, topRows, x0, y0, iw * s, y1 - y0);
+      if (y2 > y1) ctx.drawImage(img, 0, m, iw, 1, x0, y1, iw * s, y2 - y1);
       const botRows = ih - m - 1;
-      if (botRows > 0) ctx.drawImage(img, 0, m + 1, iw, botRows, x0, dyTop + (topRows + 1 + extra) * s, iw * s, botRows * s);
+      if (botRows > 0 && y3 > y2) ctx.drawImage(img, 0, m + 1, iw, botRows, x0, y2, iw * s, y3 - y2);
     }
     if (o.flip) ctx.restore();
     if (o.alpha !== undefined && o.alpha !== 1) ctx.globalAlpha = 1;
   }
+  // like blit, but the whole picture leans sideways (the top moves by `lean` game pixels): trees in the wind
+  function blitLean(img, wx, wyBottom, o) {
+    const s = V.S, iw = img.width, ih = img.height;
+    if (o.alpha !== undefined && o.alpha !== 1) ctx.globalAlpha = o.alpha;
+    ctx.save();
+    ctx.translate(sxOf(wx) + (o.flip ? iw * s : 0), syOf(wyBottom));
+    if (o.flip) ctx.scale(-1, 1);
+    ctx.transform(1, 0, -o.lean / ih, 1, 0, 0);
+    ctx.drawImage(img, 0, 0, iw, ih, 0, -ih * s, iw * s, ih * s);
+    ctx.restore();
+    if (o.alpha !== undefined && o.alpha !== 1) ctx.globalAlpha = 1;
+  }
   function fillWorldRect(wx, wy, w, h, color) { ctx.fillStyle = color; ctx.fillRect(sxOf(wx), syOf(wy), w * V.S, h * V.S); }
 
-  // pixel-art ellipse shadow, 12x3 game pixels
-  function shadow(cwx, bottomWy, wide) {
-    const w = wide || 12;
-    const rows = w >= 14 ? [w - 4, w, w - 4] : [w - 4, w, w - 4];
-    for (let r = 0; r < 3; r++) ctx.fillRect(sxOf(cwx - rows[r] / 2), syOf(bottomWy - 2 + r), rows[r] * V.S, V.S);
+  // ------------------------------------------------------------------ shadows: cast away from the sun, never turning with the unit
+  let sun = { lean: 0, len: 0.4, alpha: 1 };
+  function updateSun(hour) {
+    const rise = 6.5, set = 19.5;
+    const t = clamp((hour - rise) / (set - rise), 0, 1);
+    const f = (t - 0.5) * 2;                         // -1 sun in the east (morning), 0 noon, +1 sun in the west (evening)
+    const up = clamp(Math.min((hour - 5.5) / 1.5, (20.5 - hour) / 1.5), 0, 1);
+    const night = S('shadow.nightOpacity', 0.35);
+    sun = { lean: f * S('shadow.lean', 0.9), len: S('shadow.length', 0.4) * (0.65 + 0.7 * Math.abs(f)), alpha: night + (1 - night) * up };
+  }
+  // the picture's silhouette is laid flat on the ground, leaning away from the sun. (baseX, baseY) = the feet, in world pixels.
+  function castShadow(img, key, baseX, baseY, o) {
+    o = o || {};
+    const sil = silhouette(img, key, K.C('shadow.purple', '#957fae'));
+    const iw = img.width, ih = img.height - (o.crop || 0), len = sun.len * (o.len || 1);
+    ctx.save();
+    ctx.setTransform(V.S, 0, 0, V.S, V.ox, V.oy);
+    ctx.transform(1, 0, -sun.lean, -len, baseX - iw / 2 + sun.lean * ih, baseY + len * ih);
+    if (o.flip) { ctx.translate(iw, 0); ctx.scale(-1, 1); }
+    ctx.drawImage(sil, 0, o.crop || 0, iw, ih, 0, 0, iw, ih);
+    ctx.restore();
+  }
+  function castBox(wx, wyBottom, w, h) {
+    // a flat building: a parallelogram leaning away from the sun
+    const hh = h * sun.len * 0.9, dx = sun.lean * h * 0.8;
+    ctx.beginPath();
+    ctx.moveTo(sxOf(wx), syOf(wyBottom)); ctx.lineTo(sxOf(wx + w), syOf(wyBottom));
+    ctx.lineTo(sxOf(wx + w + dx), syOf(wyBottom + hh)); ctx.lineTo(sxOf(wx + dx), syOf(wyBottom + hh));
+    ctx.closePath(); ctx.fill();
   }
 
   // ------------------------------------------------------------------ grass
+  function grassPeriod(r) { const an = K.anim('grass_sway'); return an.extra.periodMin + r * (an.extra.periodMax - an.extra.periodMin); }
   function advanceGrass(g, dt) {
     const an = K.anim('grass_sway');
     g.phase += (Math.PI * 2 / g.period) * dt;
@@ -172,7 +224,7 @@
       if (g.cycles >= (an.extra.cyclesBeforeSpeedChange || 3)) { g.cycles = 0; g.period = an.extra.periodMin + Math.random() * (an.extra.periodMax - an.extra.periodMin); }
     }
   }
-  function grassExtra(g) { const an = K.anim('grass_sway'); return Math.round(an.stretch * (0.5 + 0.5 * Math.sin(g.phase))); }
+  function grassExtra(g) { const an = K.anim('grass_sway'); return an.stretch * (0.5 + 0.5 * Math.sin(g.phase)); }
 
   function ensureEdgeTufts(W) {
     if (R.edgeVersion === W.kmapVersion && R.edgeW === W) return;
@@ -181,7 +233,7 @@
     for (const e of W.edges || []) {
       for (let j = 0; j < 4; j++) {
         const h = ((e.x * 73856093) ^ (e.y * 19349663) ^ (j * 83492791)) >>> 0;
-        arr.push({ x: e.x, y: e.y, ox: (h % 11) - 3, oy: ((h >> 8) % 11) - 3, phase: ((h >> 3) % 628) / 100, period: 2.5 + ((h >> 5) % 35) / 10, cycles: 0 });
+        arr.push({ x: e.x, y: e.y, ox: (h % 11) - 3, oy: ((h >> 8) % 11) - 3, phase: ((h >> 3) % 628) / 100, period: grassPeriod(((h >> 5) % 100) / 100), cycles: 0 });
       }
     }
     R.edgeTufts = arr;
@@ -224,15 +276,16 @@
     return day;
   }
 
+  const FEET = 8;   // units stand with their feet half a tile lower than their tile, so they can walk behind the upper half of trees and structures
   function entityPos(W, e, t) {
-    let px = e.x * TILE, py = e.y * TILE, lift = 0;
+    let px = e.x * TILE, py = e.y * TILE, lift = 0, p = 0;
     if (e.hop) {
-      const p = clamp(e.hop.t / e.hop.dur, 0, 1);
-      px = Math.round(e.hop.fx * TILE + (e.x - e.hop.fx) * TILE * p);
-      py = Math.round(e.hop.fy * TILE + (e.y - e.hop.fy) * TILE * p);
-      if (!e.flies) lift = Math.round(S('unit.hopHeightPx', 3) * Math.sin(Math.PI * p));
+      p = clamp((e.hop.t + R.frac) / e.hop.dur, 0, 1);
+      px = e.hop.fx * TILE + (e.x - e.hop.fx) * TILE * p;
+      py = e.hop.fy * TILE + (e.y - e.hop.fy) * TILE * p;
+      if (!e.flies) lift = S('unit.hopHeightPx', 2) * Math.sin(Math.PI * p);
     }
-    return { px, py, lift };
+    return { px, py: py + FEET, lift, p };
   }
 
   function spriteFor(u) {
@@ -248,6 +301,7 @@
     R.world = W;
     const dt = Math.min(0.1, Math.max(0, now - lastT)); lastT = now; frameDt = dt;
     const v = R.view; V = v;
+    advanceZoom(dt);
     // follow the selected unit
     if (R.follow && R.selected && R.selected.type === 'unit') {
       const u = W.byId.get(R.selected.id);
@@ -277,26 +331,27 @@
     ctx.fillRect(0, Math.max(0, mapT), Math.max(0, mapL), Math.max(0, Math.min(v.h, mapB) - Math.max(0, mapT)));
     ctx.fillRect(Math.min(v.w, mapR), Math.max(0, mapT), Math.max(0, v.w - mapR), Math.max(0, Math.min(v.h, mapB) - Math.max(0, mapT)));
 
-    // ---- 2. grass tufts (green everywhere, purple on kingdom borders)
+    // ---- 2. grass tufts (green everywhere, purple on kingdom borders): they stand in the same layer as trees, units and buildings
     const gd = images.grassDetail, pg = cache.purpleGrass;
     const vx0 = wx0 - 16, vx1 = wx1 + 16, vy0 = wy0 - 16, vy1 = wy1 + 16;
+    items = [];
     for (const g of W.grass) {
       const px = g.x * TILE + 3 + g.ox, py = g.y * TILE + 3 + g.oy;
       if (px < vx0 || px > vx1 || py < vy0 || py > vy1) continue;
       advanceGrass(g, dt);
-      blit(gd, px, py + 10, { extra: grassExtra(g) });
+      items.push({ k: 'grass', y: py + 10, px, py, img: gd, ref: g });
     }
     ensureEdgeTufts(W);
     for (const g of R.edgeTufts) {
       const px = g.x * TILE + 3 + g.ox, py = g.y * TILE + 4 + g.oy;
       if (px < vx0 || px > vx1 || py < vy0 || py > vy1) continue;
       advanceGrass(g, dt);
-      blit(pg, px, py + 10, { extra: grassExtra(g) });
+      items.push({ k: 'grass', y: py + 10, px, py, img: pg, ref: g });
     }
 
     // ---- 3. collect what stands on the ground, in drawing order (lowest on the screen is drawn last)
-    items = [];
-    const t = W.t;
+    const t = W.t + R.frac;
+    R.time = t;
     const inView = (px, py, w, h) => px + w >= vx0 && px <= vx1 && py + h >= vy0 - 8 && py <= vy1 + 8;
     for (const tr of W.trees.values()) {
       const px = tr.x * TILE, py = tr.y * TILE;
@@ -317,28 +372,32 @@
       if (u.dead) continue;
       const p = entityPos(W, u, t);
       if (!inView(p.px, p.py, 16, 16)) continue;
-      items.push({ k: 'unit', y: p.py + 16 + 0.1, ref: u, px: p.px, py: p.py, lift: p.lift });
+      items.push({ k: 'unit', y: p.py + 16 + 0.1, ref: u, px: p.px, py: p.py, lift: p.lift, p: p.p });
     }
     for (const c of W.creatures) {
       if (c.dead) continue;
       const p = entityPos(W, c, t);
       if (!inView(p.px, p.py, 16, 16)) continue;
-      items.push({ k: 'creature', y: p.py + 16 + (c.flies ? 40 : 0.1), ref: c, px: p.px, py: p.py, lift: p.lift });
+      items.push({ k: 'creature', y: p.py + 16 + (c.flies ? 40 : 0.1), ref: c, px: p.px, py: p.py, lift: p.lift, p: p.p });
     }
     items.sort((a, b) => a.y - b.y);
 
-    // ---- 4. shadows (multiply, desaturated purple), all before the things that cast them
+    // ---- 4. shadows (multiply, desaturated purple), cast away from the sun; all before the things that cast them
+    const clock = K.sim.clockAt(W.t + R.frac);
+    updateSun(clock.hour);
     ctx.globalCompositeOperation = 'multiply';
     ctx.fillStyle = K.C('shadow.purple', '#957fae');
-    ctx.globalAlpha = K.C('shadow.opacity', 1);
+    ctx.globalAlpha = K.C('shadow.opacity', 1) * sun.alpha;
     for (const it of items) {
-      if (it.k === 'tree') shadow(it.px + 8, it.py + 16, 14);
-      else if (it.k === 'tomb') shadow(it.px + 8, it.py + 15, 10);
-      else if (it.k === 'unit') shadow(it.px + 8, it.py + 15 + (it.ref.lying ? 0 : 0), it.ref.lying ? 14 : 12);
-      else if (it.k === 'creature') shadow(it.px + 8, it.py + 15 + (it.ref.flies ? 2 : 0), it.ref.flies ? 8 : 12);
+      if (it.k === 'tree') castShadow(images.tree, 'tree', it.px + 8, it.py + 15.5, { flip: treeFlip(it.ref), len: 0.9 });
+      else if (it.k === 'tomb') castBox(it.px + 4, it.py + 14, 8, 6);
+      else if (it.k === 'unit') { const u = it.ref; const sp = spriteFor(u); const lying = u.lying; castShadow(lying ? rotatedCanvas(sp.img, sp.key) : sp.img, lying ? 'r' + sp.key : sp.key, it.px + 8, it.py + 15.5, { flip: u.face < 0, crop: K.sim.isAdult(W, u) ? 0 : 3, len: lying ? 0.7 : 1 }); }
+      else if (it.k === 'creature') { const c = it.ref; const img = images[c.def.sprite] || images.slime; castShadow(img, c.def.sprite, it.px + 8, it.py + 15.5 + (c.flies ? 3 : 0), { flip: faceFlip(c), len: c.flies ? 0.7 : 1 }); }
       else if (it.k === 'struct') {
-        const st = it.ref;
-        ctx.fillRect(sxOf(it.px + 2), syOf(it.py + st.h * TILE - 2), st.w * TILE * s, 3 * s);
+        const st = it.ref, def = K.struct(st.type);
+        if (st.type === 'torch') castBox(it.px + 7, it.py + 15, 2, 9);
+        else if (def.sprite && images[def.sprite]) castShadow(images[def.sprite], def.sprite, it.px + st.w * 8, it.py + st.h * TILE - 0.5, {});
+        else castBox(it.px + 1, it.py + st.h * TILE - 1, st.w * TILE - 2, st.type === 'wall' ? 8 : st.h * TILE * 0.8);
       }
     }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
@@ -346,7 +405,8 @@
     // ---- 5. the things themselves
     const hoverId = R.hover && R.hover.id, selId = R.selected && R.selected.id;
     for (const it of items) {
-      if (it.k === 'tree') drawTree(W, it, dt);
+      if (it.k === 'grass') blit(it.img, it.px, it.py + 10, { extra: grassExtra(it.ref) });
+      else if (it.k === 'tree') drawTree(W, it, dt);
       else if (it.k === 'struct') drawStructure(W, it, t);
       else if (it.k === 'tomb') drawTomb(W, it, t);
       else if (it.k === 'unit') drawUnit(W, it, t);
@@ -361,11 +421,25 @@
     for (const it of items) if (it.k === 'unit' && it.ref.shot && t - it.ref.shot.t < 0.18) drawShot(it);
 
     // ---- 6. day and night
-    const clock = K.sim.clockAt(W.t);
     const lc = lightColor(clock.hour);
     if (lc[0] < 255 || lc[1] < 255 || lc[2] < 255) {
       ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgb(' + lc[0] + ',' + lc[1] + ',' + lc[2] + ')';
       ctx.fillRect(0, 0, v.w, v.h); ctx.globalCompositeOperation = 'source-over';
+    }
+    // torches light the ground once it gets dark
+    const dark = clamp(1 - (lc[0] * 0.3 + lc[1] * 0.4 + lc[2] * 0.3) / 255, 0, 1);
+    if (dark > 0.05) {
+      const rad = S('torch.lightRadiusTiles', 4.5) * TILE, strength = S('torch.glowStrength', 0.7) * Math.min(1, dark * 1.6);
+      ctx.globalCompositeOperation = 'lighter';
+      for (const it of items) {
+        if (it.k !== 'struct' || it.ref.type !== 'torch') continue;
+        const fl = 1 + 0.05 * Math.sin(t * 9 + it.ref.id) + 0.03 * Math.sin(t * 23 + it.ref.id * 2);
+        const cx = sxOf(it.px + 8), cy = syOf(it.py + 8), r = rad * fl * s;
+        const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        gr.addColorStop(0, 'rgba(255,170,80,' + (0.55 * strength) + ')'); gr.addColorStop(0.45, 'rgba(255,140,60,' + (0.22 * strength) + ')'); gr.addColorStop(1, 'rgba(255,120,40,0)');
+        ctx.fillStyle = gr; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      }
+      ctx.globalCompositeOperation = 'source-over';
     }
 
     // ---- 7. words (names, kingdom names, speech bubbles) - drawn after the light so they stay readable
@@ -386,17 +460,44 @@
     const target = behind ? (an.extra.opacity || S('tree.fadeOpacity', 0.5)) : 1;
     const rate = dt / Math.max(0.01, S('tree.fadeSeconds', 0.25));
     tr.fade += clamp(target - tr.fade, -rate, rate);
-    const flip = ((tr.x * 7 + tr.y * 3) & 1) === 1;
-    blit(images.tree, it.px, it.py + 16, { alpha: tr.fade, flip });
+    const an2 = K.anim('tree_sway');
+    const h = ((tr.x * 73856093) ^ (tr.y * 19349663)) >>> 0;
+    const period = (an2.extra.periodMin || 2.5) + ((h % 100) / 100) * ((an2.extra.periodMax || 5.5) - (an2.extra.periodMin || 2.5));
+    const lean = an2.stretch * (Math.sin(R.time * Math.PI * 2 / period + (h % 628) / 100) * 0.8 + 0.2 * Math.sin(R.time * 1.7 + (h >> 4) % 7));
+    blitLean(images.tree, it.px, it.py + 16, { alpha: tr.fade, flip: treeFlip(tr), lean });
   }
+  const treeFlip = (tr) => ((tr.x * 7 + tr.y * 3) & 1) === 1;
+  const faceFlip = (c) => (c.def && c.def.facesLeft ? c.face > 0 : c.face < 0);
 
   function drawStructure(W, it, t) {
     const st = it.ref, def = K.struct(st.type), s = V.S;
     const w = st.w * TILE, h = st.h * TILE;
     const flash = st.hurtAt && t - st.hurtAt < 0.15;
-    const alpha = st.building ? 0.55 : 1;
+    // fade a little when somebody walks behind the upper part of it
+    let behind = false;
+    if (st.type !== 'torch' && st.type !== 'wall' && st.type !== 'kingdom_chest') {
+      for (let yy = st.y - 1; yy < st.y + (st.walkRows || 0) && !behind; yy++) for (let xx = st.x - 1; xx <= st.x + st.w && !behind; xx++) {
+        if (yy < 0 || xx < 0 || xx >= W.w || yy >= W.h) continue;
+        if (W.unitAt[yy * W.w + xx]) behind = true;
+      }
+    }
+    st.fade = st.fade === undefined ? 1 : st.fade;
+    const fr = frameDt / Math.max(0.01, S('tree.fadeSeconds', 0.25));
+    st.fade += clamp((behind ? S('tree.fadeOpacity', 0.5) : 1) - st.fade, -fr, fr);
+    const alpha = (st.building ? 0.55 : 1) * st.fade;
     ctx.globalAlpha = alpha;
-    if (def.sprite && images[def.sprite]) {
+    if (st.type === 'torch') {
+      drawTorch(it, t);
+    } else if (st.type === 'wall') {
+      // placeholder wall: a stone block (no artwork yet)
+      const col = def.color || '#b9b6c2', rgb = hexToRgb(col);
+      const dark = 'rgb(' + Math.round(rgb[0] * 0.6) + ',' + Math.round(rgb[1] * 0.6) + ',' + Math.round(rgb[2] * 0.6) + ')';
+      fillWorldRect(it.px + 1, it.py + 5, 14, 11, dark);
+      fillWorldRect(it.px + 2, it.py + 5, 12, 9, col);
+      fillWorldRect(it.px + 2, it.py + 5, 12, 2, 'rgba(255,255,255,0.35)');
+      fillWorldRect(it.px + 2, it.py + 10, 12, 1, 'rgba(0,0,0,0.12)');
+      fillWorldRect(it.px + 7, it.py + 7, 1, 3, 'rgba(0,0,0,0.12)');
+    } else if (def.sprite && images[def.sprite]) {
       blit(images[def.sprite], it.px, it.py + h, { alpha });
     } else {
       // placeholder drawing: a labelled square (no artwork yet)
@@ -424,6 +525,19 @@
     }
   }
 
+  // placeholder torch: a wooden pole with a flickering flame (no artwork yet)
+  function drawTorch(it, t) {
+    const x = it.px, y = it.py, id = it.ref.id;
+    fillWorldRect(x + 7, y + 7, 2, 9, '#6b4423');
+    fillWorldRect(x + 7, y + 7, 1, 9, '#8a5a2b');
+    fillWorldRect(x + 6, y + 6, 4, 2, '#4a3019');
+    const f1 = Math.sin(t * 11 + id) * 0.5 + 0.5, f2 = Math.sin(t * 17 + id * 3) * 0.5 + 0.5;
+    const h = 4 + f1 * 1.6, w = 3 + f2 * 0.8;
+    fillWorldRect(x + 8 - w / 2, y + 6 - h, w, h, '#ff9a3c');
+    fillWorldRect(x + 8 - w / 4, y + 6 - h * 0.65, w / 2, h * 0.65, '#ffd36a');
+    fillWorldRect(x + 7.4, y + 6 - h * 0.35, 1.2, h * 0.35, '#fff3b0');
+  }
+
   const TOMB = ['..####..', '.######.', '.##..##.', '.######.', '.##..##.', '.######.', '.######.', '.######.'];
   function drawTomb(W, it, t) {
     const tb = it.ref;
@@ -439,6 +553,7 @@
     ctx.globalAlpha = 1;
   }
 
+  const wave = (t, period, phase) => 0.5 + 0.5 * Math.sin(t * Math.PI * 2 / period + (phase || 0));
   function drawUnit(W, it, t) {
     const u = it.ref, s = V.S;
     const sp = spriteFor(u);
@@ -449,24 +564,22 @@
     if (u.lying) {
       img = rotatedCanvas(img, sp.key + (crop ? 'k' : ''));
       const an = K.anim(u.fainted ? 'faint' : 'sleep');
-      // lying flat: shifted down so it rests on the ground
-      blit(img, px, py + 16, { flip: u.face < 0, crop: 0, extra: u.fainted ? 0 : Math.round(an.stretch * (0.5 + 0.5 * Math.sin(t * Math.PI * 2 / an.period + u.phase))) });
+      blit(img, px, py + 16, { flip: u.face < 0, crop: 0, extra: u.fainted ? 0 : an.stretch * wave(t, an.period, u.phase) });
       if (u.sleeping) drawZ(px + 10, py - 2 + 0, t, u);
     } else {
       let lift = it.lift || 0;
       const talk = u.talkUntil && t < u.talkUntil;
       if (u.cheerUntil && t < u.cheerUntil) {
         const an = K.anim('cheer');
-        lift = Math.round(an.height * Math.abs(Math.sin(t * Math.PI * 2 / an.period)));
+        lift = an.height * Math.abs(Math.sin(t * Math.PI * 2 / an.period));
       } else if (u.act === 'work' && !u.hop) {
-        lift = Math.round(2 * Math.max(0, Math.sin(t * 9 + u.phase)));
+        lift = 2 * Math.max(0, Math.sin(t * 9 + u.phase));
       } else if (u.act === 'perform' && !u.hop) {
-        lift = Math.round(2 * Math.abs(Math.sin(t * 5 + u.phase)));
+        lift = 2 * Math.abs(Math.sin(t * 5 + u.phase));
       }
-      if (!u.hop) {
-        if (talk) { const an = K.anim('talk'); extra = Math.floor((t * 2 / an.period + u.phase) % 2) ? 0 : an.stretch; }
-        else { const an = K.anim('breathe'); extra = Math.round(an.stretch * (0.5 + 0.5 * Math.sin(t * Math.PI * 2 / an.period + u.phase))); }
-      }
+      if (u.hop) { const an = K.anim('hop'); extra = an.stretch * Math.sin(Math.PI * it.p); }
+      else if (talk) { const an = K.anim('talk'); extra = an.stretch * wave(t, an.period, u.phase); }
+      else { const an = K.anim('breathe'); extra = an.stretch * wave(t, an.period, u.phase); }
       blit(img, px, py + 16 - lift, { flip: u.face < 0, extra, crop });
       if (u.flashT && t - u.flashT < 0.14) blit(silhouette(img, sp.key, 'rgba(255,255,255,0.7)'), px, py + 16 - lift, { flip: u.face < 0, extra, crop });
     }
@@ -476,21 +589,22 @@
     const mh = K.sim.maxHearts(u);
     if (u.hearts < mh - 0.01 && !u.lying) {
       fillWorldRect(px + 2, py - 1, 12, 2, 'rgba(47,44,54,0.8)');
-      fillWorldRect(px + 2, py - 1, Math.max(1, Math.round(12 * clamp(u.hearts / mh, 0, 1))), 2, K.C('bar.hearts', '#ff9fb4'));
+      fillWorldRect(px + 2, py - 1, Math.max(1, 12 * clamp(u.hearts / mh, 0, 1)), 2, K.C('bar.hearts', '#ff9fb4'));
     }
   }
   function drawCreature(W, it, t) {
     const c = it.ref;
     const img = images[c.def.sprite] || images.slime;
-    const bob = c.flies ? Math.round(Math.sin(t * 9 + c.phase) * 1.4) - 4 : 0;
+    const bob = c.flies ? Math.sin(t * 9 + c.phase) * 1.4 - 4 : 0;
     const lift = c.flies ? 0 : (it.lift || 0);
-    const an = K.anim('breathe');
-    const extra = c.hop ? 0 : Math.round(an.stretch * (0.5 + 0.5 * Math.sin(t * Math.PI * 2 / an.period + c.phase)));
-    blit(img, it.px, it.py + 16 - lift + bob, { flip: c.face < 0, extra });
-    if (c.flashT && t - c.flashT < 0.14) blit(silhouette(img, c.def.sprite, 'rgba(255,255,255,0.7)'), it.px, it.py + 16 - lift + bob, { flip: c.face < 0, extra });
+    const an = K.anim(c.hop ? 'hop' : 'breathe');
+    const extra = c.hop ? an.stretch * Math.sin(Math.PI * it.p) : an.stretch * wave(t, an.period, c.phase);
+    const flip = faceFlip(c);
+    blit(img, it.px, it.py + 16 - lift + bob, { flip, extra });
+    if (c.flashT && t - c.flashT < 0.14) blit(silhouette(img, c.def.sprite, 'rgba(255,255,255,0.7)'), it.px, it.py + 16 - lift + bob, { flip, extra });
     if (c.hearts < c.maxHearts - 0.01) {
       fillWorldRect(it.px + 2, it.py - 1 + bob, 12, 2, 'rgba(47,44,54,0.8)');
-      fillWorldRect(it.px + 2, it.py - 1 + bob, Math.max(1, Math.round(12 * clamp(c.hearts / c.maxHearts, 0, 1))), 2, K.C('bar.hearts', '#ff9fb4'));
+      fillWorldRect(it.px + 2, it.py - 1 + bob, Math.max(1, 12 * clamp(c.hearts / c.maxHearts, 0, 1)), 2, K.C('bar.hearts', '#ff9fb4'));
     }
   }
 

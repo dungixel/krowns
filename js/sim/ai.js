@@ -23,7 +23,8 @@
   function gotoStruct(W, u, s, run) { const c = sim.structCenter(s); return goto(W, u, c.x, c.y, sim.structRange(s), run); }
   const nearStruct = (u, s) => { const c = sim.structCenter(s); return cheb(u.x, u.y, c.x, c.y) <= sim.structRange(s); };
   function awakeSeconds() { const a = S('time.sleepEndHour', 6), b = S('time.sleepStartHour', 21); return sim.dayLength() * ((b - a) / 24); }
-  const canFightUnit = (W, u) => sim.isAdult(W, u) && (sim.isFighterUnit(u) || u.job === 'hunter' || sim.hasTrait(u, 'brave'));
+  const isRuler = (u) => u.job === 'king';
+  const canFightUnit = (W, u) => !isRuler(u) && sim.isAdult(W, u) && (sim.isFighterUnit(u) || u.job === 'hunter' || sim.hasTrait(u, 'brave'));
   function maybeSay(W, u, cat, p, prio, vars) { if (W.rng() < p) sim.say(W, u, K.line(W.rng, cat, vars), prio || 0); }
 
   // a free tile in the kingdom around the castle, between r0 and r1 tiles
@@ -60,7 +61,7 @@
     const fighterish = canFightUnit(W, u);
     const k = kOf(W, u);
     const fighters = k ? sim.counts(W, k).fighters || 0 : 0;
-    const civJoin = adult && k && fighters <= S('fight.civiliansJoinWhenFightersAtOrBelow', 1);
+    const civJoin = adult && k && !isRuler(u) && fighters <= S('fight.civiliansJoinWhenFightersAtOrBelow', 1);
     const R = fighterish ? S('fight.watchRadius', 10) : S('fight.creatureAggroRadius', 3) + 2;
     const hostiles = sim.near(W, u.x, u.y, R, (e) => e.kind === 'creature' && e.def.behavior === 'Hostile' && !e.dead);
     if (hostiles.length) {
@@ -101,7 +102,7 @@
     if (u.energy <= 0.01) return { type: 'faint', prio: 95 };
     const th = threat(W, u);
     if (th) return th;
-    const role = adult && sim.warRole(W, u);
+    const role = adult && !isRuler(u) && sim.warRole(W, u);
     if (role) return { type: 'war', prio: 88, role: role.role, enemy: role.enemy, war: role.war.id };
     if (sim.isSleepHour(hour) || (u.energy < 1.2 && !sim.isSleepHour(hour) && W.rng() < 0.2)) return { type: 'sleep', prio: 85 };
     // hunger
@@ -109,7 +110,7 @@
       if (W.t > (u.hungrySay || 0)) { u.hungrySay = W.t + 25; maybeSay(W, u, 'hungry', 0.6); }
       const fd = food(W, u);
       if (fd) return { type: 'eat', prio: u.hunger <= 1.5 ? 80 : 70, src: fd.kind };
-      if (W.t > (u.forageAfter || 0)) return { type: 'forage', prio: u.hunger <= 1.5 ? 80 : 68 };
+      if (!isRuler(u) && W.t > (u.forageAfter || 0)) return { type: 'forage', prio: u.hunger <= 1.5 ? 80 : 68 };
     }
     if (u.energy < S('fight.lowEnergyBelow', 3) && W.t > (u.tiredSay || 0)) { u.tiredSay = W.t + 40; maybeSay(W, u, 'tired', 0.5); }
     // rumors worth telling the king
@@ -182,6 +183,10 @@
       if (j.cls === 'Fight') m = (c.fighters || 0) < pop / 7 ? 1.8 : 0.7;
       if (j.id === 'bard' && (c.bard || 0) >= 4) m = 0.4;
       if (j.id === 'merchant' && n >= 2) m = 0.3;
+      // newborns usually dream of something different from what the kingdom already has...
+      m /= 1 + S('learn.diversityPerExisting', 0.6) * n;
+      // ...but knights come first: the king needs protection (still only a chance, never a rule)
+      if (j.id === 'knight') m = Math.max(m, 1) * (n < 2 + pop / 8 ? S('learn.knightPriority', 4) : 1);
       return m;
     };
     const j = W.rng.weighted(opts, (x) => x.ambition * need(x));
@@ -215,7 +220,7 @@
     }
     const r = goto(W, u, t.goal[0], t.goal[1], 0, false);
     if (r === 'arrived' || r === 'stuck') {
-      t.arrived = true; t.pause = W.t + W.rng.range(1, 4.5);
+      t.arrived = true; t.pause = W.t + W.rng.range(2, 6);
       maybeSay(W, u, 'idle', 0.08, 0);
     }
     return true;
@@ -488,6 +493,12 @@
   }
 
   // ------------------------------------------------------------------ learning a job
+  // seconds of awake time needed to learn a job alone: learn.selfDays world days (units sleep part of every day)
+  sim.learnNeeded = () => {
+    const a = S('time.sleepStartHour', 21), b = S('time.sleepEndHour', 6);
+    const awake = 1 - ((b - a + 24) % 24) / 24;
+    return S('learn.selfDays', 3) * sim.dayLength() * awake;
+  };
   function accrueLearning(W, u, dt) {
     if (u.job !== 'villager' || !u.kingdom || !sim.isAdult(W, u) || !u.learn.job) return;
     const k = kOf(W, u);
@@ -498,11 +509,11 @@
       if (sim.related(u, o) || (u.mentorOk === undefined ? (u.mentorOk = W.rng() < S('learn.nonFamilyMentorChance', 0.8)) : u.mentorOk)) { mentor = o; break; }
     }
     if (mentor) {
-      rate = S('learn.selfSeconds', 220) / S('learn.mentorSeconds', 90);
+      rate = S('learn.selfDays', 3) / S('learn.mentorDays', 1);
       if (W.rng() < 0.01 * dt * 10) sim.say(W, mentor, K.line(W.rng, 'mentor', { other: u.name }), 0);
     }
     u.learn.progress += dt * rate;
-    if (u.learn.progress >= S('learn.selfSeconds', 220)) {
+    if (u.learn.progress >= sim.learnNeeded()) {
       const job = u.learn.job;
       const c = sim.counts(W, k);
       const j = K.job(job);
@@ -542,7 +553,9 @@
     if (u.dead) return;
     sim.processReply(W, u);
     sim.advanceHop(u, dt);
-    if (!u.task || W.t >= u.thinkAt) think(W, u);
+    // after finishing something a unit stops for a moment and thinks before the next thing
+    const urgent = u.hunger < 2 || u.energy < 1.2 || u.hurtAt > W.t - 1.5 || sim.isSleepHour(sim.clockAt(W.t).hour);
+    if ((!u.task && W.t >= (u.pauseUntil || 0) || urgent && !u.task) || (u.task && W.t >= u.thinkAt)) think(W, u);
     const t = u.task;
     if (u.job === 'villager' && u.kingdom && !u.sleeping && !u.fainted && (!t || t.prio <= 70)) accrueLearning(W, u, dt);
     u.sleeping = false; u.lying = false; u.fainted = false; u.act = null;
@@ -551,7 +564,10 @@
     if (!fn) { u.task = null; return; }
     t.work = t.work || false;
     const cont = fn(W, u, t, dt);
-    if (cont === false && u.task === t) { u.task = null; u.thinkAt = 0; }
+    if (cont === false && u.task === t) {
+      u.task = null; u.thinkAt = 0;
+      if (t.prio < 80 && t.type !== 'wander') u.pauseUntil = W.t + W.rng.range(S('unit.thinkPauseMin', 1), S('unit.thinkPauseMax', 3.5));
+    }
   }
 
   // ------------------------------------------------------------------ founding a kingdom (once per second)

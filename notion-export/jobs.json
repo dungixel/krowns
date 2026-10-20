@@ -118,8 +118,8 @@
 "Class": "Contributor",
 "Damage per second (in hearts)": 1,
 "Range (tiles)": 5,
-"Sprite": "base",
-"Tint": "#8fbf7a",
+"Sprite": "bandit",
+"Tint": "",
 "Icon": "target-arrow",
 "Color": "#a8d5a2",
 "Ambition weight": 3,
@@ -129,7 +129,7 @@
 "Work": "hunt",
 "Variant of": "",
 "Guessed": true,
-"description": "Hunts the animals that appear across the map and brings the meat to the chest of the kingdom. NEEDS A SPRITE: for now it is the base sprite tinted green.",
+"description": "Hunts the animals that appear across the map and brings the meat to the chest of the kingdom. Uses the bandit sprite.",
 "Not available yet": false
 },
 {

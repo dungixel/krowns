@@ -51,7 +51,7 @@ for (const r of read('creatures.json')) {
   out.creatures[id] = {
     id, name: r.Name, sprite: r.Sprite, behavior: r.Behavior, hearts: num(r.Hearts), dps: num(r['Damage per second (in hearts)']),
     speed: num(r['Speed (tiles/s)']) || 1, food: num(r['Food drop']), weight: num(r['Spawn weight']), nightOnly: !!r['Night only'],
-    flies: !!r.Flies, status: st[0] || '', statusChance: st[1] ? Number(st[1]) : 0, guessed: !!r.Guessed, description: r.description || '',
+    flies: !!r.Flies, facesLeft: String(r['Sprite faces'] || '').toLowerCase() === 'left', status: st[0] || '', statusChance: st[1] ? Number(st[1]) : 0, guessed: !!r.Guessed, description: r.description || '',
   };
 }
 

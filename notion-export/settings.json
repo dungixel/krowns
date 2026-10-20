@@ -16,19 +16,19 @@
 "Guessed": true
 },
 {
-"Key": "world.startUnits",
-"Value": "10",
+"Key": "world.startGroupSize",
+"Value": "5",
 "Unit": "units",
 "Group": "World",
-"Description": "How many jobless units appear when a world starts.",
+"Description": "How many jobless units are in each starting group.",
 "Guessed": false
 },
 {
 "Key": "world.startClusterRadius",
-"Value": "9",
+"Value": "3",
 "Unit": "tiles",
 "Group": "World",
-"Description": "Starting units appear within this distance of the map centre.",
+"Description": "Radius of each starting group, in tiles.",
 "Guessed": true
 },
 {
@@ -57,7 +57,7 @@
 },
 {
 "Key": "world.grassDetailDensity",
-"Value": "0.1",
+"Value": "0.24",
 "Unit": "fraction of tiles",
 "Group": "World",
 "Description": "How many tiles have a grass tuft (grass-detail.png).",
@@ -81,7 +81,7 @@
 },
 {
 "Key": "time.minutesPerSecond",
-"Value": "10",
+"Value": "5",
 "Unit": "world minutes",
 "Group": "Time",
 "Description": "1 real second at 1x speed = this many minutes in the world (a day is 144 seconds).",
@@ -137,7 +137,7 @@
 },
 {
 "Key": "unit.hopSeconds",
-"Value": "0.32",
+"Value": "0.5",
 "Unit": "seconds",
 "Group": "Units",
 "Description": "How long one hop (one tile of walking) takes.",
@@ -153,7 +153,7 @@
 },
 {
 "Key": "unit.hopHeightPx",
-"Value": "3",
+"Value": "2",
 "Unit": "pixels",
 "Group": "Units",
 "Description": "How high a hop is (whole pixels only).",
@@ -785,7 +785,7 @@
 },
 {
 "Key": "kingdom.proclaimNeighbors",
-"Value": "5",
+"Value": "4",
 "Unit": "units",
 "Group": "Kingdom",
 "Description": "More than this many jobless units around lets a unit self-proclaim king.",
@@ -1016,20 +1016,20 @@
 "Guessed": true
 },
 {
-"Key": "learn.selfSeconds",
-"Value": "150",
-"Unit": "seconds",
+"Key": "learn.selfDays",
+"Value": "3",
+"Unit": "days",
 "Group": "Learning",
-"Description": "Learning a job alone takes this long.",
-"Guessed": true
+"Description": "A jobless unit learns the job it dreams of alone in about this many days (counting only the time awake).",
+"Guessed": false
 },
 {
-"Key": "learn.mentorSeconds",
-"Value": "60",
-"Unit": "seconds",
+"Key": "learn.mentorDays",
+"Value": "1",
+"Unit": "days",
 "Group": "Learning",
-"Description": "Learning with a mentor takes this long.",
-"Guessed": true
+"Description": "...and in about this many days when a mentor (a unit who already has that job) is near.",
+"Guessed": false
 },
 {
 "Key": "learn.nonFamilyMentorChance",
@@ -1437,6 +1437,118 @@
 "Unit": "",
 "Group": "Extra (new)",
 "Description": "",
+"Guessed": true
+},
+{
+"Key": "time.displayStepMinutes",
+"Value": "5",
+"Unit": "minutes",
+"Group": "Time",
+"Description": "The clock jumps in steps of this many world minutes (one real second at 1x).",
+"Guessed": true
+},
+{
+"Key": "unit.thinkPauseMin",
+"Value": "1",
+"Unit": "seconds",
+"Group": "Units",
+"Description": "After finishing something a unit stands still for at least this long before choosing the next thing.",
+"Guessed": true
+},
+{
+"Key": "unit.thinkPauseMax",
+"Value": "3.5",
+"Unit": "seconds",
+"Group": "Units",
+"Description": "...and at most this long.",
+"Guessed": true
+},
+{
+"Key": "torch.housesPerTorch",
+"Value": "3",
+"Unit": "houses",
+"Group": "Environment",
+"Description": "One torch for every this many houses.",
+"Guessed": true
+},
+{
+"Key": "torch.lightRadiusTiles",
+"Value": "4.5",
+"Unit": "tiles",
+"Group": "Environment",
+"Description": "How far a torch lights the ground at night.",
+"Guessed": true
+},
+{
+"Key": "torch.glowStrength",
+"Value": "0.7",
+"Unit": "0-1",
+"Group": "Environment",
+"Description": "How bright torch light is when it is dark.",
+"Guessed": true
+},
+{
+"Key": "shadow.lean",
+"Value": "0.9",
+"Unit": "x",
+"Group": "Environment",
+"Description": "How far a shadow leans away from the sun (sideways, per pixel of height) in the morning and evening.",
+"Guessed": true
+},
+{
+"Key": "shadow.length",
+"Value": "0.4",
+"Unit": "x",
+"Group": "Environment",
+"Description": "How long shadows are on the ground (up and down).",
+"Guessed": true
+},
+{
+"Key": "shadow.nightOpacity",
+"Value": "0.35",
+"Unit": "0-1",
+"Group": "Environment",
+"Description": "Shadows are fainter at night.",
+"Guessed": true
+},
+{
+"Key": "world.startGroups",
+"Value": "4",
+"Unit": "groups",
+"Group": "World",
+"Description": "How many groups of jobless units a new world starts with.",
+"Guessed": false
+},
+{
+"Key": "world.startGroupSpacing",
+"Value": "24",
+"Unit": "tiles",
+"Group": "World",
+"Description": "Least distance between the centers of the starting groups.",
+"Guessed": true
+},
+{
+"Key": "wall.keepWood",
+"Value": "10",
+"Unit": "wood",
+"Group": "Kingdom",
+"Description": "Blacksmiths only build walls when the chest has this much wood left over after paying for the piece.",
+"Guessed": true
+},
+{
+"Key": "learn.diversityPerExisting",
+"Value": "0.6",
+"Unit": "x",
+"Group": "Learning",
+"Description": "Newborns usually dream of jobs the kingdom does not have yet: every unit already doing a job divides its chance by 1 + this.",
+"Guessed": true
+},
+{
+"Key": "learn.knightPriority",
+"Value": "4",
+"Unit": "x",
+"Group": "Learning",
+"Description": "Dreaming of being a knight is this much more likely while the kingdom has fewer knights than it needs (2 + population / 8), because the king needs protection.",
 "Guessed": true
 }
 ]

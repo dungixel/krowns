@@ -99,7 +99,7 @@
       for (let dy = -r; dy <= s.h - 1 + r; dy++) for (let dx = -r; dx <= s.w - 1 + r; dx++) {
         if (Math.max(dx < 0 ? -dx : dx > s.w - 1 ? dx - (s.w - 1) : 0, dy < 0 ? -dy : dy > s.h - 1 ? dy - (s.h - 1) : 0) !== r) continue;
         const x = s.x + dx, y = s.y + dy;
-        if (sim.inb(W, x, y) && W.occ[y * W.w + x] === 0) out.push([x, y]);
+        if (sim.inb(W, x, y) && W.blk[y * W.w + x] === 0) out.push([x, y]);
       }
     }
     return out;

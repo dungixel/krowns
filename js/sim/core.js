@@ -6,19 +6,20 @@
   const S = K.S;
 
   // ------------------------------------------------------------------ time
-  // One real second at 1x = 10 world minutes (time.minutesPerSecond), so a day is 144 seconds.
-  function dayLength() { return 1440 / S('time.minutesPerSecond', 10); }
+  // One real second at 1x = 5 world minutes (time.minutesPerSecond), so a day is 288 seconds. The clock shows whole steps of time.displayStepMinutes.
+  function dayLength() { return 1440 / S('time.minutesPerSecond', 5); }
   function clockAt(t) {
-    const mins = t * S('time.minutesPerSecond', 10) + S('time.startHour', 8) * 60;
+    const mins = t * S('time.minutesPerSecond', 5) + S('time.startHour', 8) * 60;
     const day = Math.floor(mins / 1440) + 1;
     const hour = (mins % 1440) / 60;
-    const m = Math.floor(mins % 1440);
+    const stp = Math.max(1, S('time.displayStepMinutes', 5));
+    const m = Math.floor((mins % 1440) / stp) * stp;
     return { day, hour, text: K.util.pad2(Math.floor(m / 60)) + ':' + K.util.pad2(m % 60), abs: mins };
   }
   // world seconds from now until a given day/hour
   function timeOf(day, hour) {
     const mins = (day - 1) * 1440 + hour * 60 - S('time.startHour', 8) * 60;
-    return mins / S('time.minutesPerSecond', 10);
+    return mins / S('time.minutesPerSecond', 5);
   }
   const isSleepHour = (h) => (S('time.sleepStartHour', 21) > S('time.sleepEndHour', 6) ? (h >= S('time.sleepStartHour', 21) || h < S('time.sleepEndHour', 6)) : (h >= S('time.sleepStartHour') && h < S('time.sleepEndHour')));
   const isNightHour = (h) => h >= S('time.nightStartHour', 20) || h < S('time.nightEndHour', 5.5);
@@ -32,6 +33,7 @@
     const W = {
       seed, rng, w: w0, h: h0, t: 0, step: 0, nextId: 1,
       occ: new Int32Array(w0 * h0),        // 0 free, -1 tree, >0 structure id
+      blk: new Uint8Array(w0 * h0),         // 1 = units cannot walk here (trees, and the lower part of structures)
       unitAt: new Int32Array(w0 * h0),     // id of the unit/creature standing on the tile
       units: [], byId: new Map(), creatures: [], structures: new Map(), trees: new Map(),
       kingdoms: new Map(), families: new Map(), wars: [], events: [], log: [], tombstones: [],
@@ -51,7 +53,7 @@
     W.grass = [];
     const gd = S('world.grassDetailDensity', 0.1);
     for (let y = 0; y < h0; y++) for (let x = 0; x < w0; x++) {
-      if (rng() < gd) W.grass.push({ x, y, ox: rng.int(-3, 3), oy: rng.int(-3, 3), phase: rng() * 6.28, period: rng.range(2.5, 6), cycles: 0 });
+      if (rng() < gd) W.grass.push({ x, y, ox: rng.int(-3, 3), oy: rng.int(-3, 3), phase: rng() * 6.28, period: rng.range(K.anim('grass_sway').extra.periodMin, K.anim('grass_sway').extra.periodMax), cycles: 0 });
     }
     return W;
   }
@@ -59,19 +61,19 @@
   // ------------------------------------------------------------------ grid helpers
   const idx = (W, x, y) => y * W.w + x;
   const inb = (W, x, y) => x >= 0 && y >= 0 && x < W.w && y < W.h;
-  const terrainFree = (W, x, y) => inb(W, x, y) && W.occ[y * W.w + x] === 0;
-  const tileFree = (W, x, y) => inb(W, x, y) && W.occ[y * W.w + x] === 0 && W.unitAt[y * W.w + x] === 0;
+  const terrainFree = (W, x, y) => inb(W, x, y) && W.blk[y * W.w + x] === 0;
+  const tileFree = (W, x, y) => inb(W, x, y) && W.blk[y * W.w + x] === 0 && W.unitAt[y * W.w + x] === 0;
 
   function addTree(W, x, y) {
     const i = idx(W, x, y);
     if (W.occ[i] !== 0) return null;
     const tr = { x, y, fruitAt: 0, fade: 1, id: W.nextId++, variant: (x * 7 + y * 13) % 4 };
-    W.trees.set(i, tr); W.occ[i] = -1;
+    W.trees.set(i, tr); W.occ[i] = -1; W.blk[i] = 1;
     return tr;
   }
   function removeTree(W, x, y) {
     const i = idx(W, x, y);
-    if (W.occ[i] === -1) { W.occ[i] = 0; W.trees.delete(i); return true; }
+    if (W.occ[i] === -1) { W.occ[i] = 0; W.blk[i] = 0; W.trees.delete(i); return true; }
     return false;
   }
   const treeAt = (W, x, y) => (inb(W, x, y) ? W.trees.get(idx(W, x, y)) : undefined);
@@ -135,14 +137,14 @@
       if (closed[c] === stamp) continue;
       closed[c] = stamp;
       const cx = c % W.w, cy = (c / W.w) | 0;
-      if (goalOk(cx, cy) && (opts.fly || W.occ[c] === 0)) { best = c; bestH = -1; break; }
+      if (goalOk(cx, cy) && (opts.fly || W.blk[c] === 0)) { best = c; bestH = -1; break; }
       for (const [dx, dy, cost] of DIRS) {
         const nx = cx + dx, ny = cy + dy;
         if (!inb(W, nx, ny)) continue;
         const ni = ny * W.w + nx;
-        if (!opts.fly && W.occ[ni] !== 0) continue;
+        if (!opts.fly && W.blk[ni] !== 0) continue;
         if (opts.avoid && opts.avoid.has(ni)) continue;
-        if (dx !== 0 && dy !== 0 && !opts.fly && (W.occ[cy * W.w + nx] !== 0 || W.occ[ny * W.w + cx] !== 0)) continue; // no cutting corners
+        if (dx !== 0 && dy !== 0 && !opts.fly && (W.blk[cy * W.w + nx] !== 0 || W.blk[ny * W.w + cx] !== 0)) continue; // no cutting corners
         const g = gCost[c] + cost + (W.unitAt[ni] && !goalOk(nx, ny) ? 0.6 : 0);
         if (gStamp[ni] === stamp && gCost[ni] <= g) continue;
         gStamp[ni] = stamp; gCost[ni] = g; gFrom[ni] = c;
@@ -161,7 +163,7 @@
 
   // ------------------------------------------------------------------ movement (one tile per hop)
   function hopSecondsFor(e, run) {
-    let d = K.S('unit.hopSeconds', 0.32);
+    let d = K.S('unit.hopSeconds', 0.5);
     if (e.kind === 'creature') d = 1 / (e.speed || 1) * 0.5;
     if (run) d /= K.S('unit.runMultiplier', 1.5);
     return d;
@@ -170,7 +172,8 @@
     const fx = e.x, fy = e.y;
     if (!e.flies) { W.unitAt[idx(W, fx, fy)] = 0; W.unitAt[idx(W, nx, ny)] = e.id; }
     e.x = nx; e.y = ny;
-    e.hop = { fx, fy, t: 0, dur: hopSecondsFor(e, run) };
+    e.hop = { fx, fy, t: Math.min(e.hopOver || 0, 0.12), dur: hopSecondsFor(e, run) };
+    e.hopOver = 0;
     if (nx !== fx) e.face = nx > fx ? 1 : -1;
   }
   function placeEntity(W, e, x, y) {
@@ -183,9 +186,9 @@
     if (e.hop) { const j = idx(W, e.hop.fx, e.hop.fy); if (W.unitAt[j] === e.id) W.unitAt[j] = 0; }
   }
   function advanceHop(e, dt) {
-    if (!e.hop) return false;
+    if (!e.hop) { e.hopOver = 0; return false; }
     e.hop.t += dt;
-    if (e.hop.t >= e.hop.dur) { e.hop = null; return false; }
+    if (e.hop.t >= e.hop.dur) { e.hopOver = e.hop.t - e.hop.dur; e.hop = null; return false; }
     return true;
   }
 
@@ -202,7 +205,7 @@
     }
     const nxt = e.path[0];
     const ni = idx(W, nxt[0], nxt[1]);
-    const blockedTerrain = !e.flies && W.occ[ni] !== 0;
+    const blockedTerrain = !e.flies && W.blk[ni] !== 0;
     if (blockedTerrain || (!e.flies && W.unitAt[ni] && W.unitAt[ni] !== e.id)) {
       e.pathBlocked = (e.pathBlocked || 0) + 1;
       if (e.pathBlocked > (blockedTerrain ? 0 : 3)) {
@@ -214,7 +217,7 @@
     }
     const first = e.path[0];
     const fi = idx(W, first[0], first[1]);
-    if (!e.flies && (W.occ[fi] !== 0 || (W.unitAt[fi] && W.unitAt[fi] !== e.id))) return 'moving';   // wait for the way to clear
+    if (!e.flies && (W.blk[fi] !== 0 || (W.unitAt[fi] && W.unitAt[fi] !== e.id))) return 'moving';   // wait for the way to clear
     const step = e.path.shift();
     startHop(W, e, step[0], step[1], run);
     return 'moving';

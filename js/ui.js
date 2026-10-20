@@ -156,7 +156,7 @@
       '<div class="grid2"><div>' + ic('barbell', 14, K.C('icon.strength')) + ' Strength <b>' + fmt(u.iv.strength) + '</b></div><div>' + ic('hourglass', 14, K.C('icon.longevity')) + ' Age <b>' + fmt(age) + '</b> / ' + fmt(u.iv.longevity) + ' days</div></div>' +
       '<h3>Born with (IVs)</h3><div class="sub">Hearts <b>' + fmt(u.iv.hearts) + '</b> · Energy <b>' + fmt(u.iv.energy) + '</b> · Evil/good <b>' + fmt(u.iv.evilgood) + '</b> · Strength <b>' + fmt(u.iv.strength) + '</b> · Longevity <b>' + fmt(u.iv.longevity) + '</b></div>' +
       '<h3>Trained (EVs)</h3><div class="sub">' + (evs || '<span class="dim">nothing yet</span>') + '</div>' +
-      (u.learn.job && u.job === 'villager' ? '<div class="sub">Wants to become a <b>' + esc(K.job(u.learn.job).name.toLowerCase()) + '</b> · ' + Math.round(clamp(u.learn.progress / S('learn.selfSeconds', 150), 0, 1) * 100) + '%</div>' : '') +
+      (u.learn.job && u.job === 'villager' ? '<div class="sub">Wants to become a <b>' + esc(K.job(u.learn.job).name.toLowerCase()) + '</b> · ' + Math.round(clamp(u.learn.progress / sim.learnNeeded(), 0, 1) * 100) + '%</div>' : '') +
       '<h3>Traits</h3><div>' + (traits || '<span class="dim">none</span>') + '</div>' +
       '<h3>Family</h3><div class="sub">Partner: ' + partner + '<br>Parents: ' + parents + '<br>Children: ' + (kids || '<span class="dim">none</span>') + '</div>' +
       (u.rumors.length ? '<h3>Rumors known</h3><ul class="rl">' + rumors + '</ul>' : '');

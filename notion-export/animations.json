@@ -1,12 +1,112 @@
 [
-{"Animation":"Grass sway","Applies to":"Grass tufts","Stretch (px)":2,"Period (s)":4,"Height (px)":0,"Extra":"cyclesBeforeSpeedChange=3;periodMin=2.5;periodMax=6","Description":"Grass inclines left and right, always, at random slow speeds every time it completes a few right and left cycles. Whole pixel steps only.","Guessed":false},
-{"Animation":"Breathe","Applies to":"Idle units","Stretch (px)":1,"Period (s)":1.8,"Height (px)":0,"Extra":"","Description":"When units stay in the same position without moving, their image stretches down and up smoothly and softly, to indicate they're breathing.","Guessed":false},
-{"Animation":"Hop","Applies to":"Walking units","Stretch (px)":1,"Period (s)":0.32,"Height (px)":3,"Extra":"","Description":"When units move, it is little hops, and in these hops their image is stretched a little bit. The shadow stays on the ground during the jump.","Guessed":false},
-{"Animation":"Talk","Applies to":"Talking and eating units","Stretch (px)":1,"Period (s)":0.34,"Height (px)":0,"Extra":"","Description":"When units talk they stretch up and down a little more abruptly than breathing. Eating uses the same animation.","Guessed":false},
-{"Animation":"Sleep","Applies to":"Sleeping units","Stretch (px)":1,"Period (s)":2.4,"Height (px)":0,"Extra":"lying=true","Description":"When units sleep they drop to the ground horizontal, and the stretch breathing goes from side to side.","Guessed":false},
-{"Animation":"Cheer","Applies to":"Units enjoying a spectacle","Stretch (px)":0,"Period (s)":0.55,"Height (px)":4,"Extra":"","Description":"When units are enjoying a spectacle, they jump.","Guessed":false},
-{"Animation":"Faint","Applies to":"Fainted units","Stretch (px)":0,"Period (s)":2.4,"Height (px)":0,"Extra":"lying=true","Description":"A fainted unit lies on the ground (like sleeping, but pale).","Guessed":true},
-{"Animation":"Tree fade","Applies to":"Trees","Stretch (px)":0,"Period (s)":0.25,"Height (px)":0,"Extra":"opacity=0.5","Description":"When units pass behind a tree, that tree changes to 50% opacity smoothly.","Guessed":false},
-{"Animation":"Tombstone fade","Applies to":"Tombstones","Stretch (px)":0,"Period (s)":3,"Height (px)":0,"Extra":"","Description":"A tombstone disappears softly after one day.","Guessed":false},
-{"Animation":"Shadow","Applies to":"All units","Stretch (px)":0,"Period (s)":0,"Height (px)":0,"Extra":"","Description":"Below every unit there's a soft desaturated purple shadow (multiply). It stays on the ground when they jump.","Guessed":false}
+{
+"Animation": "Grass sway",
+"Applies to": "Grass tufts",
+"Stretch (px)": 2,
+"Period (s)": 8,
+"Height (px)": 0,
+"Extra": "cyclesBeforeSpeedChange=3;periodMin=5;periodMax=11",
+"Description": "Grass inclines left and right, always, at random slow speeds every time it completes a few right and left cycles. Smooth, not in whole pixel steps.",
+"Guessed": false
+},
+{
+"Animation": "Breathe",
+"Applies to": "Idle units",
+"Stretch (px)": 1,
+"Period (s)": 1.8,
+"Height (px)": 0,
+"Extra": "",
+"Description": "When units stay in the same position without moving, their image stretches down and up smoothly and softly, to indicate they're breathing.",
+"Guessed": false
+},
+{
+"Animation": "Hop",
+"Applies to": "Walking units",
+"Stretch (px)": 1,
+"Period (s)": 0.5,
+"Height (px)": 2,
+"Extra": "",
+"Description": "When units move, it is little hops, and in these hops their image is stretched a little bit. The shadow stays on the ground during the jump.",
+"Guessed": false
+},
+{
+"Animation": "Talk",
+"Applies to": "Talking and eating units",
+"Stretch (px)": 1,
+"Period (s)": 0.34,
+"Height (px)": 0,
+"Extra": "",
+"Description": "When units talk they stretch up and down a little more abruptly than breathing. Eating uses the same animation.",
+"Guessed": false
+},
+{
+"Animation": "Sleep",
+"Applies to": "Sleeping units",
+"Stretch (px)": 1,
+"Period (s)": 2.4,
+"Height (px)": 0,
+"Extra": "lying=true",
+"Description": "When units sleep they drop to the ground horizontal, and the stretch breathing goes from side to side.",
+"Guessed": false
+},
+{
+"Animation": "Cheer",
+"Applies to": "Units enjoying a spectacle",
+"Stretch (px)": 0,
+"Period (s)": 0.55,
+"Height (px)": 4,
+"Extra": "",
+"Description": "When units are enjoying a spectacle, they jump.",
+"Guessed": false
+},
+{
+"Animation": "Faint",
+"Applies to": "Fainted units",
+"Stretch (px)": 0,
+"Period (s)": 2.4,
+"Height (px)": 0,
+"Extra": "lying=true",
+"Description": "A fainted unit lies on the ground (like sleeping, but pale).",
+"Guessed": true
+},
+{
+"Animation": "Tree sway",
+"Applies to": "Trees",
+"Stretch (px)": 1.5,
+"Period (s)": 4,
+"Height (px)": 0,
+"Extra": "periodMin=2.5;periodMax=5.5",
+"Description": "Trees sway a little in the wind, like the grass: the top leans left and right smoothly, each tree at its own slow speed.",
+"Guessed": true
+},
+{
+"Animation": "Tree fade",
+"Applies to": "Trees",
+"Stretch (px)": 0,
+"Period (s)": 0.25,
+"Height (px)": 0,
+"Extra": "opacity=0.5",
+"Description": "When units pass behind a tree, that tree changes to 50% opacity smoothly.",
+"Guessed": false
+},
+{
+"Animation": "Tombstone fade",
+"Applies to": "Tombstones",
+"Stretch (px)": 0,
+"Period (s)": 3,
+"Height (px)": 0,
+"Extra": "",
+"Description": "A tombstone disappears softly after one day.",
+"Guessed": false
+},
+{
+"Animation": "Shadow",
+"Applies to": "All units",
+"Stretch (px)": 0,
+"Period (s)": 0,
+"Height (px)": 0,
+"Extra": "",
+"Description": "Below every unit, tree and structure there's a desaturated purple shadow (multiply) cast away from the sun: it points west in the morning, is short at noon and points east in the evening. It never turns when the unit turns, and it stays on the ground when they jump.",
+"Guessed": false
+}
 ]
