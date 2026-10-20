@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en" data-v="1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Krowns</title>
+<meta name="description" content="Krowns - a tiny kingdom simulation where everyone lives their own life.">
+<link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="topleft">
+  <div id="clock" class="card"></div>
+  <div id="pop" class="card"></div>
+</div>
+<div id="topright" class="card">
+  <button id="btn-pause" title="Pause (space)"></button>
+  <button id="btn-1x" title="Normal speed (1)">1x</button>
+  <button id="btn-2x" title="Faster (2)">2x</button>
+  <button id="btn-4x" title="Fastest (3)">4x</button>
+  <span class="sep"></span>
+  <button id="btn-zout" title="Zoom out (-)"></button>
+  <button id="btn-zin" title="Zoom in (+)"></button>
+  <span class="sep"></span>
+  <button id="btn-log" title="Event log"></button>
+  <button id="btn-sound" title="Sound"></button>
+  <button id="btn-new" title="New world"></button>
+</div>
+
+<div id="hover" class="card"></div>
+<aside id="panel" class="card">
+  <div id="panel-tools"><button id="btn-follow" title="Follow (F)">F</button><button id="panel-close" title="Close (Esc)">x</button></div>
+  <div id="panel-body"></div>
+</aside>
+<div id="logbox" class="card"><h4>What is happening</h4><ul id="loglist"></ul></div>
+<div id="seedlabel"></div>
+<div id="toast"></div>
+
+<div id="start" class="show">
+  <div class="box card">
+    <h1>Krowns</h1>
+    <p>A tiny kingdom where everyone lives their own life. Watch, click, zoom, and see what happens.</p>
+    <div class="seedrow"><input id="seed" inputmode="numeric" placeholder="World number (empty = random)"><button id="btn-dice" title="Random number"></button></div>
+    <button id="btn-start">Loading...</button>
+    <div class="hint">Drag to move &middot; mouse wheel or pinch to zoom &middot; click anyone</div>
+  </div>
+</div>
+
+<script src="data/game-data.js?v=1"></script>
+<script src="js/icons-data.js?v=1"></script>
+<script src="js/util.js?v=1"></script>
+<script src="js/data.js?v=1"></script>
+<script src="js/names.js?v=1"></script>
+<script src="js/sim/core.js?v=1"></script>
+<script src="js/sim/units.js?v=1"></script>
+<script src="js/sim/kingdom.js?v=1"></script>
+<script src="js/sim/social.js?v=1"></script>
+<script src="js/sim/creatures.js?v=1"></script>
+<script src="js/sim/events.js?v=1"></script>
+<script src="js/sim/ai.js?v=1"></script>
+<script src="js/sim/jobs.js?v=1"></script>
+<script src="js/sim/index.js?v=1"></script>
+<script src="js/render.js?v=1"></script>
+<script src="js/audio.js?v=1"></script>
+<script src="js/ui.js?v=1"></script>
+<script src="js/main.js?v=1"></script>
+<script>
+  // the icons of the interface buttons
+  (function () {
+    var K = globalThis.Krowns, b = function (id, name, size) { document.getElementById(id).innerHTML = K.icon(name, size || 20); };
+    b('btn-pause', 'player-pause'); b('btn-zout', 'zoom-out'); b('btn-zin', 'zoom-in'); b('btn-log', 'list-details'); b('btn-sound', 'volume'); b('btn-new', 'refresh'); b('btn-dice', 'dice-5', 22);
+  })();
+</script>
+</body>
+</html>

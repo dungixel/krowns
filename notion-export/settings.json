@@ -1,0 +1,1442 @@
+[
+{
+"Key": "world.width",
+"Value": "96",
+"Unit": "tiles",
+"Group": "World",
+"Description": "Map width in tiles (every tile is 16x16 pixels).",
+"Guessed": true
+},
+{
+"Key": "world.height",
+"Value": "64",
+"Unit": "tiles",
+"Group": "World",
+"Description": "Map height in tiles.",
+"Guessed": true
+},
+{
+"Key": "world.startUnits",
+"Value": "10",
+"Unit": "units",
+"Group": "World",
+"Description": "How many jobless units appear when a world starts.",
+"Guessed": false
+},
+{
+"Key": "world.startClusterRadius",
+"Value": "9",
+"Unit": "tiles",
+"Group": "World",
+"Description": "Starting units appear within this distance of the map centre.",
+"Guessed": true
+},
+{
+"Key": "world.treeDensity",
+"Value": "0.08",
+"Unit": "fraction of tiles",
+"Group": "World",
+"Description": "How many tiles start with a tree (scattered everywhere).",
+"Guessed": true
+},
+{
+"Key": "world.treeMaxDensity",
+"Value": "0.11",
+"Unit": "fraction of tiles",
+"Group": "World",
+"Description": "Trees stop regrowing above this density.",
+"Guessed": true
+},
+{
+"Key": "world.treeRegrowEverySeconds",
+"Value": "4",
+"Unit": "seconds",
+"Group": "World",
+"Description": "A new tree grows on a random free tile this often.",
+"Guessed": true
+},
+{
+"Key": "world.grassDetailDensity",
+"Value": "0.1",
+"Unit": "fraction of tiles",
+"Group": "World",
+"Description": "How many tiles have a grass tuft (grass-detail.png).",
+"Guessed": true
+},
+{
+"Key": "world.animalSpawnEverySeconds",
+"Value": "8",
+"Unit": "seconds",
+"Group": "World",
+"Description": "An animal appears at a random spot this often.",
+"Guessed": true
+},
+{
+"Key": "world.animalMax",
+"Value": "28",
+"Unit": "animals",
+"Group": "World",
+"Description": "No more animals spawn above this number.",
+"Guessed": true
+},
+{
+"Key": "time.minutesPerSecond",
+"Value": "10",
+"Unit": "world minutes",
+"Group": "Time",
+"Description": "1 real second at 1x speed = this many minutes in the world (a day is 144 seconds).",
+"Guessed": false
+},
+{
+"Key": "time.startHour",
+"Value": "8",
+"Unit": "hour",
+"Group": "Time",
+"Description": "The world starts at this hour on Day 1.",
+"Guessed": true
+},
+{
+"Key": "time.sleepStartHour",
+"Value": "21",
+"Unit": "hour",
+"Group": "Time",
+"Description": "Units go to sleep from this hour.",
+"Guessed": true
+},
+{
+"Key": "time.sleepEndHour",
+"Value": "6",
+"Unit": "hour",
+"Group": "Time",
+"Description": "Units wake up at this hour (if rested).",
+"Guessed": true
+},
+{
+"Key": "time.nightStartHour",
+"Value": "20",
+"Unit": "hour",
+"Group": "Time",
+"Description": "Night animals (bats) start to appear.",
+"Guessed": true
+},
+{
+"Key": "time.nightEndHour",
+"Value": "5.5",
+"Unit": "hour",
+"Group": "Time",
+"Description": "Night animals leave.",
+"Guessed": true
+},
+{
+"Key": "time.eventEarliestHour",
+"Value": "9",
+"Unit": "hour",
+"Group": "Time",
+"Description": "Plays and shows never start before this hour.",
+"Guessed": false
+},
+{
+"Key": "unit.hopSeconds",
+"Value": "0.32",
+"Unit": "seconds",
+"Group": "Units",
+"Description": "How long one hop (one tile of walking) takes.",
+"Guessed": true
+},
+{
+"Key": "unit.runMultiplier",
+"Value": "1.5",
+"Unit": "x",
+"Group": "Units",
+"Description": "Fighters running to a fight hop this much faster.",
+"Guessed": true
+},
+{
+"Key": "unit.hopHeightPx",
+"Value": "3",
+"Unit": "pixels",
+"Group": "Units",
+"Description": "How high a hop is (whole pixels only).",
+"Guessed": true
+},
+{
+"Key": "unit.talkRadius",
+"Value": "4",
+"Unit": "tiles",
+"Group": "Units",
+"Description": "Units closer than this can talk to each other.",
+"Guessed": true
+},
+{
+"Key": "unit.adultAgeDays",
+"Value": "2",
+"Unit": "days",
+"Group": "Units",
+"Description": "Younger units are children: base sprite, no job, no partner.",
+"Guessed": true
+},
+{
+"Key": "unit.chatChancePerSecond",
+"Value": "0.05",
+"Unit": "per second",
+"Group": "Units",
+"Description": "Chance a free unit starts talking when someone is near.",
+"Guessed": true
+},
+{
+"Key": "unit.hoverDelaySeconds",
+"Value": "0.2",
+"Unit": "seconds",
+"Group": "Units",
+"Description": "Hovering a unit this long shows its hearts and need.",
+"Guessed": true
+},
+{
+"Key": "names.syllables",
+"Value": "na,sa,ta,ca,ne,se,te,ni,no,nu,ma,me,mi,mo,mu,da,de,di,do,du,ba,be,bi,bo,bu,nae,sae,tae,cae,ya,ye,yi,yo,yu,ke,ki,co,fe,fi,pa,pae,pe,tra,tre,tri,tro,tru,cra,cre,cri,cro,cru,bra,bre,bri,bro,bru,la,lae,leo,lu,li",
+"Unit": "list",
+"Group": "Names",
+"Description": "Syllables used to build names (units and kingdoms).",
+"Guessed": false
+},
+{
+"Key": "names.syllablesMin",
+"Value": "2",
+"Unit": "syllables",
+"Group": "Names",
+"Description": "A name has at least this many syllables.",
+"Guessed": false
+},
+{
+"Key": "names.syllablesMax",
+"Value": "3",
+"Unit": "syllables",
+"Group": "Names",
+"Description": "A name has at most this many syllables.",
+"Guessed": false
+},
+{
+"Key": "names.poolSize",
+"Value": "100",
+"Unit": "names",
+"Group": "Names",
+"Description": "The world keeps a list of this many random names.",
+"Guessed": false
+},
+{
+"Key": "names.refillAfterUsed",
+"Value": "60",
+"Unit": "names",
+"Group": "Names",
+"Description": "When this many names are used, another list is generated in the background.",
+"Guessed": false
+},
+{
+"Key": "iv.hearts.min",
+"Value": "10",
+"Unit": "hearts",
+"Group": "Traits",
+"Description": "Lowest max hearts.",
+"Guessed": false
+},
+{
+"Key": "iv.hearts.max",
+"Value": "15",
+"Unit": "hearts",
+"Group": "Traits",
+"Description": "Highest max hearts.",
+"Guessed": false
+},
+{
+"Key": "iv.hearts.mutation",
+"Value": "1",
+"Unit": "hearts",
+"Group": "Traits",
+"Description": "Child = average of parents' max hearts, then this much up or down.",
+"Guessed": false
+},
+{
+"Key": "iv.energy.min",
+"Value": "10",
+"Unit": "energy",
+"Group": "Traits",
+"Description": "Lowest max energy.",
+"Guessed": true
+},
+{
+"Key": "iv.energy.max",
+"Value": "15",
+"Unit": "energy",
+"Group": "Traits",
+"Description": "Highest max energy.",
+"Guessed": true
+},
+{
+"Key": "iv.energy.mutation",
+"Value": "1",
+"Unit": "energy",
+"Group": "Traits",
+"Description": "Child = average of parents, then this much up or down.",
+"Guessed": false
+},
+{
+"Key": "iv.evilgood.min",
+"Value": "-10",
+"Unit": "points",
+"Group": "Traits",
+"Description": "Most evil.",
+"Guessed": false
+},
+{
+"Key": "iv.evilgood.max",
+"Value": "10",
+"Unit": "points",
+"Group": "Traits",
+"Description": "Most good.",
+"Guessed": false
+},
+{
+"Key": "iv.evilgood.startSpread",
+"Value": "7",
+"Unit": "points",
+"Group": "Traits",
+"Description": "New world units start with evil-good between -spread and +spread.",
+"Guessed": true
+},
+{
+"Key": "iv.strength.min",
+"Value": "1",
+"Unit": "points",
+"Group": "Traits",
+"Description": "Weakest.",
+"Guessed": true
+},
+{
+"Key": "iv.strength.max",
+"Value": "5",
+"Unit": "points",
+"Group": "Traits",
+"Description": "Strongest.",
+"Guessed": true
+},
+{
+"Key": "iv.strength.mutation",
+"Value": "1",
+"Unit": "points",
+"Group": "Traits",
+"Description": "Child = average of parents, then this much up or down.",
+"Guessed": true
+},
+{
+"Key": "iv.longevity.min",
+"Value": "10",
+"Unit": "days",
+"Group": "Traits",
+"Description": "Shortest life.",
+"Guessed": false
+},
+{
+"Key": "iv.longevity.max",
+"Value": "15",
+"Unit": "days",
+"Group": "Traits",
+"Description": "Longest life.",
+"Guessed": false
+},
+{
+"Key": "iv.longevity.mutation",
+"Value": "3",
+"Unit": "days",
+"Group": "Traits",
+"Description": "Child = parents' longevity plus or minus up to this many days.",
+"Guessed": false
+},
+{
+"Key": "iv.step",
+"Value": "0.5",
+"Unit": "step",
+"Group": "Traits",
+"Description": "Everything rounds to steps of this size, with at most 1 decimal.",
+"Guessed": false
+},
+{
+"Key": "ev.inheritShare",
+"Value": "0.3333",
+"Unit": "fraction",
+"Group": "Traits",
+"Description": "A child gets this fraction of its parents' EVs.",
+"Guessed": false
+},
+{
+"Key": "ev.perWorkCycle",
+"Value": "0.5",
+"Unit": "points",
+"Group": "Traits",
+"Description": "A unit gains this much EV in its job each time it finishes a work cycle.",
+"Guessed": true
+},
+{
+"Key": "ev.max",
+"Value": "20",
+"Unit": "points",
+"Group": "Traits",
+"Description": "EV cap per job.",
+"Guessed": true
+},
+{
+"Key": "ev.effectPerPoint",
+"Value": "0.03",
+"Unit": "fraction",
+"Group": "Traits",
+"Description": "Each EV point makes work and fighting this much better.",
+"Guessed": true
+},
+{
+"Key": "trait.theaterLoverChance",
+"Value": "0.15",
+"Unit": "fraction",
+"Group": "Traits",
+"Description": "Chance a unit is born 'keen on theater'.",
+"Guessed": true
+},
+{
+"Key": "hunger.max",
+"Value": "10",
+"Unit": "points",
+"Group": "Needs",
+"Description": "Full stomach.",
+"Guessed": true
+},
+{
+"Key": "hunger.drainPerSecond",
+"Value": "0.02",
+"Unit": "per second",
+"Group": "Needs",
+"Description": "Hunger lost every second just by living.",
+"Guessed": true
+},
+{
+"Key": "hunger.actionMultiplier",
+"Value": "1.6",
+"Unit": "x",
+"Group": "Needs",
+"Description": "All actions consume hunger: drain is multiplied by this while working, walking far or fighting.",
+"Guessed": false
+},
+{
+"Key": "hunger.eatBelow",
+"Value": "4",
+"Unit": "points",
+"Group": "Needs",
+"Description": "Units look for food when hunger is below this.",
+"Guessed": true
+},
+{
+"Key": "hunger.perFood",
+"Value": "3",
+"Unit": "points",
+"Group": "Needs",
+"Description": "One food point fills this much hunger.",
+"Guessed": true
+},
+{
+"Key": "hunger.starveDamagePerSecond",
+"Value": "0.15",
+"Unit": "hearts/s",
+"Group": "Needs",
+"Description": "Hearts lost every second with an empty stomach.",
+"Guessed": true
+},
+{
+"Key": "energy.drainPerSecond",
+"Value": "0.05",
+"Unit": "per second",
+"Group": "Needs",
+"Description": "Energy lost every second awake.",
+"Guessed": true
+},
+{
+"Key": "energy.actionMultiplier",
+"Value": "1.5",
+"Unit": "x",
+"Group": "Needs",
+"Description": "Drain multiplier while working, walking far or fighting.",
+"Guessed": true
+},
+{
+"Key": "energy.sleepRegenPerSecond",
+"Value": "0.3",
+"Unit": "per second",
+"Group": "Needs",
+"Description": "Energy gained every second asleep.",
+"Guessed": true
+},
+{
+"Key": "energy.faintRecoverTo",
+"Value": "3",
+"Unit": "energy",
+"Group": "Needs",
+"Description": "A fainted unit gets up again at this energy.",
+"Guessed": true
+},
+{
+"Key": "heal.passivePerSecond",
+"Value": "0.04",
+"Unit": "hearts/s",
+"Group": "Needs",
+"Description": "Slow natural healing when fed and not fighting.",
+"Guessed": true
+},
+{
+"Key": "heal.sleepMultiplier",
+"Value": "2",
+"Unit": "x",
+"Group": "Needs",
+"Description": "Natural healing is this much faster during sleep.",
+"Guessed": true
+},
+{
+"Key": "death.tombstoneDays",
+"Value": "1",
+"Unit": "days",
+"Group": "Death",
+"Description": "A tombstone stays this long, then fades softly.",
+"Guessed": false
+},
+{
+"Key": "death.mournChance",
+"Value": "0.7",
+"Unit": "fraction",
+"Group": "Death",
+"Description": "Chance a family member comes to the tombstone.",
+"Guessed": true
+},
+{
+"Key": "death.mournSeconds",
+"Value": "25",
+"Unit": "seconds",
+"Group": "Death",
+"Description": "How long a mourner stays.",
+"Guessed": true
+},
+{
+"Key": "status.dotHearts",
+"Value": "1",
+"Unit": "hearts",
+"Group": "Status",
+"Description": "Burned or poisoned units lose this many hearts...",
+"Guessed": false
+},
+{
+"Key": "status.dotIntervalSeconds",
+"Value": "2",
+"Unit": "seconds",
+"Group": "Status",
+"Description": "...every this many seconds,",
+"Guessed": false
+},
+{
+"Key": "status.minHearts",
+"Value": "1",
+"Unit": "hearts",
+"Group": "Status",
+"Description": "...until healed or until they reach this many hearts, then they auto-heal.",
+"Guessed": false
+},
+{
+"Key": "status.witchPoisonChance",
+"Value": "0.3",
+"Unit": "fraction",
+"Group": "Status",
+"Description": "Chance a witch hit poisons.",
+"Guessed": true
+},
+{
+"Key": "status.mageBurnChance",
+"Value": "0.3",
+"Unit": "fraction",
+"Group": "Status",
+"Description": "Chance a mage's attack burns (only used against enemies in a war).",
+"Guessed": true
+},
+{
+"Key": "status.healAmount",
+"Value": "1.5",
+"Unit": "hearts",
+"Group": "Status",
+"Description": "What a mage heals per cast.",
+"Guessed": true
+},
+{
+"Key": "status.healCooldownSeconds",
+"Value": "2.5",
+"Unit": "seconds",
+"Group": "Status",
+"Description": "Time between heal casts.",
+"Guessed": true
+},
+{
+"Key": "status.healRange",
+"Value": "5",
+"Unit": "tiles",
+"Group": "Status",
+"Description": "How far a mage can heal.",
+"Guessed": true
+},
+{
+"Key": "fight.attackIntervalSeconds",
+"Value": "0.5",
+"Unit": "seconds",
+"Group": "Combat",
+"Description": "Attacks happen this often (damage per hit = damage per second x interval).",
+"Guessed": true
+},
+{
+"Key": "fight.lowEnergyBelow",
+"Value": "3",
+"Unit": "energy",
+"Group": "Combat",
+"Description": "Below this energy units can't fight properly...",
+"Guessed": false
+},
+{
+"Key": "fight.lowEnergyMultiplier",
+"Value": "0.5",
+"Unit": "x",
+"Group": "Combat",
+"Description": "...and deal only this much damage.",
+"Guessed": true
+},
+{
+"Key": "fight.strengthEffect",
+"Value": "0.1",
+"Unit": "per point",
+"Group": "Combat",
+"Description": "Each strength point above 3 adds (or below subtracts) this much damage.",
+"Guessed": true
+},
+{
+"Key": "fight.civiliansJoinWhenFightersAtOrBelow",
+"Value": "1",
+"Unit": "fighters",
+"Group": "Combat",
+"Description": "Non-fighters start fighting when their kingdom has this many fighters or fewer.",
+"Guessed": false
+},
+{
+"Key": "fight.watchRadius",
+"Value": "10",
+"Unit": "tiles",
+"Group": "Combat",
+"Description": "Units within this distance of an attack stop and watch.",
+"Guessed": true
+},
+{
+"Key": "fight.creatureAggroRadius",
+"Value": "3",
+"Unit": "tiles",
+"Group": "Combat",
+"Description": "Hostile animals attack units this close.",
+"Guessed": true
+},
+{
+"Key": "raid.stealPerSecond",
+"Value": "1",
+"Unit": "items/s",
+"Group": "Combat",
+"Description": "Raiders take this many items per second from a chest.",
+"Guessed": true
+},
+{
+"Key": "eg.witnessDefeat",
+"Value": "-1",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "Everyone who witnesses a defeat.",
+"Guessed": false
+},
+{
+"Key": "eg.defenseWinGood",
+"Value": "2",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "Good kingdom that defends successfully.",
+"Guessed": false
+},
+{
+"Key": "eg.defenseWinEvil",
+"Value": "-2",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "Evil kingdom that defends successfully (evilly happy).",
+"Guessed": false
+},
+{
+"Key": "eg.loseFamily",
+"Value": "-3",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "Losing a family member.",
+"Guessed": false
+},
+{
+"Key": "eg.haveKid",
+"Value": "3",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "Having a kid (only if already 0 or positive).",
+"Guessed": false
+},
+{
+"Key": "eg.bardsRejected",
+"Value": "-2",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "Bards rejected by the king.",
+"Guessed": false
+},
+{
+"Key": "eg.playEnjoyMin",
+"Value": "1",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "A spectator who enjoys a play gains at least this much...",
+"Guessed": false
+},
+{
+"Key": "eg.playEnjoyMax",
+"Value": "2",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "...and at most this much.",
+"Guessed": false
+},
+{
+"Key": "eg.playEnjoyChance",
+"Value": "0.7",
+"Unit": "fraction",
+"Group": "Evil-good",
+"Description": "Chance a spectator enjoys the play.",
+"Guessed": true
+},
+{
+"Key": "eg.playMemoryDaysMin",
+"Value": "1",
+"Unit": "days",
+"Group": "Evil-good",
+"Description": "A spectator may remember the play and gain the same again within this...",
+"Guessed": false
+},
+{
+"Key": "eg.playMemoryDaysMax",
+"Value": "3",
+"Unit": "days",
+"Group": "Evil-good",
+"Description": "...to this many days.",
+"Guessed": false
+},
+{
+"Key": "eg.bardsMinEvilGood",
+"Value": "3",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "Both bards need more than this to ask for a play.",
+"Guessed": false
+},
+{
+"Key": "eg.coliseumMinEvilGood",
+"Value": "2",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "The 4 knights need more than this (happiness) to ask for a coliseum.",
+"Guessed": false
+},
+{
+"Key": "eg.avoidConflictAbove",
+"Value": "5",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "Above this units often try to avoid conflict.",
+"Guessed": false
+},
+{
+"Key": "eg.deepVengeanceBelow",
+"Value": "-6",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "Below this a unit chasing a defeater forgets hunger and tiredness.",
+"Guessed": false
+},
+{
+"Key": "eg.crimeWitnessEvilGood",
+"Value": "-3",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "Evil units at or below this sometimes do illegal things (hit, steal, defeat).",
+"Guessed": true
+},
+{
+"Key": "eg.crimeChancePerSecond",
+"Value": "0.004",
+"Unit": "per second",
+"Group": "Evil-good",
+"Description": "Chance per second that an evil unit near a target does something illegal.",
+"Guessed": true
+},
+{
+"Key": "kingdom.proclaimNeighbors",
+"Value": "5",
+"Unit": "units",
+"Group": "Kingdom",
+"Description": "More than this many jobless units around lets a unit self-proclaim king.",
+"Guessed": false
+},
+{
+"Key": "kingdom.proclaimRadius",
+"Value": "6",
+"Unit": "tiles",
+"Group": "Kingdom",
+"Description": "How close 'around' means.",
+"Guessed": true
+},
+{
+"Key": "kingdom.proclaimChancePerSecond",
+"Value": "0.03",
+"Unit": "per second",
+"Group": "Kingdom",
+"Description": "Chance per second to proclaim when the rule above is met.",
+"Guessed": true
+},
+{
+"Key": "kingdom.minGapBetweenBorders",
+"Value": "3",
+"Unit": "tiles",
+"Group": "Kingdom",
+"Description": "No kingdom can be made inside another kingdom's area, plus this gap.",
+"Guessed": false
+},
+{
+"Key": "kingdom.baseRadius",
+"Value": "8",
+"Unit": "tiles",
+"Group": "Kingdom",
+"Description": "Starting size of the kingdom area.",
+"Guessed": true
+},
+{
+"Key": "kingdom.radiusPerCitizen",
+"Value": "0.25",
+"Unit": "tiles",
+"Group": "Kingdom",
+"Description": "The area grows by this for each citizen.",
+"Guessed": true
+},
+{
+"Key": "kingdom.maxRadius",
+"Value": "15",
+"Unit": "tiles",
+"Group": "Kingdom",
+"Description": "The area never grows beyond this.",
+"Guessed": true
+},
+{
+"Key": "kingdom.borderWobble",
+"Value": "2",
+"Unit": "tiles",
+"Group": "Kingdom",
+"Description": "The border is a random shape: it wobbles by up to this much.",
+"Guessed": false
+},
+{
+"Key": "kingdom.joinChance",
+"Value": "0.5",
+"Unit": "fraction",
+"Group": "Kingdom",
+"Description": "Chance a jobless wanderer who enters a kingdom joins it.",
+"Guessed": true
+},
+{
+"Key": "kingdom.leaveChancePerDay",
+"Value": "0.05",
+"Unit": "per day",
+"Group": "Kingdom",
+"Description": "Base chance per day that a citizen leaves for another place.",
+"Guessed": true
+},
+{
+"Key": "kingdom.leaveTyrantBonus",
+"Value": "0.2",
+"Unit": "per day",
+"Group": "Kingdom",
+"Description": "Extra leaving chance per day under a tyrant.",
+"Guessed": true
+},
+{
+"Key": "kingdom.startFood",
+"Value": "20",
+"Unit": "food",
+"Group": "Kingdom",
+"Description": "Food in a new chest.",
+"Guessed": true
+},
+{
+"Key": "kingdom.startWood",
+"Value": "6",
+"Unit": "wood",
+"Group": "Kingdom",
+"Description": "Wood in a new chest.",
+"Guessed": true
+},
+{
+"Key": "kingdom.startGold",
+"Value": "0",
+"Unit": "gold",
+"Group": "Kingdom",
+"Description": "Gold in a new chest.",
+"Guessed": true
+},
+{
+"Key": "tyrant.evilGoodAtOrBelow",
+"Value": "-4",
+"Unit": "points",
+"Group": "Kingdom",
+"Description": "Kings and queens at or below this become tyrants.",
+"Guessed": true
+},
+{
+"Key": "tyrant.workMultiplier",
+"Value": "1.25",
+"Unit": "x",
+"Group": "Kingdom",
+"Description": "Under a tyrant everyone works this much harder and faster...",
+"Guessed": false
+},
+{
+"Key": "tyrant.drainMultiplier",
+"Value": "1.25",
+"Unit": "x",
+"Group": "Kingdom",
+"Description": "...consuming energy and hunger this much faster.",
+"Guessed": false
+},
+{
+"Key": "farmer.foodPerDay",
+"Value": "15",
+"Unit": "food/day",
+"Group": "Jobs",
+"Description": "Food a farmer produces each day.",
+"Guessed": false
+},
+{
+"Key": "axeman.woodPerTree",
+"Value": "3",
+"Unit": "wood",
+"Group": "Jobs",
+"Description": "Wood from one tree.",
+"Guessed": true
+},
+{
+"Key": "axeman.chopSeconds",
+"Value": "4",
+"Unit": "seconds",
+"Group": "Jobs",
+"Description": "Time to cut one tree.",
+"Guessed": true
+},
+{
+"Key": "merchant.goldPerTrip",
+"Value": "3",
+"Unit": "gold",
+"Group": "Jobs",
+"Description": "Gold a merchant brings after visiting another kingdom.",
+"Guessed": true
+},
+{
+"Key": "merchant.goldPerTripAlone",
+"Value": "1",
+"Unit": "gold",
+"Group": "Jobs",
+"Description": "Gold per trip when no other kingdom exists.",
+"Guessed": true
+},
+{
+"Key": "hunter.huntRadius",
+"Value": "16",
+"Unit": "tiles",
+"Group": "Jobs",
+"Description": "How far a hunter looks for animals.",
+"Guessed": true
+},
+{
+"Key": "build.blacksmithSpeed",
+"Value": "1",
+"Unit": "x",
+"Group": "Jobs",
+"Description": "Build speed of a blacksmith.",
+"Guessed": true
+},
+{
+"Key": "build.otherSpeed",
+"Value": "0.4",
+"Unit": "x",
+"Group": "Jobs",
+"Description": "Build speed of anyone else (families build their own house slowly).",
+"Guessed": true
+},
+{
+"Key": "repair.heartsPerSecond",
+"Value": "1",
+"Unit": "hearts/s",
+"Group": "Jobs",
+"Description": "Blacksmith repair speed.",
+"Guessed": true
+},
+{
+"Key": "joker.followDistance",
+"Value": "3",
+"Unit": "tiles",
+"Group": "Jobs",
+"Description": "The joker stays within this distance of the king.",
+"Guessed": true
+},
+{
+"Key": "joker.tellKingChance",
+"Value": "0.8",
+"Unit": "fraction",
+"Group": "Jobs",
+"Description": "Chance the joker passes a heard rumor to the king.",
+"Guessed": true
+},
+{
+"Key": "innkeeper.foodBonus",
+"Value": "1.2",
+"Unit": "x",
+"Group": "Jobs",
+"Description": "Meals next to the innkeeper fill this much more.",
+"Guessed": true
+},
+{
+"Key": "learn.selfSeconds",
+"Value": "150",
+"Unit": "seconds",
+"Group": "Learning",
+"Description": "Learning a job alone takes this long.",
+"Guessed": true
+},
+{
+"Key": "learn.mentorSeconds",
+"Value": "60",
+"Unit": "seconds",
+"Group": "Learning",
+"Description": "Learning with a mentor takes this long.",
+"Guessed": true
+},
+{
+"Key": "learn.nonFamilyMentorChance",
+"Value": "0.8",
+"Unit": "fraction",
+"Group": "Learning",
+"Description": "Students try to find a mentor outside the family first.",
+"Guessed": false
+},
+{
+"Key": "family.maxChildren",
+"Value": "3",
+"Unit": "children",
+"Group": "Family",
+"Description": "Parents can have up to this many children.",
+"Guessed": false
+},
+{
+"Key": "family.pairChancePerSecond",
+"Value": "0.03",
+"Unit": "per second",
+"Group": "Family",
+"Description": "Chance two free adults nearby become a family.",
+"Guessed": true
+},
+{
+"Key": "family.birthChancePerSecond",
+"Value": "0.02",
+"Unit": "per second",
+"Group": "Family",
+"Description": "Chance a family with a house and food has a child.",
+"Guessed": true
+},
+{
+"Key": "parents.defendHeartsNonFighter",
+"Value": "3",
+"Unit": "hearts",
+"Group": "Family",
+"Description": "Non-fighter parents defend a kid at or below this many hearts.",
+"Guessed": false
+},
+{
+"Key": "parents.defendHeartsFighter",
+"Value": "5",
+"Unit": "hearts",
+"Group": "Family",
+"Description": "Fighter parents defend a kid below this many hearts.",
+"Guessed": false
+},
+{
+"Key": "rumor.forgetPerDayBase",
+"Value": "0.3",
+"Unit": "per day",
+"Group": "War",
+"Description": "Base chance per day to forget a rumor.",
+"Guessed": true
+},
+{
+"Key": "rumor.forgiveGoodFactor",
+"Value": "0.05",
+"Unit": "per point",
+"Group": "War",
+"Description": "Each point of good makes forgetting/forgiving more likely.",
+"Guessed": false
+},
+{
+"Key": "rumor.repeatSeconds",
+"Value": "30",
+"Unit": "seconds",
+"Group": "War",
+"Description": "How often a unit remembers and repeats a rumor.",
+"Guessed": true
+},
+{
+"Key": "rumor.warFactor",
+"Value": "0.07",
+"Unit": "per point",
+"Group": "War",
+"Description": "War chance after the king hears a rumor = (5 - king evil-good) x this (min 0.02, max 0.8).",
+"Guessed": true
+},
+{
+"Key": "war.durationSeconds",
+"Value": "110",
+"Unit": "seconds",
+"Group": "War",
+"Description": "A war ends after this long if nobody won.",
+"Guessed": true
+},
+{
+"Key": "war.cooldownDays",
+"Value": "2",
+"Unit": "days",
+"Group": "War",
+"Description": "Two kingdoms can't go to war again right away.",
+"Guessed": true
+},
+{
+"Key": "war.attackerFraction",
+"Value": "1",
+"Unit": "fraction",
+"Group": "War",
+"Description": "Fraction of the attacking kingdom's fighters that march.",
+"Guessed": true
+},
+{
+"Key": "war.structureDamageMultiplier",
+"Value": "1",
+"Unit": "x",
+"Group": "War",
+"Description": "Damage against structures.",
+"Guessed": true
+},
+{
+"Key": "theater.minBards",
+"Value": "2",
+"Unit": "bards",
+"Group": "Events",
+"Description": "A theater needs this many bards...",
+"Guessed": false
+},
+{
+"Key": "theater.planDaysMin",
+"Value": "1",
+"Unit": "days",
+"Group": "Events",
+"Description": "A play is planned this many days ahead...",
+"Guessed": false
+},
+{
+"Key": "theater.planDaysMax",
+"Value": "3",
+"Unit": "days",
+"Group": "Events",
+"Description": "...to this many.",
+"Guessed": false
+},
+{
+"Key": "theater.durationSeconds",
+"Value": "24",
+"Unit": "seconds",
+"Group": "Events",
+"Description": "How long a play lasts.",
+"Guessed": true
+},
+{
+"Key": "theater.kingAllowBase",
+"Value": "0.35",
+"Unit": "fraction",
+"Group": "Events",
+"Description": "Base chance the king allows a play.",
+"Guessed": true
+},
+{
+"Key": "theater.kingAllowPerGood",
+"Value": "0.04",
+"Unit": "per point",
+"Group": "Events",
+"Description": "Extra chance per point of king's evil-good.",
+"Guessed": false
+},
+{
+"Key": "theater.kingKeenBonus",
+"Value": "0.3",
+"Unit": "fraction",
+"Group": "Events",
+"Description": "Extra chance if the king is keen on theater.",
+"Guessed": false
+},
+{
+"Key": "theater.jokerJoinChance",
+"Value": "0.5",
+"Unit": "fraction",
+"Group": "Events",
+"Description": "Chance the joker joins a play.",
+"Guessed": false
+},
+{
+"Key": "coliseum.minKnights",
+"Value": "4",
+"Unit": "knights",
+"Group": "Events",
+"Description": "A coliseum needs this many knights...",
+"Guessed": false
+},
+{
+"Key": "coliseum.duelEndsAtHearts",
+"Value": "3",
+"Unit": "hearts",
+"Group": "Events",
+"Description": "A friendly duel ends when a knight is down to this many hearts.",
+"Guessed": true
+},
+{
+"Key": "forage.seconds",
+"Value": "3",
+"Unit": "seconds",
+"Group": "Needs",
+"Description": "Units with no kingdom food pick fruit from a tree: time it takes.",
+"Guessed": true
+},
+{
+"Key": "forage.hunger",
+"Value": "2.5",
+"Unit": "points",
+"Group": "Needs",
+"Description": "Hunger filled by one picked fruit.",
+"Guessed": true
+},
+{
+"Key": "forage.treeCooldownSeconds",
+"Value": "70",
+"Unit": "seconds",
+"Group": "Needs",
+"Description": "A tree has no fruit for this long after being picked.",
+"Guessed": true
+},
+{
+"Key": "traits.list",
+"Value": "theaterLover,brave,hardworker,glutton,sleepy,gossip",
+"Unit": "list",
+"Group": "Traits",
+"Description": "Trait names. theaterLover: the king allows plays more and the unit enjoys them more. brave: defends kids at more hearts. hardworker: works faster. glutton: gets hungry faster. sleepy: gets tired faster. gossip: repeats rumors more.",
+"Guessed": true
+},
+{
+"Key": "traits.startCount",
+"Value": "2",
+"Unit": "traits",
+"Group": "Traits",
+"Description": "Units at the start of a world get this many random traits.",
+"Guessed": true
+},
+{
+"Key": "traits.hardworkerMultiplier",
+"Value": "1.1",
+"Unit": "x",
+"Group": "Traits",
+"Description": "Work speed of hardworkers.",
+"Guessed": true
+},
+{
+"Key": "traits.gluttonDrainMultiplier",
+"Value": "1.2",
+"Unit": "x",
+"Group": "Traits",
+"Description": "Hunger drain of gluttons.",
+"Guessed": true
+},
+{
+"Key": "traits.sleepyDrainMultiplier",
+"Value": "1.2",
+"Unit": "x",
+"Group": "Traits",
+"Description": "Energy drain of sleepy units.",
+"Guessed": true
+},
+{
+"Key": "traits.gossipMultiplier",
+"Value": "2",
+"Unit": "x",
+"Group": "Traits",
+"Description": "Gossips repeat rumors this much more.",
+"Guessed": true
+},
+{
+"Key": "traits.braveHeartsBonus",
+"Value": "2",
+"Unit": "hearts",
+"Group": "Traits",
+"Description": "Brave parents defend kids at this many more hearts.",
+"Guessed": true
+},
+{
+"Key": "crime.hitDamage",
+"Value": "1",
+"Unit": "hearts",
+"Group": "Evil-good",
+"Description": "Damage of an illegal hit.",
+"Guessed": true
+},
+{
+"Key": "crime.defeatMaxEvilGood",
+"Value": "-7",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "Only units this evil (or worse) go as far as defeating someone.",
+"Guessed": true
+},
+{
+"Key": "crime.punishMinKingGood",
+"Value": "0",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "A king at or above this punishes (banishes) criminals of his own kingdom. Below it he ignores them.",
+"Guessed": true
+},
+{
+"Key": "crime.arrestHearts",
+"Value": "3",
+"Unit": "hearts",
+"Group": "Evil-good",
+"Description": "Guards stop hitting a criminal when he is down to this many hearts.",
+"Guessed": true
+},
+{
+"Key": "family.birthMinHunger",
+"Value": "4",
+"Unit": "points",
+"Group": "Family",
+"Description": "Parents need at least this much hunger to have a child.",
+"Guessed": true
+},
+{
+"Key": "unit.maxPopulation",
+"Value": "120",
+"Unit": "units",
+"Group": "Family",
+"Description": "No more births above this number.",
+"Guessed": true
+},
+{
+"Key": "bubble.charsPerSecond",
+"Value": "28",
+"Unit": "letters/s",
+"Group": "Units",
+"Description": "Speed of the typing in speech bubbles.",
+"Guessed": true
+},
+{
+"Key": "bubble.holdSeconds",
+"Value": "2.5",
+"Unit": "seconds",
+"Group": "Units",
+"Description": "A bubble stays this long after finishing typing.",
+"Guessed": true
+},
+{
+"Key": "bubble.maxAtOnce",
+"Value": "12",
+"Unit": "bubbles",
+"Group": "Units",
+"Description": "Most bubbles on screen at once (important ones always show).",
+"Guessed": true
+},
+{
+"Key": "audio.pitchLowHz",
+"Value": "300",
+"Unit": "Hz",
+"Group": "Units",
+"Description": "Voice pitch of the longest-living units.",
+"Guessed": true
+},
+{
+"Key": "audio.pitchHighHz",
+"Value": "520",
+"Unit": "Hz",
+"Group": "Units",
+"Description": "Voice pitch of the shortest-living units.",
+"Guessed": true
+},
+{
+"Key": "tree.fadeOpacity",
+"Value": "0.5",
+"Unit": "fraction",
+"Group": "Environment",
+"Description": "Tree opacity while a unit stands behind it.",
+"Guessed": false
+},
+{
+"Key": "tree.fadeSeconds",
+"Value": "0.25",
+"Unit": "seconds",
+"Group": "Environment",
+"Description": "How fast the tree fades.",
+"Guessed": true
+},
+{
+"Key": "render.nameFontWorldPx",
+"Value": "5.5",
+"Unit": "world px",
+"Group": "Environment",
+"Description": "Name size in world pixels (scales with zoom; never smaller than render.nameFontMinPx on screen).",
+"Guessed": true
+},
+{
+"Key": "render.nameFontMinPx",
+"Value": "9",
+"Unit": "screen px",
+"Group": "Environment",
+"Description": "Smallest readable name size on screen.",
+"Guessed": true
+},
+{
+"Key": "render.zoomSteps",
+"Value": "1,2,3,4,6,8",
+"Unit": "list",
+"Group": "Environment",
+"Description": "Allowed zoom levels. Only whole numbers, so every pixel stays the same size.",
+"Guessed": false
+},
+{
+"Key": "eg.relaxPerDay",
+"Value": "1",
+"Unit": "",
+"Group": "Extra (new)",
+"Description": "",
+"Guessed": true
+}
+]
