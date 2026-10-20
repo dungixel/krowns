@@ -16,7 +16,7 @@
 "Variant of": "",
 "Guessed": true,
 "description": "A unit with no job yet. Uses the base sprite. Wanders, eats, sleeps and dreams of becoming something. When more than 5 jobless units are around, one may proclaim himself king.",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Farmer",
@@ -35,7 +35,7 @@
 "Variant of": "",
 "Guessed": false,
 "description": "Produces 15 points of food everyday, and stores it in the chest of the kingdom. People then come to the chest to eat. But before putting the food in the chest, they give the food to their family.",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Blacksmith",
@@ -54,7 +54,7 @@
 "Variant of": "",
 "Guessed": false,
 "description": "Builds structures, repairs structures when damaged. (This is the 'builder' mentioned in the Events pages.)",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Bard",
@@ -73,7 +73,7 @@
 "Variant of": "",
 "Guessed": false,
 "description": "Plays music around the kingdom and organizes theater plays together with another bard.",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Merchant",
@@ -92,7 +92,7 @@
 "Variant of": "",
 "Guessed": false,
 "description": "Travels between kingdoms and brings gold to the chest of the kingdom.",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Axeman",
@@ -111,7 +111,7 @@
 "Variant of": "",
 "Guessed": true,
 "description": "Gathers wood by cutting down trees and stores it in the chest of the kingdom. (Damage is a guess.)",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Hunter",
@@ -130,7 +130,7 @@
 "Variant of": "",
 "Guessed": true,
 "description": "Hunts the animals that appear across the map and brings the meat to the chest of the kingdom. NEEDS A SPRITE: for now it is the base sprite tinted green.",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Knight",
@@ -149,7 +149,7 @@
 "Variant of": "",
 "Guessed": false,
 "description": "They can attack close range. (Renamed from Swordsman.)",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Spearman",
@@ -168,7 +168,7 @@
 "Variant of": "",
 "Guessed": false,
 "description": "They can attack medium range.",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Archer",
@@ -187,7 +187,7 @@
 "Variant of": "",
 "Guessed": false,
 "description": "They can attack long range.",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Mage",
@@ -206,7 +206,7 @@
 "Variant of": "",
 "Guessed": true,
 "description": "Heals hurt, burned or poisoned units. Can also burn enemies with fire during a war.",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Witch",
@@ -225,7 +225,7 @@
 "Variant of": "",
 "Guessed": true,
 "description": "Only evil units want to be witches. Their attacks can poison.",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Joker",
@@ -244,7 +244,7 @@
 "Variant of": "",
 "Guessed": false,
 "description": "Sometimes joins the theater plays. Stays near the king and helps him make sure the kingdom is running well. Likes to hear about rumors and tells the king.",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Innkeeper",
@@ -263,7 +263,7 @@
 "Variant of": "",
 "Guessed": true,
 "description": "Stays next to the chest and serves food. Everyone who eats next to the innkeeper gets a bit more out of the meal and hears the latest rumors.",
-"Available": false
+"Not available yet": true
 },
 {
 "Name": "King",
@@ -282,7 +282,7 @@
 "Variant of": "",
 "Guessed": false,
 "description": "The king from a kingdom is the one making the decisions in their kingdom, not their spouse. When he dies, the prince becomes the new king.",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Queen",
@@ -301,7 +301,7 @@
 "Variant of": "King",
 "Guessed": true,
 "description": "Looks different, rules the same. Units are genderless, so a new ruler randomly looks like a king or a queen.",
-"Available": false
+"Not available yet": true
 },
 {
 "Name": "Prince",
@@ -320,7 +320,7 @@
 "Variant of": "",
 "Guessed": false,
 "description": "The one inheriting the kingdom. When the king dies, the prince transforms into the new king.",
-"Available": true
+"Not available yet": false
 },
 {
 "Name": "Princess",
@@ -339,6 +339,6 @@
 "Variant of": "Prince",
 "Guessed": true,
 "description": "Looks different, inherits the same. A new heir randomly looks like a prince or a princess.",
-"Available": false
+"Not available yet": true
 }
 ]
