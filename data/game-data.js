@@ -1,7 +1,7 @@
 // GENERATED from the Notion page "krowns 1.0" by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-20T13:49:56.809Z",
+ "generatedAt": "2026-10-20T13:57:02.679Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -162,8 +162,8 @@ globalThis.Krowns.data = {
   "eg.coliseumMinEvilGood": 2,
   "eg.avoidConflictAbove": 5,
   "eg.deepVengeanceBelow": -6,
-  "eg.crimeWitnessEvilGood": -3,
-  "eg.crimeChancePerSecond": 0.004,
+  "eg.crimeWitnessEvilGood": -2,
+  "eg.crimeChancePerSecond": 0.01,
   "kingdom.proclaimNeighbors": 4,
   "kingdom.proclaimRadius": 6,
   "kingdom.proclaimChancePerSecond": 0.03,
@@ -188,7 +188,6 @@ globalThis.Krowns.data = {
   "merchant.goldPerTripAlone": 1,
   "hunter.huntRadius": 16,
   "build.blacksmithSpeed": 1,
-  "build.otherSpeed": 0.4,
   "repair.heartsPerSecond": 1,
   "joker.followDistance": 3,
   "joker.tellKingChance": 0.8,
@@ -264,8 +263,8 @@ globalThis.Krowns.data = {
   "unit.thinkPauseMin": 1,
   "unit.thinkPauseMax": 3.5,
   "torch.housesPerTorch": 3,
-  "torch.lightRadiusTiles": 4.5,
-  "torch.glowStrength": 0.7,
+  "torch.lightRadiusTiles": 6,
+  "torch.glowStrength": 1,
   "shadow.lean": 0.9,
   "shadow.length": 0.4,
   "shadow.nightOpacity": 0.35,
@@ -273,7 +272,15 @@ globalThis.Krowns.data = {
   "world.startGroupSpacing": 24,
   "wall.keepWood": 10,
   "learn.diversityPerExisting": 0.6,
-  "learn.knightPriority": 4
+  "learn.knightPriority": 4,
+  "evil.damagePerPoint": 0.04,
+  "evil.perkAtOrBelow": -4,
+  "evil.drainMultiplier": 0.85,
+  "crime.lootHunger": 2,
+  "farm.farmersPerFarm": 3,
+  "farm.openFieldMultiplier": 0.5,
+  "pocket.capacity": 6,
+  "torch.shadowLength": 0.7
  },
  "colors": {
   "shadow.purple": "#957fae",
@@ -784,6 +791,23 @@ globalThis.Krowns.data = {
    "iconColor": "#c98f5a",
    "description": "Appears right next to the castle when a kingdom is made. Everyone puts what belongs to the kingdom here. Click it to see what is inside. It can be raided."
   },
+  "farm": {
+   "id": "farm",
+   "name": "Farm",
+   "kind": "Structure",
+   "sprite": "",
+   "color": "#cfe08f",
+   "label": "FARM",
+   "w": 3,
+   "h": 2,
+   "hearts": 14,
+   "wood": 10,
+   "gold": 0,
+   "buildSeconds": 40,
+   "icon": "plant",
+   "iconColor": "#cfe08f",
+   "description": "Farmers work next to a farm and make the full amount of food. Without a farm they only work the open ground, which is slower. The kingdom builds one farm for every 3 farmers when it has the wood, and a blacksmith builds it. (No drawing yet: placeholder.)"
+  },
   "torch": {
    "id": "torch",
    "name": "Torch",
@@ -796,10 +820,10 @@ globalThis.Krowns.data = {
    "hearts": 6,
    "wood": 0,
    "gold": 0,
-   "buildSeconds": 0,
+   "buildSeconds": 6,
    "icon": "flame",
    "iconColor": "#ffb04a",
-   "description": "Gives light at dusk and at night. Kingdoms put torches at the corners of the castle, in front of the theater and the coliseum, and next to some houses. (No drawing yet: placeholder flame.)"
+   "description": "Built by a blacksmith. Gives light (the add/color-dodge layer mode) at dusk and at night. Kingdoms put torches at the corners of the castle, in front of the theater and the coliseum, and next to some houses. (No drawing yet: placeholder flame.)"
   },
   "wall": {
    "id": "wall",

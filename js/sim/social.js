@@ -181,6 +181,7 @@
     if (reason === 'crime') {
       if (!victim.crimeRumor || W.t - victim.crimeRumor > 10) {
         victim.crimeRumor = W.t;
+        attacker.hunger = Math.min(sim.hungerMax(), attacker.hunger + S('crime.lootHunger', 2));    // the loot: crime pays a little
         const r = createRumor(W, 'crime', attacker, 'hit ' + victim.name, victim);
         learnRumor(W, victim, r);
         spreadRumorAt(W, r, victim.x, victim.y, attacker.id);

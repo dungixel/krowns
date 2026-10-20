@@ -769,7 +769,7 @@
 },
 {
 "Key": "eg.crimeWitnessEvilGood",
-"Value": "-3",
+"Value": "-2",
 "Unit": "points",
 "Group": "Evil-good",
 "Description": "Evil units at or below this sometimes do illegal things (hit, steal, defeat).",
@@ -777,7 +777,7 @@
 },
 {
 "Key": "eg.crimeChancePerSecond",
-"Value": "0.004",
+"Value": "0.01",
 "Unit": "per second",
 "Group": "Evil-good",
 "Description": "Chance per second that an evil unit near a target does something illegal.",
@@ -973,14 +973,6 @@
 "Unit": "x",
 "Group": "Jobs",
 "Description": "Build speed of a blacksmith.",
-"Guessed": true
-},
-{
-"Key": "build.otherSpeed",
-"Value": "0.4",
-"Unit": "x",
-"Group": "Jobs",
-"Description": "Build speed of anyone else (families build their own house slowly).",
 "Guessed": true
 },
 {
@@ -1473,7 +1465,7 @@
 },
 {
 "Key": "torch.lightRadiusTiles",
-"Value": "4.5",
+"Value": "6",
 "Unit": "tiles",
 "Group": "Environment",
 "Description": "How far a torch lights the ground at night.",
@@ -1481,10 +1473,10 @@
 },
 {
 "Key": "torch.glowStrength",
-"Value": "0.7",
+"Value": "1",
 "Unit": "0-1",
 "Group": "Environment",
-"Description": "How bright torch light is when it is dark.",
+"Description": "How bright torch light is when it is dark (1 = lit ground looks like daytime).",
 "Guessed": true
 },
 {
@@ -1549,6 +1541,70 @@
 "Unit": "x",
 "Group": "Learning",
 "Description": "Dreaming of being a knight is this much more likely while the kingdom has fewer knights than it needs (2 + population / 8), because the king needs protection.",
+"Guessed": true
+},
+{
+"Key": "evil.damagePerPoint",
+"Value": "0.04",
+"Unit": "x per point",
+"Group": "Evil-good",
+"Description": "Evil units hit harder: damage is multiplied by 1 + this for every point below zero.",
+"Guessed": true
+},
+{
+"Key": "evil.perkAtOrBelow",
+"Value": "-4",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "Units this evil (or worse) get the perk below.",
+"Guessed": true
+},
+{
+"Key": "evil.drainMultiplier",
+"Value": "0.85",
+"Unit": "x",
+"Group": "Evil-good",
+"Description": "Evil units get hungry and tired this much slower.",
+"Guessed": true
+},
+{
+"Key": "crime.lootHunger",
+"Value": "2",
+"Unit": "points",
+"Group": "Evil-good",
+"Description": "A criminal fills this much hunger with what he takes from his victim.",
+"Guessed": true
+},
+{
+"Key": "farm.farmersPerFarm",
+"Value": "3",
+"Unit": "farmers",
+"Group": "Jobs",
+"Description": "The kingdom builds one farm for every this many farmers.",
+"Guessed": true
+},
+{
+"Key": "farm.openFieldMultiplier",
+"Value": "0.5",
+"Unit": "x",
+"Group": "Jobs",
+"Description": "Farmers without a farm make this fraction of the food.",
+"Guessed": true
+},
+{
+"Key": "pocket.capacity",
+"Value": "6",
+"Unit": "items",
+"Group": "Units",
+"Description": "Every unit has a pocket that holds this many things (food, wood, gold). Workers fill it and then put it in the chest of the kingdom; hungry units eat what they carry.",
+"Guessed": true
+},
+{
+"Key": "torch.shadowLength",
+"Value": "0.7",
+"Unit": "x",
+"Group": "Environment",
+"Description": "Shadows cast by torch light fall straight away from the torch; this is how long they are.",
 "Guessed": true
 }
 ]

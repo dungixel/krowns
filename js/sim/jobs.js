@@ -11,32 +11,58 @@
   const blocked = (u, secs) => { u.blockedUntil = u.task ? u.task.t0 + secs : 0; };
 
   // ------------------------------------------------------------------ farmer
+  // everything in the pocket goes into the chest of the kingdom
+  function deliver(W, u, k) {
+    const p = u.pocket;
+    if (p.food) { k.chest.food += p.food; k.deeds.fed += p.food; }
+    if (p.wood) { k.chest.wood += p.wood; u.stats.wood = (u.stats.wood || 0) + p.wood; }
+    if (p.gold) { k.chest.gold += p.gold; u.stats.gold += p.gold; k.deeds.gold += p.gold; }
+    u.pocket = {};
+    sim.gainEV(u);
+  }
+  TICK.deposit = (W, u, t, dt) => {
+    const k = kOf(W, u), ch = k && chestOf(W, k);
+    if (!k || !ch || !sim.pocketCount(u)) return false;
+    const r = gotoStruct(W, u, ch, false);
+    if (r === 'stuck' || W.t - t.t0 > 40) return false;
+    if (nearStruct(u, ch)) { deliver(W, u, k); return false; }
+    return true;
+  };
+
   TICK.farm = (W, u, t, dt) => {
     const k = kOf(W, u);
     if (!k) return false;
-    if (!t.spot) {
-      t.spot = kingdomSpot(W, k, 3, 7);
-      if (!t.spot) return false;
-      t.end = W.t + W.rng.range(20, 35); t.acc = 0;
+    if (!t.init) {
+      t.init = true; t.end = W.t + W.rng.range(20, 35); t.acc = 0;
+      // work next to a finished farm; without one the fields are just open ground (slower)
+      const farms = [...W.structures.values()].filter((x) => x.type === 'farm' && x.kingdom === k.id && !x.building);
+      t.farm = farms.length ? W.rng.pick(farms).id : 0;
+      if (!t.farm) { t.spot = kingdomSpot(W, k, 3, 7); if (!t.spot) return false; }
     }
     if (W.t > t.end) return false;
     if (!t.at) {
-      const r = goto(W, u, t.spot[0], t.spot[1], 0, false);
-      if (r === 'arrived') t.at = true; else if (r === 'stuck') return false;
-      return true;
+      const fm = t.farm && W.structures.get(t.farm);
+      if (t.farm && !fm) return false;
+      if (fm) { gotoStruct(W, u, fm, false); if (nearStruct(u, fm)) t.at = true; else return W.t - t.t0 < 40; }
+      else {
+        const r = goto(W, u, t.spot[0], t.spot[1], 0, false);
+        if (r === 'arrived') t.at = true; else if (r === 'stuck') return false;
+        return true;
+      }
     }
     u.act = 'work';
-    const cycle = A.awakeSeconds() / S('farmer.foodPerDay', 15);
+    const cycle = A.awakeSeconds() / S('farmer.foodPerDay', 15) / (t.farm ? 1 : S('farm.openFieldMultiplier', 0.5));
     t.acc += dt * sim.workMult(W, u);
     if (t.acc >= cycle) {
       t.acc -= cycle;
       const f = W.families.get(u.family);
       const h = A.houseOf(W, u);
       // the family eats first, the rest goes to the kingdom chest
-      if (f && h && f.stock < f.members.size * 2) f.stock++;
-      else k.chest.food += 1;
-      k.deeds.fed++; u.stats.food++;
+      if (f && h && f.stock < f.members.size * 2) { f.stock++; k.deeds.fed++; }
+      else if (!sim.pocketAdd(u, 'food', 1)) { k.chest.food += 1; k.deeds.fed++; }
+      u.stats.food++;
       sim.gainEV(u);
+      if (sim.pocketRoom(u) <= 0) return false;                  // pocket full: go and put it in the chest
     }
     return true;
   };
@@ -61,10 +87,7 @@
     if (!k || !ch) return false;
     if (t.carry) {
       const r = gotoStruct(W, u, ch, false);
-      if (nearStruct(u, ch)) {
-        k.chest.wood += t.carry; u.stats.wood = (u.stats.wood || 0) + t.carry; sim.gainEV(u);
-        return false;
-      }
+      if (nearStruct(u, ch)) { deliver(W, u, k); return false; }
       if (r === 'stuck') return false;
       return true;
     }
@@ -86,7 +109,9 @@
     if (t.acc >= S('axeman.chopSeconds', 4)) {
       sim.removeTree(W, tr.x, tr.y);
       sim.emit(W, 'treeChopped', { x: tr.x, y: tr.y });
-      t.carry = S('axeman.woodPerTree', 3);
+      sim.pocketAdd(u, 'wood', S('axeman.woodPerTree', 3));
+      if (sim.pocketRoom(u) >= S('axeman.woodPerTree', 3)) { t.tree = null; t.at = false; t.acc = 0; t.said = false; }      // room for more: next tree
+      else t.carry = true;
     }
     return true;
   };
@@ -99,12 +124,12 @@
     if (t.carry) {
       if (t.own || !ch) { u.hunger = Math.min(sim.hungerMax(), u.hunger + t.carry * 1.5); maybeSay(W, u, 'eat', 0.6, 0); return false; }
       gotoStruct(W, u, ch, false);
-      if (nearStruct(u, ch)) { k.chest.food += t.carry; k.deeds.fed += t.carry; sim.gainEV(u); return false; }
+      if (nearStruct(u, ch)) { deliver(W, u, k); return false; }
       return true;
     }
     let tgt = t.target && W.byId.get(t.target);
     if (!tgt || tgt.dead) {
-      if (t.target && tgt && tgt.dead && tgt.hurtBy === u.id) { t.carry = tgt.def.food; return true; }
+      if (t.target && tgt && tgt.dead && tgt.hurtBy === u.id) { t.carry = tgt.def.food; if (!t.own) sim.pocketAdd(u, 'food', t.carry); return true; }
       t.target = 0;
       const R = S('hunter.huntRadius', 16);
       const list = sim.near(W, u.x, u.y, R, (e) => e.kind === 'creature' && e.def.behavior === 'Prey' && !e.dead && e.def.food > 0);
@@ -114,7 +139,7 @@
       maybeSay(W, u, 'hunt', 0.4, 0);
     }
     A.fightStep(W, u, tgt, dt);
-    if (tgt.dead && tgt.hurtBy === u.id) t.carry = tgt.def.food;
+    if (tgt.dead && tgt.hurtBy === u.id) { t.carry = tgt.def.food; if (!t.own) sim.pocketAdd(u, 'food', t.carry); }
     return true;
   };
 
@@ -141,15 +166,14 @@
     }
     if (t.phase === 'out') {
       const r = goto(W, u, t.dest[0], t.dest[1], 2, false);
-      if (r === 'arrived') { t.phase = 'wait'; t.wait = W.t + 3; maybeSay(W, u, 'trade', 0.8, 1); }
+      if (r === 'arrived') { t.phase = 'wait'; t.wait = W.t + 3; maybeSay(W, u, 'trade', 0.8, 1); sim.pocketAdd(u, 'gold', t.other ? S('merchant.goldPerTrip', 3) : S('merchant.goldPerTripAlone', 1)); }
       else if (r === 'stuck') t.phase = 'back';
       return true;
     }
     if (t.phase === 'wait') { u.act = 'work'; if (W.t > t.wait) t.phase = 'back'; return true; }
     gotoStruct(W, u, ch, false);
     if (nearStruct(u, ch)) {
-      const g = t.other ? S('merchant.goldPerTrip', 3) : S('merchant.goldPerTripAlone', 1);
-      k.chest.gold += g; u.stats.gold += g; k.deeds.gold += g; sim.gainEV(u);
+      deliver(W, u, k);
       return false;
     }
     return true;
@@ -178,7 +202,7 @@
     u.act = 'work';
     u.face = s.x + s.w / 2 >= u.x ? 1 : -1;
     if (s.building) {
-      s.progress += dt * (smith ? S('build.blacksmithSpeed', 1) : S('build.otherSpeed', 0.4)) * sim.workMult(W, u);
+      s.progress += dt * S('build.blacksmithSpeed', 1) * sim.workMult(W, u);
       s.hearts = Math.max(1, s.maxHearts * (s.progress / s.buildSeconds));
       t.sayT = (t.sayT || 0) + dt;
       if (t.sayT > 6) { t.sayT = 0; maybeSay(W, u, 'build', 0.5, 0); }

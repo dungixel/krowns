@@ -197,13 +197,36 @@
   function castShadow(img, key, baseX, baseY, o) {
     o = o || {};
     const sil = silhouette(img, key, K.C('shadow.purple', '#957fae'));
-    const iw = img.width, ih = img.height - (o.crop || 0), len = sun.len * (o.len || 1);
+    const iw = img.width, ih = img.height - (o.crop || 0);
+    const ax = o.ax !== undefined ? o.ax : sun.lean, ay = o.ay !== undefined ? o.ay : sun.len * (o.len || 1);   // where the top of the picture falls, per pixel of height
     ctx.save();
     ctx.setTransform(V.S, 0, 0, V.S, V.ox, V.oy);
-    ctx.transform(1, 0, -sun.lean, -len, baseX - iw / 2 + sun.lean * ih, baseY + len * ih);
+    ctx.transform(1, 0, -ax, -ay, baseX - iw / 2 + ax * ih, baseY + ay * ih);
     if (o.flip) { ctx.translate(iw, 0); ctx.scale(-1, 1); }
     ctx.drawImage(sil, 0, o.crop || 0, iw, ih, 0, 0, iw, ih);
     ctx.restore();
+  }
+  // things near a lit torch cast their shadow straight away from the torch; the sun's shadow fades out under the torch light
+  let torchList = [], torchDark = 0;
+  function casterShadow(img, key, baseX, baseY, o) {
+    o = o || {};
+    let near = null, nd = 1e9;
+    if (torchDark > 0.02) {
+      const R = S('torch.lightRadiusTiles', 4.5) * TILE;
+      for (const t of torchList) { const d = Math.hypot(baseX - t.x, baseY - t.y); if (d < nd && d < R) { nd = d; near = t; } }
+      if (near) {
+        const R2 = S('torch.lightRadiusTiles', 4.5) * TILE, infl = clamp(1 - nd / R2, 0, 1) * torchDark;
+        const d = Math.max(4, nd), ux = (baseX - near.x) / d, uy = (baseY - near.y) / d, len = S('torch.shadowLength', 0.7) * (o.len || 1);
+        const base = ctx.globalAlpha;
+        ctx.globalAlpha = base / Math.max(0.01, sun.alpha) * sun.alpha * (1 - infl);
+        castShadow(img, key, baseX, baseY, o);
+        ctx.globalAlpha = K.C('shadow.opacity', 1) * infl;
+        castShadow(img, key, baseX, baseY, Object.assign({}, o, { ax: ux * len, ay: uy * len * 0.75 }));
+        ctx.globalAlpha = base;
+        return;
+      }
+    }
+    castShadow(img, key, baseX, baseY, o);
   }
   function castBox(wx, wyBottom, w, h) {
     // a flat building: a parallelogram leaning away from the sun
@@ -303,7 +326,7 @@
     const v = R.view; V = v;
     advanceZoom(dt);
     // follow the selected unit
-    if (R.follow && R.selected && R.selected.type === 'unit') {
+    if (R.follow && R.selected && (R.selected.type === 'unit' || R.selected.type === 'creature')) {
       const u = W.byId.get(R.selected.id);
       if (u) { const p = entityPos(W, u, W.t); v.cx += (p.px + 8 - v.cx) * Math.min(1, dt * 6); v.cy += (p.py + 8 - v.cy) * Math.min(1, dt * 6); }
     }
@@ -385,18 +408,25 @@
     // ---- 4. shadows (multiply, desaturated purple), cast away from the sun; all before the things that cast them
     const clock = K.sim.clockAt(W.t + R.frac);
     updateSun(clock.hour);
+    {
+      const lc0 = lightColor(clock.hour);
+      torchDark = clamp(1 - (lc0[0] * 0.3 + lc0[1] * 0.4 + lc0[2] * 0.3) / 255, 0, 1);
+      torchDark = clamp(torchDark * 1.6, 0, 1);
+      torchList = [];
+      for (const it of items) if (it.k === 'struct' && it.ref.type === 'torch' && !it.ref.building) torchList.push({ x: it.px + 8, y: it.py + 14 });
+    }
     ctx.globalCompositeOperation = 'multiply';
     ctx.fillStyle = K.C('shadow.purple', '#957fae');
     ctx.globalAlpha = K.C('shadow.opacity', 1) * sun.alpha;
     for (const it of items) {
-      if (it.k === 'tree') castShadow(images.tree, 'tree', it.px + 8, it.py + 15.5, { flip: treeFlip(it.ref), len: 0.9 });
+      if (it.k === 'tree') casterShadow(images.tree, 'tree', it.px + 8, it.py + 15.5, { flip: treeFlip(it.ref), len: 0.9 });
       else if (it.k === 'tomb') castBox(it.px + 4, it.py + 14, 8, 6);
-      else if (it.k === 'unit') { const u = it.ref; const sp = spriteFor(u); const lying = u.lying; castShadow(lying ? rotatedCanvas(sp.img, sp.key) : sp.img, lying ? 'r' + sp.key : sp.key, it.px + 8, it.py + 15.5, { flip: u.face < 0, crop: K.sim.isAdult(W, u) ? 0 : 3, len: lying ? 0.7 : 1 }); }
-      else if (it.k === 'creature') { const c = it.ref; const img = images[c.def.sprite] || images.slime; castShadow(img, c.def.sprite, it.px + 8, it.py + 15.5 + (c.flies ? 3 : 0), { flip: faceFlip(c), len: c.flies ? 0.7 : 1 }); }
+      else if (it.k === 'unit') { const u = it.ref; const sp = spriteFor(u); const lying = u.lying; casterShadow(lying ? rotatedCanvas(sp.img, sp.key) : sp.img, lying ? 'r' + sp.key : sp.key, it.px + 8, it.py + 15.5, { flip: u.face < 0, crop: K.sim.isAdult(W, u) ? 0 : 3, len: lying ? 0.7 : 1 }); }
+      else if (it.k === 'creature') { const c = it.ref; const img = images[c.def.sprite] || images.slime; casterShadow(img, c.def.sprite, it.px + 8, it.py + 15.5 + (c.flies ? 3 : 0), { flip: faceFlip(c), len: c.flies ? 0.7 : 1 }); }
       else if (it.k === 'struct') {
         const st = it.ref, def = K.struct(st.type);
         if (st.type === 'torch') castBox(it.px + 7, it.py + 15, 2, 9);
-        else if (def.sprite && images[def.sprite]) castShadow(images[def.sprite], def.sprite, it.px + st.w * 8, it.py + st.h * TILE - 0.5, {});
+        else if (def.sprite && images[def.sprite]) casterShadow(images[def.sprite], def.sprite, it.px + st.w * 8, it.py + st.h * TILE - 0.5, {});
         else castBox(it.px + 1, it.py + st.h * TILE - 1, st.w * TILE - 2, st.type === 'wall' ? 8 : st.h * TILE * 0.8);
       }
     }
@@ -420,26 +450,32 @@
     // shots and little effects
     for (const it of items) if (it.k === 'unit' && it.ref.shot && t - it.ref.shot.t < 0.18) drawShot(it);
 
-    // ---- 6. day and night
+    // ---- 6. day and night: the whole scene is multiplied by a light map. The map is the colour of the hour (night blue...), and torches
+    //         ADD warm light to it, so near a torch the scene shows its real colours again (shadows keep their own colour).
     const lc = lightColor(clock.hour);
-    if (lc[0] < 255 || lc[1] < 255 || lc[2] < 255) {
+    const dark = clamp(1 - (lc[0] * 0.3 + lc[1] * 0.4 + lc[2] * 0.3) / 255, 0, 1);
+    const lit = dark > 0.05 ? torchList.length : 0;
+    if (lit) {
+      if (!R.lightCv) R.lightCv = mkCanvas(v.w, v.h);
+      const lcv = R.lightCv; if (lcv.width !== v.w || lcv.height !== v.h) { lcv.width = v.w; lcv.height = v.h; }
+      const lg = lcv.getContext('2d');
+      lg.globalCompositeOperation = 'source-over'; lg.fillStyle = 'rgb(' + lc[0] + ',' + lc[1] + ',' + lc[2] + ')'; lg.fillRect(0, 0, lcv.width, lcv.height);
+      lg.globalCompositeOperation = 'lighter';                         // "add"
+      const rad = S('torch.lightRadiusTiles', 4.5) * TILE, strength = clamp(S('torch.glowStrength', 0.7) / 0.7, 0, 2) * Math.min(1, dark * 1.6);
+      for (const it of items) {
+        if (it.k !== 'struct' || it.ref.type !== 'torch' || it.ref.building) continue;
+        const fl = 1 + 0.04 * Math.sin(t * 9 + it.ref.id) + 0.025 * Math.sin(t * 23 + it.ref.id * 2);
+        const cx = sxOf(it.px + 8), cy = syOf(it.py + 9), r = rad * fl * s;
+        if (cx + r < 0 || cy + r < 0 || cx - r > v.w || cy - r > v.h) continue;
+        const gr = lg.createRadialGradient(cx, cy, 0, cx, cy, r);
+        gr.addColorStop(0, 'rgba(255,222,176,' + Math.min(1, 1.05 * strength) + ')'); gr.addColorStop(0.35, 'rgba(255,214,164,' + Math.min(1, 0.7 * strength) + ')');
+        gr.addColorStop(0.7, 'rgba(250,200,150,' + Math.min(1, 0.3 * strength) + ')'); gr.addColorStop(1, 'rgba(245,190,140,0)');
+        lg.fillStyle = gr; lg.fillRect(cx - r, cy - r, r * 2, r * 2);
+      }
+      ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(lcv, 0, 0); ctx.globalCompositeOperation = 'source-over';
+    } else if (lc[0] < 255 || lc[1] < 255 || lc[2] < 255) {
       ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgb(' + lc[0] + ',' + lc[1] + ',' + lc[2] + ')';
       ctx.fillRect(0, 0, v.w, v.h); ctx.globalCompositeOperation = 'source-over';
-    }
-    // torches light the ground once it gets dark
-    const dark = clamp(1 - (lc[0] * 0.3 + lc[1] * 0.4 + lc[2] * 0.3) / 255, 0, 1);
-    if (dark > 0.05) {
-      const rad = S('torch.lightRadiusTiles', 4.5) * TILE, strength = S('torch.glowStrength', 0.7) * Math.min(1, dark * 1.6);
-      ctx.globalCompositeOperation = 'lighter';
-      for (const it of items) {
-        if (it.k !== 'struct' || it.ref.type !== 'torch') continue;
-        const fl = 1 + 0.05 * Math.sin(t * 9 + it.ref.id) + 0.03 * Math.sin(t * 23 + it.ref.id * 2);
-        const cx = sxOf(it.px + 8), cy = syOf(it.py + 8), r = rad * fl * s;
-        const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-        gr.addColorStop(0, 'rgba(255,170,80,' + (0.55 * strength) + ')'); gr.addColorStop(0.45, 'rgba(255,140,60,' + (0.22 * strength) + ')'); gr.addColorStop(1, 'rgba(255,120,40,0)');
-        ctx.fillStyle = gr; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-      }
-      ctx.globalCompositeOperation = 'source-over';
     }
 
     // ---- 7. words (names, kingdom names, speech bubbles) - drawn after the light so they stay readable

@@ -227,7 +227,9 @@
   function emit(W, type, data) { W.events.push(Object.assign({ type }, data)); }
   function log(W, text, ids) {
     const c = clockAt(W.t);
-    W.log.push({ t: W.t, day: c.day, time: c.text, text, ids: ids || [] });
+    // remember who is named, so the log can colour and link the names even after they die
+    const who = (ids || []).map((id) => { const e = W.byId.get(id); return e && e.kind === 'unit' ? { id, name: e.name, color: e.color } : null; }).filter(Boolean);
+    W.log.push({ t: W.t, day: c.day, time: c.text, text, ids: ids || [], who });
     if (W.log.length > 400) W.log.shift();
     emit(W, 'log', { text, ids });
   }

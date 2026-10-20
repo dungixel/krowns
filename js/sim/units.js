@@ -83,8 +83,18 @@
     const j = K.job(u.job);
     let d = j.dps * S('fight.attackIntervalSeconds', 0.5) * (1 + u.iv.strength * S('fight.strengthEffect', 0.1));
     if (u.energy < S('fight.lowEnergyBelow', 3)) d *= S('fight.lowEnergyMultiplier', 0.5);
+    if (u.evilGood < 0) d *= 1 + (-u.evilGood) * S('evil.damagePerPoint', 0.04);       // being evil makes you hit harder
     return d;
   };
+
+  // ------------------------------------------------------------------ the pocket: every unit can carry a few things (food, wood, gold)
+  const pocketCount = (u) => { let n = 0; for (const k in u.pocket) n += u.pocket[k]; return n; };
+  const pocketRoom = (u) => Math.max(0, S('pocket.capacity', 6) - pocketCount(u));
+  function pocketAdd(u, kind, n) {
+    const add = Math.min(n, pocketRoom(u));
+    if (add > 0) u.pocket[kind] = K.util.one((u.pocket[kind] || 0) + add);
+    return add;
+  }
 
   // ------------------------------------------------------------------ creating units
   // opts: x,y,job,parents[],ageDays,female,kingdom
@@ -97,7 +107,7 @@
       x: o.x, y: o.y, face: rng.chance(0.5) ? 1 : -1, hop: null, path: null, pathGoal: null,
       job: o.job || 'villager', ev: makeEVs(p1, p2), iv: makeIVs(rng, p1, p2), traits: makeTraits(rng, p1, p2),
       kingdom: o.kingdom || 0, family: 0, parents: o.parents ? o.parents.map((p) => p.id) : [], children: [],
-      status: null, statusT: 0, task: null, thinkAt: W.t + rng() * 0.5, bubble: null, talkUntil: 0,
+      pocket: {}, status: null, statusT: 0, task: null, thinkAt: W.t + rng() * 0.5, bubble: null, talkUntil: 0,
       rumors: [], rumorSaid: 0, learn: { job: null, progress: 0 }, grudge: 0, hurtAt: -99, hurtBy: 0,
       stats: { kills: 0, defended: 0, gold: 0, food: 0, plays: 0, built: 0 }, color: rng.int(1, 12), phase: rng() * 6.28,
       sleeping: false, lying: false, refusedUntil: 0, born: o.ageDays === undefined,
@@ -119,7 +129,7 @@
     if (u.job === job) return;
     u.job = job; u.task = null; u.thinkAt = 0;
     u.learn = { job: null, progress: 0 };
-    if (!quiet) sim.log(W, u.name + ' became a ' + K.job(displayJob(u)).name.toLowerCase() + '.', [u.id]);
+    if (!quiet) { const jn = K.job(displayJob(u)).name.toLowerCase(); sim.log(W, u.name + ' became ' + (/^[aeiou]/.test(jn) ? 'an ' : 'a ') + jn + '.', [u.id]); }
     sim.emit(W, 'job', { id: u.id, job });
   }
 
@@ -169,6 +179,8 @@
     if (sleeping) hDrain *= 0.5;
     if (hasTrait(u, 'glutton')) hDrain *= S('traits.gluttonDrainMultiplier', 1.2);
     if (underTyrant(W, u)) hDrain *= S('tyrant.drainMultiplier', 1.25);
+    const evilPerk = u.evilGood <= S('evil.perkAtOrBelow', -4) ? S('evil.drainMultiplier', 0.85) : 1;      // evil units tire and hunger a bit slower
+    hDrain *= evilPerk;
     u.hunger = Math.max(0, u.hunger - hDrain * dt);
 
     if (sleeping || u.fainted) {
@@ -178,6 +190,7 @@
       if (working) eDrain *= S('energy.actionMultiplier', 1.5);
       if (hasTrait(u, 'sleepy')) eDrain *= S('traits.sleepyDrainMultiplier', 1.2);
       if (underTyrant(W, u)) eDrain *= S('tyrant.drainMultiplier', 1.25);
+      eDrain *= evilPerk;
       u.energy = Math.max(0, u.energy - eDrain * dt);
     }
 
@@ -207,6 +220,6 @@
   Object.assign(sim, {
     IV_KEYS, createUnit, setJob, makeIVs, hasTrait, maxHearts, maxEnergy, hungerMax, ageSeconds, ageDays, isAdult, lifespanSeconds,
     kingdomOf, isTyrantKing, underTyrant, displayJob, workMult, gainEV, addGood, isFighterUnit, damageOf, damage, applyStatus, healUnit,
-    die, updateNeeds,
+    die, updateNeeds, pocketCount, pocketRoom, pocketAdd,
   });
 })();

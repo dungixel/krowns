@@ -70,7 +70,7 @@
     if (ui.logCount !== W.log.length || ui.logLast !== (W.log[W.log.length - 1] || {}).t) {
       ui.logCount = W.log.length; ui.logLast = (W.log[W.log.length - 1] || {}).t;
       const list = W.log.slice(-40).reverse();
-      $('loglist').innerHTML = list.map((l) => '<li data-ids="' + l.ids.join(',') + '"><b>D' + l.day + ' ' + l.time + '</b> ' + esc(l.text) + '</li>').join('');
+      $('loglist').innerHTML = list.map((l) => '<li data-ids="' + l.ids.join(',') + '"><b>D' + l.day + ' ' + l.time + '</b> ' + logText(l) + '</li>').join('');
     }
     ui.refreshPanel(false);
   };
@@ -106,10 +106,34 @@
     el.style.top = clamp(cssY + 16, 8, window.innerHeight - h - 8) + 'px';
   };
 
+  // the pastel name colour, made deeper so it reads on the white log
+  function deepen(hex) {
+    const [r, g, b] = K.util.hexToRgb(hex).map((v) => v / 255);
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    let h = 0, s = 0;
+    if (d) {
+      s = d / (1 - Math.abs(2 * l - 1));
+      h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      h *= 60; if (h < 0) h += 360;
+    }
+    return 'hsl(' + Math.round(h) + ',' + Math.round(Math.min(100, s * 100 * 1.15 + 15)) + '%,' + 40 + '%)';
+  }
+  function logText(l) {
+    let html = esc(l.text);
+    const who = (l.who || []).slice().sort((a, b) => b.name.length - a.name.length);
+    const done = new Set();
+    for (const w of who) {
+      if (done.has(w.name)) continue; done.add(w.name);
+      const re = new RegExp('\\b' + w.name + '\\b', 'g');
+      html = html.replace(re, '<a class="un" data-uid="' + w.id + '" style="color:' + deepen(K.C('name.pastel.' + w.color, '#9aa')) + '">' + w.name + '</a>');
+    }
+    return html;
+  }
   // ------------------------------------------------------------------ side panel
   ui.select = function (hit) {
     K.render.selected = hit;
     if (!hit) K.render.follow = false;
+    else if (hit.type === 'unit' || hit.type === 'creature') K.render.follow = true;      // clicking a unit makes the camera follow it until you click away
     ui.panelKey = null;
     ui.refreshPanel(true);
   };
@@ -156,7 +180,7 @@
       '<div class="grid2"><div>' + ic('barbell', 14, K.C('icon.strength')) + ' Strength <b>' + fmt(u.iv.strength) + '</b></div><div>' + ic('hourglass', 14, K.C('icon.longevity')) + ' Age <b>' + fmt(age) + '</b> / ' + fmt(u.iv.longevity) + ' days</div></div>' +
       '<h3>Born with (IVs)</h3><div class="sub">Hearts <b>' + fmt(u.iv.hearts) + '</b> · Energy <b>' + fmt(u.iv.energy) + '</b> · Evil/good <b>' + fmt(u.iv.evilgood) + '</b> · Strength <b>' + fmt(u.iv.strength) + '</b> · Longevity <b>' + fmt(u.iv.longevity) + '</b></div>' +
       '<h3>Trained (EVs)</h3><div class="sub">' + (evs || '<span class="dim">nothing yet</span>') + '</div>' +
-      (u.learn.job && u.job === 'villager' ? '<div class="sub">Wants to become a <b>' + esc(K.job(u.learn.job).name.toLowerCase()) + '</b> · ' + Math.round(clamp(u.learn.progress / sim.learnNeeded(), 0, 1) * 100) + '%</div>' : '') +
+      (u.learn.job && u.job === 'villager' ? '<div class="sub">Wants to become ' + (/^[aeiou]/i.test(K.job(u.learn.job).name) ? 'an' : 'a') + ' <b>' + esc(K.job(u.learn.job).name.toLowerCase()) + '</b> · ' + Math.round(clamp(u.learn.progress / sim.learnNeeded(), 0, 1) * 100) + '%</div>' : '') +
       '<h3>Traits</h3><div>' + (traits || '<span class="dim">none</span>') + '</div>' +
       '<h3>Family</h3><div class="sub">Partner: ' + partner + '<br>Parents: ' + parents + '<br>Children: ' + (kids || '<span class="dim">none</span>') + '</div>' +
       (u.rumors.length ? '<h3>Rumors known</h3><ul class="rl">' + rumors + '</ul>' : '');
@@ -205,6 +229,8 @@
   // ------------------------------------------------------------------ log clicks
   ui.bindLog = function () {
     $('loglist').onclick = (ev) => {
+      const un = ev.target.closest('a.un');
+      if (un) { const e = K.render.world.byId.get(+un.dataset.uid); if (e) { ui.select({ type: e.kind, id: e.id }); K.render.centerOn(e.x, e.y); } else ui.toast('This one is gone.'); return; }
       const li = ev.target.closest('li'); if (!li) return;
       const ids = li.dataset.ids.split(',').map(Number).filter(Boolean);
       const W = K.render.world;

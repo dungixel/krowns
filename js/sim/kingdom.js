@@ -281,6 +281,8 @@
       if (o.structId) { const s = W.structures.get(o.structId); return !!s && s.building; }
       return true;
     });
+    // nothing can be built without a builder (a blacksmith)
+    if (!(counts(W, k).blacksmith > 0)) return;
     const active = k.orders.find((o) => !o.structId);
     if (active) {
       const def = K.struct(active.type);
@@ -308,6 +310,12 @@
       k.orders.push({ type: 'house', family: f.id });
       return;
     }
+    // farmers need a farm: one for every few farmers
+    const fd = K.data.structures.farm;
+    if (fd && (c.farmer || 0) > 0 && k.chest.wood >= (fd.wood || 0)) {
+      const farms = [...W.structures.values()].filter((x) => x.type === 'farm' && x.kingdom === k.id).length;
+      if (farms < Math.ceil(c.farmer / S('farm.farmersPerFarm', 3)) && !k.orders.some((o) => o.type === 'farm')) { k.orders.push({ type: 'farm' }); return; }
+    }
     // with nothing else to build, blacksmiths wall the border of the kingdom with spare wood
     const wd = K.data.structures.wall;
     if (wd && smith >= 1 && !k.orders.some((o) => o.type === 'wall' && !o.structId) && k.chest.wood >= (wd.wood || 0) + S('wall.keepWood', 10)) k.orders.push({ type: 'wall' });
@@ -330,7 +338,7 @@
   }
   // ------------------------------------------------------------------ torches: light around the castle, the theater, the coliseum and some houses
   function torchUpdate(W, k) {
-    if (!K.data.structures.torch) return;
+    if (!K.data.structures.torch || !(counts(W, k).blacksmith > 0)) return;
     const have = new Set();
     for (const t of W.structures.values()) if (t.type === 'torch' && t.kingdom === k.id) have.add(t.slotKey);
     k.torchFail = k.torchFail || new Set();
@@ -349,7 +357,7 @@
     for (const w of want) {
       if (have.has(w.key) || k.torchFail.has(w.key)) continue;
       if (!sim.inb(W, w.x, w.y) || W.occ[w.y * W.w + w.x] > 0 || kingdomAt(W, w.x, w.y) !== k.id) { k.torchFail.add(w.key); continue; }
-      const t = createStructure(W, 'torch', k.id, w.x, w.y);
+      const t = createStructure(W, 'torch', k.id, w.x, w.y, { building: true });
       t.slotKey = w.key;
       return;                                  // one at a time
     }

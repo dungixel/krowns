@@ -85,6 +85,23 @@
 "Guessed": false
 },
 {
+"Name": "Farm",
+"Kind": "Structure",
+"Sprite": "",
+"Placeholder color": "#cfe08f",
+"Label": "FARM",
+"Width (tiles)": 3,
+"Height (tiles)": 2,
+"Hearts": 14,
+"Wood cost": 10,
+"Gold cost": 0,
+"Build seconds": 40,
+"Icon": "plant",
+"Color": "#cfe08f",
+"Description": "Farmers work next to a farm and make the full amount of food. Without a farm they only work the open ground, which is slower. The kingdom builds one farm for every 3 farmers when it has the wood, and a blacksmith builds it. (No drawing yet: placeholder.)",
+"Guessed": true
+},
+{
 "Name": "Torch",
 "Kind": "Light",
 "Sprite": "",
@@ -95,10 +112,10 @@
 "Hearts": 6,
 "Wood cost": 0,
 "Gold cost": 0,
-"Build seconds": 0,
+"Build seconds": 6,
 "Icon": "flame",
 "Color": "#ffb04a",
-"Description": "Gives light at dusk and at night. Kingdoms put torches at the corners of the castle, in front of the theater and the coliseum, and next to some houses. (No drawing yet: placeholder flame.)",
+"Description": "Built by a blacksmith. Gives light (the add/color-dodge layer mode) at dusk and at night. Kingdoms put torches at the corners of the castle, in front of the theater and the coliseum, and next to some houses. (No drawing yet: placeholder flame.)",
 "Guessed": true
 },
 {

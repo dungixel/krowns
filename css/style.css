@@ -92,3 +92,4 @@ button { font: inherit; color: inherit; }
   #topright { top: 62px; }
   #pop { display: none; }
 }
+#loglist a.un { font-weight: 700; cursor: pointer; } #loglist a.un:hover { text-decoration: underline; }

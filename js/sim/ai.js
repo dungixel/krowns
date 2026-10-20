@@ -89,6 +89,7 @@
   function nextHour(W) { return sim.clockAt(W.t).hour; }
 
   function food(W, u) {
+    if ((u.pocket.food || 0) >= 1) return { kind: 'pocket', struct: { id: -1 } };
     const f = W.families.get(u.family);
     if (f && f.stock >= 1 && houseOf(W, u)) return { kind: 'house', struct: houseOf(W, u), fam: f };
     const k = kOf(W, u);
@@ -135,6 +136,7 @@
 
   function workTask(W, u, k) {
     const job = u.job;
+    if (k && job !== 'king' && job !== 'prince' && sim.pocketCount(u) > 0 && chestOf(W, k)) return { type: 'deposit', prio: 55 };
     if (W.t < (u.blockedUntil || 0) && job !== 'villager' && job !== 'king') return { type: 'wander', prio: 10 };
     if (!k) {
       if (job === 'hunter' && u.hunger < 7) return { type: 'hunt', prio: 50, work: true, own: true };
@@ -143,8 +145,6 @@
     switch (job) {
       case 'villager': {
         if (!u.learn.job) u.learn.job = pickJobToLearn(W, u, k);
-        const helping = [...W.structures.values()].some((s) => s.kingdom === k.id && s.building) && W.rng() < 0.5;
-        if (helping) return { type: 'build', prio: 45, work: true };
         return { type: 'learn', prio: 30 };
       }
       case 'farmer': return { type: 'farm', prio: 50, work: true };
@@ -273,6 +273,13 @@
       const fd = food(W, u);
       if (!fd) { u.forageAfter = 0; return false; }
       t.src = fd.kind; t.struct = fd.struct.id; t.k = fd.k ? fd.k.id : 0; t.fam = fd.fam ? fd.fam.id : 0;
+    }
+    if (t.src === 'pocket') {
+      if ((u.pocket.food || 0) < 1) return false;
+      u.pocket.food = K.util.one(u.pocket.food - 1);
+      u.hunger = Math.min(sim.hungerMax(), u.hunger + S('hunger.perFood', 3));
+      maybeSay(W, u, 'eat', 0.6, 0); u.cheerUntil = W.t + 0.5;
+      return false;
     }
     const s = W.structures.get(t.struct);
     if (!s) return false;
