@@ -31,12 +31,12 @@ Optional: with a Notion integration token stored as a GitHub secret, a GitHub Ac
 
 ## What lives in which Notion table
 
-* **Jobs** - every job (and the villager with no job): class, damage, range, sprite, tint, icon, color, ambition, evil/good limits, how many per kingdom.
-* **Settings** - every number of the world (time, hunger, energy, hearts, fights, kingdoms, wars, plays...). Each row says what it does.
+* **Jobs** - every job (and the villager with no job): class, damage, range, sprite, tint, icon, color, ambition, evil/good limits, how many per kingdom. Tick **Not available yet** to hide a job from the game (queen, princess and innkeeper are hidden for now).
+* **Settings** - every number of the world (time, hunger, energy, hearts, fights, kingdoms, wars, plays, learning days, evil perks, torches, walls, farms, pockets, shadows...). Each row says what it does.
 * **Colors** - interface colors, name colors, shadow purple, day/night light.
 * **Animations** - how many pixels things stretch, hop or sway, and how fast.
-* **Creatures** - animals and monsters.
-* **Structures and items** - castle, houses, theater, coliseum, chest, trees, food, wood, gold.
+* **Creatures** - animals and monsters (**Sprite faces** says which way the drawing looks, so the pig walks the right way).
+* **Structures and items** - castle, houses, theater, coliseum, chest, farm, wall, torch (kind *Light*), trees, food, wood, gold. Nothing is built without a blacksmith.
 * **Speech** - every sentence units can say (with `{placeholders}`).
 * **Rules** (page) - the rules in plain English, with every guess marked.
 
