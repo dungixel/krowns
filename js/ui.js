@@ -63,7 +63,7 @@
     const txt = 'Day ' + c.day + ' · ' + c.text;
     if (txt !== lastClock) {
       lastClock = txt;
-      $('clock').innerHTML = '<span class="ci">' + K.icon(night ? 'moon' : 'sun', 18) + '</span><b>Day ' + c.day + '</b><span class="tm">' + c.text + '</span>';
+      $('clock').innerHTML = '<span class="ci">' + K.icon(night ? 'moon' : 'sun', 18) + '</span><b>Day ' + c.day + '</b><span class="tm">' + c.text.replace(/\d/g, '<i>$&</i>') + '</span>';
     }
     $('pop').innerHTML = ic('users', 15) + ' ' + W.units.length + (W.kingdoms.size ? ' &nbsp;' + ic('crown', 15, K.C('icon.kingdom')) + ' ' + W.kingdoms.size : '');
     // log

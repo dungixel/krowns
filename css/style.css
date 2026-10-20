@@ -15,7 +15,8 @@ button { font: inherit; color: inherit; }
 #clock { display: flex; align-items: center; gap: 8px; padding: 9px 14px; font-size: 15px; }
 #clock .ci { color: var(--accent); display: inline-flex; }
 #clock b { font-weight: 700; }
-#clock .tm { font-weight: 700; font-variant-numeric: tabular-nums; background: var(--line); border-radius: 9px; padding: 2px 8px; }
+#clock .tm i { display: inline-block; width: 0.72em; text-align: center; font-style: normal; }
+#clock .tm { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; background: var(--line); border-radius: 9px; padding: 2px 8px; }
 #pop { padding: 9px 13px; font-size: 14px; color: var(--soft); display: flex; align-items: center; gap: 4px; }
 #topright { position: fixed; right: 12px; top: 12px; display: flex; gap: 6px; padding: 6px; align-items: center; max-width: calc(100vw - 24px); flex-wrap: wrap; justify-content: flex-end; }
 #topright button { border: 0; background: transparent; width: 38px; height: 38px; border-radius: 11px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: var(--text); font-weight: 700; font-size: 13px; }
