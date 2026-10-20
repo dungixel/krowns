@@ -146,6 +146,26 @@
 
   // draws `img` (16x16 or any size) with its bottom edge at world y = wyBottom, left edge at world x = wx.
   // `extra` (any fractional number) stretches the middle row, so the sprite grows smoothly upward; `crop` cuts rows off the top.
+  // the row that stretches when a unit breathes: the chest/belly (about two thirds down the drawing), never the face
+  const chestRows = new WeakMap();
+  function chestRow(img) {
+    if (chestRows.has(img)) return chestRows.get(img);
+    let row = Math.floor(img.height / 2);
+    try {
+      const c = mkCanvas(img.width, img.height), g = c.getContext('2d');
+      g.drawImage(img, 0, 0);
+      const d = g.getImageData(0, 0, img.width, img.height).data;
+      let top = -1, bot = -1;
+      for (let y = 0; y < img.height; y++) {
+        let any = false;
+        for (let x = 0; x < img.width && !any; x++) any = d[(y * img.width + x) * 4 + 3] > 0;
+        if (any) { if (top < 0) top = y; bot = y; }
+      }
+      if (top >= 0) row = Math.min(bot - 1, top + Math.round((bot - top) * 0.68));
+    } catch (e) { /* keep the middle row */ }
+    chestRows.set(img, row);
+    return row;
+  }
   function blit(img, wx, wyBottom, o) {
     o = o || {};
     const s = V.S, iw = img.width, ih = img.height;
@@ -158,7 +178,7 @@
     const x0 = o.flip ? 0 : dx;
     if (Math.abs(extra) < 0.002) ctx.drawImage(img, 0, crop, iw, rows, x0, Math.round(top), iw * s, Math.round(top + rows * s) - Math.round(top));
     else {
-      const m = crop + Math.floor(rows / 2);
+      const m = Math.max(crop, Math.min(ih - 2, chestRow(img)));
       const topRows = m - crop;
       const y0 = Math.round(top), y1 = Math.round(top + topRows * s), y2 = Math.round(top + (topRows + 1 + extra) * s), y3 = Math.round(top + totalH * s);
       if (topRows > 0 && y1 > y0) ctx.drawImage(img, 0, crop, iw, topRows, x0, y0, iw * s, y1 - y0);
