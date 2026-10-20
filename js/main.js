@@ -158,11 +158,11 @@
     if (!paused && !ended) holdAlpha = Math.min(1, acc / TICK_MS);
     view.draw(now, holdAlpha);
     // keep the on-screen text readable when the world turns dark
-    const dk = view.light.dark > 0.55 ? 1 : 0;
+    const dk = view.light.dark > 0.55 ? 2 : view.light.dark > 0.1 ? 1 : 0;   // day, twilight, night
     if (dk !== lastDark) {
       lastDark = dk;
-      gameEl.style.setProperty('--hud-ink', dk ? 'rgb(236,240,252)' : '');
-      gameEl.style.setProperty('--hud-soft', dk ? 'rgb(176,186,212)' : '');
+      gameEl.style.setProperty('--hud-ink', dk === 2 ? 'rgb(236,240,252)' : dk === 1 ? 'rgb(30,30,30)' : '');
+      gameEl.style.setProperty('--hud-soft', dk === 2 ? 'rgb(176,186,212)' : dk === 1 ? 'rgb(62,58,64)' : '');
     }
   }
 })();
