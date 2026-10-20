@@ -10,7 +10,7 @@ const D = globalThis.Krowns.data;
 
 const names = new Set(['heart', 'bolt', 'meat', 'yin-yang', 'barbell', 'hourglass', 'crown', 'users', 'flame', 'droplet', 'zzz', 'x', 'player-play', 'player-pause',
   'player-track-next', 'refresh', 'zoom-in', 'zoom-out', 'history', 'list-details', 'volume', 'volume-off', 'dice-5', 'current-location', 'tools-kitchen-2', 'apple',
-  'moon', 'sun', 'clock', 'focus-2', 'info-circle', 'chevron-down', 'chevron-up', 'coins', 'wood', 'wheat', 'grave-2', 'skull', 'sword', 'heartbeat', 'user', 'help-circle']);
+  'moon', 'sun', 'clock', 'focus-2', 'info-circle', 'chevron-down', 'chevron-up', 'coins', 'wood', 'wheat', 'grave-2', 'skull', 'sword', 'heartbeat', 'user', 'help-circle', 'backpack']);
 for (const j of Object.values(D.jobs)) if (j.icon) names.add(j.icon);
 for (const s of Object.values(D.structures)) if (s.icon) names.add(s.icon);
 

@@ -119,6 +119,7 @@
     u.hunger = o.hunger !== undefined ? o.hunger : hungerMax() * rng.range(0.6, 1);
     u.deathAge = lifespanSeconds(u) * rng.range(1, 1.15);
     W.units.push(u); W.byId.set(u.id, u);
+    (W.nameInfo = W.nameInfo || new Map()).set(u.name, { id: u.id, color: u.color });
     sim.placeEntity(W, u, o.x, o.y);
     // everyone starts as their own family
     sim.newFamily(W, u);

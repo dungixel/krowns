@@ -1473,7 +1473,7 @@
 },
 {
 "Key": "torch.glowStrength",
-"Value": "1",
+"Value": "0.9",
 "Unit": "0-1",
 "Group": "Environment",
 "Description": "How bright torch light is when it is dark (1 = lit ground looks like daytime).",

@@ -468,8 +468,8 @@
         const cx = sxOf(it.px + 8), cy = syOf(it.py + 9), r = rad * fl * s;
         if (cx + r < 0 || cy + r < 0 || cx - r > v.w || cy - r > v.h) continue;
         const gr = lg.createRadialGradient(cx, cy, 0, cx, cy, r);
-        gr.addColorStop(0, 'rgba(255,222,176,' + Math.min(1, 1.05 * strength) + ')'); gr.addColorStop(0.35, 'rgba(255,214,164,' + Math.min(1, 0.7 * strength) + ')');
-        gr.addColorStop(0.7, 'rgba(250,200,150,' + Math.min(1, 0.3 * strength) + ')'); gr.addColorStop(1, 'rgba(245,190,140,0)');
+        gr.addColorStop(0, 'rgba(255,208,150,' + Math.min(1, 1.05 * strength) + ')'); gr.addColorStop(0.35, 'rgba(255,196,134,' + Math.min(1, 0.7 * strength) + ')');
+        gr.addColorStop(0.7, 'rgba(250,182,118,' + Math.min(1, 0.3 * strength) + ')'); gr.addColorStop(1, 'rgba(245,172,105,0)');
         lg.fillStyle = gr; lg.fillRect(cx - r, cy - r, r * 2, r * 2);
       }
       ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(lcv, 0, 0); ctx.globalCompositeOperation = 'source-over';

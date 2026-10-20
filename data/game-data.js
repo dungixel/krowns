@@ -1,7 +1,7 @@
 // GENERATED from the Notion page "krowns 1.0" by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-20T13:57:02.679Z",
+ "generatedAt": "2026-10-20T13:57:21.196Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -264,7 +264,7 @@ globalThis.Krowns.data = {
   "unit.thinkPauseMax": 3.5,
   "torch.housesPerTorch": 3,
   "torch.lightRadiusTiles": 6,
-  "torch.glowStrength": 1,
+  "torch.glowStrength": 0.9,
   "shadow.lean": 0.9,
   "shadow.length": 0.4,
   "shadow.nightOpacity": 0.35,

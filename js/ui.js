@@ -70,7 +70,7 @@
     if (ui.logCount !== W.log.length || ui.logLast !== (W.log[W.log.length - 1] || {}).t) {
       ui.logCount = W.log.length; ui.logLast = (W.log[W.log.length - 1] || {}).t;
       const list = W.log.slice(-40).reverse();
-      $('loglist').innerHTML = list.map((l) => '<li data-ids="' + l.ids.join(',') + '"><b>D' + l.day + ' ' + l.time + '</b> ' + logText(l) + '</li>').join('');
+      $('loglist').innerHTML = list.map((l) => '<li data-ids="' + l.ids.join(',') + '"><b>D' + l.day + ' ' + l.time + '</b> ' + logText(l, W) + '</li>').join('');
     }
     ui.refreshPanel(false);
   };
@@ -118,16 +118,13 @@
     }
     return 'hsl(' + Math.round(h) + ',' + Math.round(Math.min(100, s * 100 * 1.15 + 15)) + '%,' + 40 + '%)';
   }
-  function logText(l) {
-    let html = esc(l.text);
-    const who = (l.who || []).slice().sort((a, b) => b.name.length - a.name.length);
-    const done = new Set();
-    for (const w of who) {
-      if (done.has(w.name)) continue; done.add(w.name);
-      const re = new RegExp('\\b' + w.name + '\\b', 'g');
-      html = html.replace(re, '<a class="un" data-uid="' + w.id + '" style="color:' + deepen(K.C('name.pastel.' + w.color, '#9aa')) + '">' + w.name + '</a>');
-    }
-    return html;
+  function logText(l, W) {
+    const info = W && W.nameInfo;
+    return esc(l.text).replace(/\b[A-Z][a-z]+\b/g, (m) => {
+      const w = (l.who || []).find((x) => x.name === m) || (info && info.get(m));
+      if (!w) return m;
+      return '<a class="un" data-uid="' + w.id + '" style="color:' + deepen(K.C('name.pastel.' + w.color, '#9aa')) + '">' + m + '</a>';
+    });
   }
   // ------------------------------------------------------------------ side panel
   ui.select = function (hit) {
@@ -178,6 +175,7 @@
       '<div class="now">' + esc(taskText(u)) + (u.status ? ' · <b style="color:' + K.C('icon.status.' + u.status) + '">' + (u.status === 'burn' ? 'burning' : 'poisoned') + '</b>' : '') + '</div>' +
       bar(u.hearts, sim.maxHearts(u), K.C('bar.hearts'), 'heart') + bar(u.energy, sim.maxEnergy(u), K.C('bar.energy'), 'bolt') + bar(u.hunger, sim.hungerMax(), K.C('bar.hunger'), 'meat') + good(u.evilGood) +
       '<div class="grid2"><div>' + ic('barbell', 14, K.C('icon.strength')) + ' Strength <b>' + fmt(u.iv.strength) + '</b></div><div>' + ic('hourglass', 14, K.C('icon.longevity')) + ' Age <b>' + fmt(age) + '</b> / ' + fmt(u.iv.longevity) + ' days</div></div>' +
+      '<div class="sub">' + ic('backpack', 14, '#8a7f9a') + ' Pocket: ' + (sim.pocketCount(u) ? Object.keys(u.pocket).filter((x) => u.pocket[x] > 0).map((x) => '<b>' + fmt(u.pocket[x]) + '</b> ' + x).join(', ') : '<span class="dim">empty</span>') + ' <span class="dim">(room for ' + fmt(S('pocket.capacity', 6)) + ')</span></div>' +
       '<h3>Born with (IVs)</h3><div class="sub">Hearts <b>' + fmt(u.iv.hearts) + '</b> · Energy <b>' + fmt(u.iv.energy) + '</b> · Evil/good <b>' + fmt(u.iv.evilgood) + '</b> · Strength <b>' + fmt(u.iv.strength) + '</b> · Longevity <b>' + fmt(u.iv.longevity) + '</b></div>' +
       '<h3>Trained (EVs)</h3><div class="sub">' + (evs || '<span class="dim">nothing yet</span>') + '</div>' +
       (u.learn.job && u.job === 'villager' ? '<div class="sub">Wants to become ' + (/^[aeiou]/i.test(K.job(u.learn.job).name) ? 'an' : 'a') + ' <b>' + esc(K.job(u.learn.job).name.toLowerCase()) + '</b> · ' + Math.round(clamp(u.learn.progress / sim.learnNeeded(), 0, 1) * 100) + '%</div>' : '') +
