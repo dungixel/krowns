@@ -1,7 +1,7 @@
 // GENERATED from the Notion page "krowns 1.0" by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-20T13:12:46.250Z",
+ "generatedAt": "2026-10-20T13:28:25.408Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -553,25 +553,6 @@ globalThis.Krowns.data = {
    "guessed": false,
    "description": "Sometimes joins the theater plays. Stays near the king and helps him make sure the kingdom is running well. Likes to hear about rumors and tells the king."
   },
-  "innkeeper": {
-   "id": "innkeeper",
-   "name": "Innkeeper",
-   "cls": "Contributor",
-   "dps": 0.5,
-   "range": 1,
-   "sprite": "innkeeper",
-   "tint": "",
-   "icon": "beer",
-   "color": "#ffd9a3",
-   "ambition": 1,
-   "minGood": -10,
-   "maxGood": 10,
-   "maxPerKingdom": 1,
-   "work": "serve",
-   "variantOf": "",
-   "guessed": true,
-   "description": "Stays next to the chest and serves food. Everyone who eats next to the innkeeper gets a bit more out of the meal and hears the latest rumors."
-  },
   "king": {
    "id": "king",
    "name": "King",
@@ -591,25 +572,6 @@ globalThis.Krowns.data = {
    "guessed": false,
    "description": "The king from a kingdom is the one making the decisions in their kingdom, not their spouse. When he dies, the prince becomes the new king."
   },
-  "queen": {
-   "id": "queen",
-   "name": "Queen",
-   "cls": "Royalty",
-   "dps": 1,
-   "range": 1,
-   "sprite": "queen",
-   "tint": "",
-   "icon": "crown",
-   "color": "#ffe27a",
-   "ambition": 0,
-   "minGood": -10,
-   "maxGood": 10,
-   "maxPerKingdom": 1,
-   "work": "rule",
-   "variantOf": "king",
-   "guessed": true,
-   "description": "Looks different, rules the same. Units are genderless, so a new ruler randomly looks like a king or a queen."
-  },
   "prince": {
    "id": "prince",
    "name": "Prince",
@@ -628,25 +590,6 @@ globalThis.Krowns.data = {
    "variantOf": "",
    "guessed": false,
    "description": "The one inheriting the kingdom. When the king dies, the prince transforms into the new king."
-  },
-  "princess": {
-   "id": "princess",
-   "name": "Princess",
-   "cls": "Royalty",
-   "dps": 0.5,
-   "range": 1,
-   "sprite": "princess",
-   "tint": "",
-   "icon": "crown",
-   "color": "#ffeaa0",
-   "ambition": 0,
-   "minGood": -10,
-   "maxGood": 10,
-   "maxPerKingdom": 1,
-   "work": "heir",
-   "variantOf": "prince",
-   "guessed": true,
-   "description": "Looks different, inherits the same. A new heir randomly looks like a prince or a princess."
   }
  },
  "creatures": {

@@ -248,7 +248,7 @@
     heir.task = null;
     k.king = heir.id;
     sim.setJob(W, heir, 'king', true);
-    sim.log(W, heir.name + ' is the new ' + (heir.female ? 'queen' : 'king') + ' of ' + k.name + '.', [heir.id]);
+    sim.log(W, heir.name + ' is the new ' + 'king' + ' of ' + k.name + '.', [heir.id]);
     sim.say(W, heir, K.line(W.rng, 'proclaim'), 2);
     // a new prince: the ruler's oldest adult child
     const kids = heir.children.map((id) => W.byId.get(id)).filter((c) => c && !c.dead);

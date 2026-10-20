@@ -31,6 +31,7 @@ for (const r of read('colors.json')) {
 // jobs
 out.jobs = {};
 for (const r of read('jobs.json')) {
+  if (r.Available === false) continue;          // not in the game yet (Notion: Available unchecked)
   const id = slug(r.Name);
   out.jobs[id] = {
     id, name: r.Name, cls: r.Class, dps: num(r['Damage per second (in hearts)']), range: num(r['Range (tiles)']) || 1,

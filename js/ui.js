@@ -183,7 +183,7 @@
       if (stock.length) html += '<div class="sub">Families also keep ' + fmt(stock.reduce((a, b) => a + b, 0)) + ' food at home.</div>';
     } else if (k) {
       const king = W.byId.get(k.king);
-      html += '<div class="sub">' + (king ? ic('crown', 14, K.C('icon.kingdom')) + ' ' + (king.female ? 'Queen' : 'King') + ' ' + link(W, king.id) : '') + '</div>';
+      html += '<div class="sub">' + (king ? ic('crown', 14, K.C('icon.kingdom')) + ' ' + 'King' + ' ' + link(W, king.id) : '') + '</div>';
       if (s.type === 'castle') {
         html += '<div class="sub">' + ic('users', 14) + ' Citizens <b>' + k.citizens.size + '</b> · border radius <b>' + fmt(k.radius) + '</b> tiles</div>';
         html += '<h3>Chest</h3><div class="sub"><a data-struct="' + k.chestId + '">Food ' + fmt(k.chest.food) + ' · Wood ' + fmt(k.chest.wood) + ' · Gold ' + fmt(k.chest.gold) + '</a></div>';

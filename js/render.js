@@ -14,7 +14,7 @@
   }
   R.loadAssets = async function (base, version) {
     const v = version ? '?v=' + version : '';
-    const names = ['archer', 'axeman', 'bard', 'base', 'bat', 'blacksmith', 'chest', 'farmer', 'innkeeper', 'joker', 'king', 'knight', 'mage', 'merchant', 'pig', 'prince', 'princess', 'queen', 'rat', 'slime', 'snake', 'spearman', 'tree', 'witch'];
+    const names = ['archer', 'axeman', 'bard', 'base', 'bat', 'blacksmith', 'chest', 'farmer', 'joker', 'king', 'knight', 'mage', 'merchant', 'pig', 'prince', 'rat', 'slime', 'snake', 'spearman', 'tree', 'witch'];
     await Promise.all(names.map(async (n) => { images[n] = await loadImage(base + 'assets/sprites/' + n + '.png' + v); }));
     images.grassDetail = await loadImage(base + 'assets/world/grass-detail.png' + v);
     images.grassMap = await loadImage(base + 'assets/world/grass-map.png' + v);
