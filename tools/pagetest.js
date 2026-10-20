@@ -27,6 +27,7 @@ const dom = new JSDOM(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), {
       return new Proxy({}, {
         get(t, p) {
           if (p === 'measureText') return () => ({ width: 10 });
+          if (p === 'createRadialGradient' || p === 'createLinearGradient') return () => ({ addColorStop() {} });
           if (p in t) return t[p];
           return (...a) => { if (p in calls) calls[p]++; };
         },

@@ -3,7 +3,7 @@
 // seconds of cooldown). Nothing in here touches the screen.
 (function () {
   const K = (globalThis.Krowns = globalThis.Krowns || {});
-  const { makeRng, clamp, cheb, dist, sign, cap } = K.util;
+  const { makeRng, clamp, cheb, dist, sign, cap, hourOf } = K.util;
   const WD = K.words;
   const ROLES = WD.ROLES;
   const ROLE_KEYS = WD.ROLE_KEYS;
@@ -49,6 +49,7 @@
     return true;
   }
   function say(w, u, key, vars, force) {
+    if (u.sleep && key !== 'dream') return false;   // sleepers only murmur in their dreams
     return sayText(w, u, WD.line(key, w.rng, vars), force);
   }
   // Announce a decision once, when the goal changes.
@@ -159,6 +160,7 @@
       fight: null, flee: null, learning: null, visit: null, joining: null, wanderTo: null, mediate: null,
       memory: {}, partner: null, exes: [], children: [], parents: parents ? [parents[0].id, parents[1].id] : [],
       mourning: null, forgave: [], log: [], spells: new Set(),
+      energy: parents ? 90 : rng.range(85, 100), sleep: null, post: null,
       noJoin: {}, roleSince: -999, alive: true, born: w.time, lastChild: -999, cause: null, diedAt: null,
     };
     u.maxHearts = u.iv.hearts; u.hearts = u.maxHearts;
@@ -300,6 +302,143 @@
   }
   const cost = (u, seconds) => { u.cd = Math.max(0, seconds - 1); };
 
+  // ------------------------------------------------------------ night and day
+  // Everybody sleeps through the night. A few swordsmen keep watch, and some kingdoms at war
+  // march in the dark against enemies who are asleep.
+  const fatigue = (u) => (u.energy >= 38 ? 1 : 0.45 + 0.55 * u.energy / 38);   // 1 = fights at full strength
+  const isSentry = (k, u) => !!(k && k.watch && k.watch.has(u.id));
+  const isRaider = (k, u) => !!(k && k.raid && k.raid.ids.has(u.id) && u.energy >= 14);
+  const isSoldier = (u) => u.role === 'swordsman' || u.role === 'mage';
+
+  function wake(w, u, why) {
+    if (!u.sleep) return;
+    u.sleep = null; u.goalKey = '';
+    if (why === 'hit' || why === 'alarm') u.cd = Math.max(u.cd, 1);   // groggy for a moment
+    w.events.push({ type: 'wake', id: u.id });
+  }
+  function fallAsleep(w, u) {
+    const h = hourOf(w.time);
+    u.sleep = { since: w.time, nap: h >= 5 && h < 19 };
+    u.fight = null; u.flee = null; u.visit = null; u.learning = null; u.wanderTo = null; u.mediate = null;
+    u.goalKey = 'sleep'; u.cd = 0;
+  }
+  // Called every second for a sleeper. Returns true while the unit stays asleep.
+  function sleepTick(w, u) {
+    const s = u.sleep, h = hourOf(w.time), k = kingdomOf(w, u);
+    // an enemy creeping close may wake a sleeper (the more rested, the lighter the sleep)
+    if (k && k.wars.size) {
+      for (const o of w.alive) {
+        if (o.kingdom == null || !k.wars.has(o.kingdom) || o.sleep) continue;
+        if (cheb(u.x, u.y, o.x, o.y) <= 3 && w.rng.chance(0.3 * (0.35 + 0.65 * u.energy / 100))) { wake(w, u, 'noise'); say(w, u, 'woken', null, true); return false; }
+      }
+    }
+    if (u.hunger <= 1) { wake(w, u, 'hunger'); return false; }
+    const day = h >= 5 && h < 19;
+    const rested = (h >= 5 && u.energy >= 85) || (h >= 6 && u.energy >= 70) || h >= 8;   // sleepyheads sleep in
+    if (day && (s.nap ? u.energy >= 32 : rested)) { wake(w, u, 'morning'); return false; }
+    if (w.rng.chance(0.004)) say(w, u, 'dream', null, true);
+    return true;
+  }
+  function raiseAlarm(w, k, sentry) {
+    const fresh = w.time >= (k.alarmUntil || 0);
+    k.alarmUntil = w.time + 30;
+    if (!fresh) return;
+    say(w, sentry, 'alarm', null, true);
+    chron(w, `The sentries of the Kingdom of {k:${k.id}} sounded the alarm!`);
+    w.events.push({ type: 'alarm', k: k.id, x: sentry.x, y: sentry.y });
+    for (const id of k.members) {
+      const m = getU(w, id);
+      if (m && m.alive && m.sleep && cheb(m.x, m.y, k.cx, k.cy) <= 22) wake(w, m, 'alarm');
+    }
+  }
+  function sentryPost(w, k, u) {
+    let ang = (u.id * 2.399) % (Math.PI * 2), best = null, bs = 1e9;
+    for (const o of w.kingdoms.values()) {
+      if (o === k) continue;
+      const score = (k.wars.has(o.id) ? -200 : 0) + (k.rel.get(o.id) || 0) + cheb(k.cx, k.cy, o.cx, o.cy) * 0.5;
+      if (score < bs) { bs = score; best = o; }
+    }
+    if (best) ang = Math.atan2(best.cy - k.cy, best.cx - k.cx) + ((u.id % 5) - 2) * 0.45;   // face the enemy
+    const r = 5 + (u.id % 2);
+    return [clamp(Math.round(k.cx + Math.cos(ang) * r), 1, w.w - 2), clamp(Math.round(k.cy + Math.sin(ang) * r), 1, w.h - 2)];
+  }
+  function actSentry(w, u, k) {
+    goal(w, u, 'watch', 'watch');
+    if (!u.post) u.post = sentryPost(w, k, u);
+    if (cheb(u.x, u.y, u.post[0], u.post[1]) > 1) {
+      if (!stepToward(w, u, u.post[0], u.post[1])) u.post = null;   // blocked: choose another spot next time
+      cost(u, 1); return true;
+    }
+    // keen-eyed souls notice sooner, and tired ones less
+    const alert = (0.04 + 0.16 * u.iv.hunting / 31) * (0.4 + 0.6 * fatigue(u));
+    for (const o of w.alive) {
+      if (o.kingdom == null || !k.wars.has(o.kingdom)) continue;
+      const d = dist(u.x, u.y, o.x, o.y);
+      if (d <= 3 || (d <= 10 && w.rng.chance(alert))) { raiseAlarm(w, k, u); break; }
+    }
+    cost(u, 1);
+    return true;
+  }
+  // Bedtime, night watch and collapsing from tiredness. True when it used the unit's turn.
+  function actBed(w, u) {
+    const k = kingdomOf(w, u);
+    const h = hourOf(w.time);
+    if (k && w.time < (k.alarmUntil || 0)) return false;           // the alarm is up: nobody goes to bed
+    if (isSentry(k, u) && (h >= 19.5 || h < 6)) return actSentry(w, u, k);
+    if (isRaider(k, u)) return false;
+    if (u.energy < 8) { fallAsleep(w, u); return true; }
+    if (u.energy >= 98) return false;
+    const bed = 20.5 + ((u.id * 7) % 5) * 0.25 - (u.energy < 35 ? 1 : 0);   // about 20:30 to 21:30, earlier when tired
+    if (!(h >= bed || h < 5)) return false;
+    if (k && h >= bed && h < 23) {                                   // walk home first when it is within reach
+      const d = cheb(u.x, u.y, k.cx, k.cy);
+      if (d > 5 && d <= 22 && stepToward(w, u, k.cx, k.cy)) { goal(w, u, 'tobed', null); cost(u, 1); return true; }
+    }
+    if (w.rng.chance(0.25)) say(w, u, 'sleepy');
+    fallAsleep(w, u);
+    return true;
+  }
+  // Each evening (from 19:30) a kingdom decides who keeps watch and whether to strike while its enemy sleeps.
+  function nightPlan(w, k) {
+    const h = hourOf(w.time);
+    if (h >= 6 && h < 19.5) {                                        // daylight: the night's plans are over
+      if (k.watch || k.raid || k.planned) {
+        for (const id of k.members) { const m = getU(w, id); if (m) m.post = null; }
+        k.watch = null; k.raid = null; k.planned = false;
+      }
+      return;
+    }
+    if (k.raid && !k.wars.has(k.raid.target)) k.raid = null;
+    if (k.planned || !(h >= 19.5 || h < 1.5)) return;
+    k.planned = true;
+    k.watch = new Set();
+    if (!k.wars.size) return;
+    const n = k.members.size;
+    const awake = [];
+    for (const id of k.members) {
+      const m = getU(w, id);
+      if (m && m.alive && !m.sleep && isSoldier(m) && m.energy >= 35 && m.hearts >= m.maxHearts * 0.5) awake.push(m);
+    }
+    awake.sort((a, b) => (b.energy + b.iv.rest) - (a.energy + a.iv.rest));
+    const home = awake.filter((m) => cheb(m.x, m.y, k.cx, k.cy) <= 22);
+    for (const m of home.slice(0, clamp(Math.ceil(n / 7), 1, 4))) k.watch.add(m.id);
+    // a night raid: swordsmen who are not on watch march on the nearest enemy
+    const crew = awake.filter((m) => !k.watch.has(m.id) && m.energy >= 42);
+    let target = null, td = 1e9;
+    for (const id of k.wars) { const o = getK(w, id); if (!o) continue; const d = cheb(k.cx, k.cy, o.cx, o.cy); if (d < td) { td = d; target = o; } }
+    if (!target || td > 45 || crew.length < 1) return;
+    let theirs = 0;
+    for (const id of target.members) { const m = getU(w, id); if (m && m.alive && isSoldier(m)) theirs++; }
+    const ruler = getU(w, k.ruler);
+    const p = (0.35 + 0.45 * (ruler ? ruler.iv.courage / 31 : 0.3)) * clamp(crew.length / (theirs + 1), 0.4, 1.5);
+    if (!w.rng.chance(p)) return;
+    k.raid = { target: target.id, ids: new Set(crew.map((m) => m.id)) };
+    chron(w, `The Kingdom of {k:${k.id}} marches on the Kingdom of {k:${target.id}} under cover of night.`);
+    if (ruler) say(w, ruler, 'raid', null, true);
+    w.events.push({ type: 'raid', a: k.id, b: target.id });
+    for (const m of crew) { m.fight = null; m.wanderTo = null; m.visit = null; }
+  }
+
   // ------------------------------------------------------------ damage and death
   function damage(w, u, amount, cause, by) {
     if (!u.alive) return;
@@ -361,6 +500,7 @@
 
   // Something hostile happened to `t` caused by `a`.
   function onHit(w, t, a, dmg) {
+    if (t.sleep) { wake(w, t, 'hit'); say(w, t, 'woken', null, true); }
     const m = mem(t, a.id);
     m.aff = clamp(m.aff - (18 + dmg * 5), -100, 100); m.hurt = true;
     t.anger = Math.min(100, t.anger + (14 + dmg * 9) * (0.4 + 1.2 * t.iv.temperament / 31));
@@ -379,7 +519,16 @@
 
   function attack(w, a, t) {
     if (a.status.burn > 0) { damage(w, a, 1, 'burn', a.status.burnBy); if (!a.alive) return; }
-    const dmg = meleeDamage(a);
+    const f = fatigue(a);
+    a.energy = Math.max(0, a.energy - 0.4);
+    if (f < 1 && w.rng.chance((1 - f) * 0.8)) {                       // too tired: the blow goes wide
+      if (w.rng.chance(0.3)) say(w, a, 'tired_fight');
+      cost(a, 2);
+      return;
+    }
+    let dmg = meleeDamage(a) * f;
+    if (t.sleep) dmg *= 1.5;                                          // a sleeper cannot defend
+    dmg = clamp(Math.round(dmg * 2) / 2, 0.5, 5);
     damage(w, t, dmg, 'combat', a.id);
     train(w, a, 'sword', 0.35);
     cost(a, 2);
@@ -389,6 +538,10 @@
 
   function castSpell(w, u, spell, t) {
     if (u.status.burn > 0) { damage(w, u, 1, 'burn', u.status.burnBy); if (!u.alive) return; }
+    if (spell !== 'heal') {
+      const f = fatigue(u);
+      if (f < 1 && w.rng.chance((1 - f) * 0.8)) { cost(u, 3); return; }   // too tired: the spell fizzles
+    }
     train(w, u, 'magic', 0.8);
     w.events.push({ type: 'spell', spell, x: t.x, y: t.y, from: u.id });
     if (spell === 'heal') {
@@ -592,12 +745,13 @@
       }
       if (w.time % 5 === k.id % 5) refreshNeeds(w, k);
       if (w.time % 10 === k.id % 10) relations(w, k);
+      nightPlan(w, k);
       // sieges: enemies sit in the capital and nobody defends it
       if (k.wars.size) {
         let enemies = 0, defenders = 0;
         for (const u of w.alive) {
           const d = cheb(u.x, u.y, k.cx, k.cy);
-          if (u.kingdom === k.id && d <= 7) defenders++;
+          if (u.kingdom === k.id && d <= 7 && !u.sleep) defenders++;
           else if (u.kingdom != null && k.wars.has(u.kingdom) && d <= 4) enemies++;
         }
         if (enemies >= 2 && defenders === 0) k.siege++; else k.siege = Math.max(0, k.siege - 1);
@@ -673,7 +827,10 @@
     }
     if (u.status.burn > 0) u.status.burn--;
     if (u.status.confused > 0) u.status.confused--;
-    if (w.time % 10 === 0) u.hunger = Math.max(0, u.hunger - 0.5);
+    if (w.time % 10 === 0) u.hunger = Math.max(0, u.hunger - (u.sleep ? 0.25 : 0.5));
+    // energy: awake souls tire, sleepers recover. A high 'rest' tires slower and recovers faster.
+    if (u.sleep) u.energy = Math.min(100, u.energy + 0.7 + 0.8 * u.iv.rest / 31);
+    else u.energy = Math.max(0, u.energy - (0.55 - 0.22 * u.iv.rest / 31));
     if (u.hunger <= 0) {
       u.starve++;
       if (u.starve % 2 === 0) damage(w, u, 1, 'hunger');
@@ -684,6 +841,7 @@
     if (u.hunger <= 0 && u.anger < 60) u.anger += 2; // starving makes everyone short-tempered
     if ((w.time + u.id) % 30 === 0) slowUpdate(w, u);
     if (!u.alive) return;
+    if (u.sleep && sleepTick(w, u)) return;
     if (u.cd > 0) { u.cd--; return; }
     act(w, u);
   }
@@ -787,6 +945,7 @@
     if (actIntervene(w, u)) return;
     if (actWar(w, u)) return;
     if (u.role === 'mage' && actHealAlly(w, u)) return;
+    if (actBed(w, u)) return;
     if (u.hunger <= 3.5 && u.pocket >= 1 && actEat(w, u)) return;
     if (actSocial(w, u)) return;
     if (actWork(w, u)) return;
@@ -990,6 +1149,8 @@
     const k = kingdomOf(w, u);
     if (!k || !k.wars.size) return false;
     const soldier = u.role === 'swordsman' || u.role === 'mage';
+    const h = hourOf(w.time);
+    const resting = (h >= 20 || h < 6) && !isRaider(k, u) && !(w.time < (k.alarmUntil || 0));   // swords are sheathed at night
     // nearest enemy
     let enemy = null, ed = 1e9;
     for (const o of w.alive) {
@@ -1012,6 +1173,11 @@
       goal(w, u, 'retreat', null);
       if (cheb(u.x, u.y, k.cx, k.cy) > 2) { stepToward(w, u, k.cx, k.cy); cost(u, 1); return true; }
       return false;
+    }
+    if (resting) {
+      if (isSentry(k, u) || !enemy || ed > 8) return false;           // sentries sound the alarm, the rest go to bed
+      u.fight = { target: enemy.id, reason: 'war' };
+      return actFight(w, u);
     }
     goal(w, u, 'war', 'war_march', null, true);
     if (enemy && ed <= 30) {
@@ -1070,7 +1236,7 @@
       for (const o of w.alive) {
         if (o === u) continue;
         const d = cheb(u.x, u.y, o.x, o.y);
-        if (d <= 2 && d < nd && aff(u, o.id) > -30 && !atWar(w, u.kingdom, o.kingdom) && !o.fight && !o.flee) { nd = d; near = o; }
+        if (d <= 2 && d < nd && !o.sleep && aff(u, o.id) > -30 && !atWar(w, u.kingdom, o.kingdom) && !o.fight && !o.flee) { nd = d; near = o; }
       }
       if (near && rng.chance(0.2 + 0.5 * u.iv.sociability / 31)) { chat(w, u, near); return true; }
     }
@@ -1182,7 +1348,7 @@
     const mine = power(u, skill);
     let best = null, bp = mine + 9;
     for (const o of w.alive) {
-      if (o === u || cheb(u.x, u.y, o.x, o.y) > 25) continue;
+      if (o === u || o.sleep || cheb(u.x, u.y, o.x, o.y) > 25) continue;
       if (!((u.kingdom != null && o.kingdom === u.kingdom) || aff(u, o.id) >= 30)) continue;
       if (aff(u, o.id) < -10) continue;
       const p = power(o, skill);
@@ -1441,7 +1607,7 @@
   }
 
   K.sim = {
-    createWorld, tick, power, foodPoints, atWar,
+    createWorld, tick, power, foodPoints, atWar, fatigue,
     describe: (w, u) => WD.describe(u, w),
     IV_KEYS, SKILLS, ROLES,
   };

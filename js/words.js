@@ -61,6 +61,10 @@
       cat: 'courage', words: ['fearful', 'timid', 'steady-nerved', 'brave', 'fearless'],
       tipHi: 'Does not run from danger', tipLo: 'Runs from danger',
     },
+    rest: {
+      cat: 'rest', words: ['dozy', 'drowsy', 'steady-paced', 'hardy', 'tireless'],
+      tipHi: 'Needs little sleep and rarely tires, so fights well on a short night', tipLo: 'Tires quickly and needs a long sleep. Fights badly when worn out',
+    },
   };
   const TRAIT_KEYS = Object.keys(TRAITS);
 
@@ -94,6 +98,16 @@
     if (h <= 3.5) return 'peckish';
     if (h <= 4.5) return 'content';
     return 'well fed';
+  }
+
+  // How rested a unit is (energy 0-100), in words. Tired units fight worse.
+  function energyWord(e) {
+    if (e <= 8) return mark('rest', 'exhausted', 'Can barely stand. Fights very badly and may collapse');
+    if (e <= 20) return mark('rest', 'worn out', 'Fights badly until they have slept');
+    if (e <= 38) return mark('rest', 'tired', 'Starting to fight worse. Wants to sleep');
+    if (e <= 60) return 'a little sleepy';
+    if (e <= 85) return 'rested';
+    return 'well rested';
   }
 
   // Build the description as a list of paragraphs (strings with the markup above).
@@ -164,7 +178,13 @@
 
     // 6. Body and mind right now
     const state = [];
+    if (u.sleep) state.push(mark('rest', 'asleep', 'Resting. Wakes if attacked, or when an alarm sounds'));
+    else {
+      if (kingdom && kingdom.watch && kingdom.watch.has(u.id)) state.push(mark('status', 'on night watch', 'Stays awake at night, guarding the kingdom and raising the alarm'));
+      else if (kingdom && kingdom.raid && kingdom.raid.ids.has(u.id)) state.push(mark('status', 'on a night raid', 'Marching against a sleeping enemy'));
+    }
     state.push(hungerWord(u.hunger));
+    state.push(energyWord(u.energy));
     if (u.anger >= 60) state.push(mark('temper', 'furious', 'About to lash out'));
     else if (u.anger >= 30) state.push(mark('temper', 'angry', 'Ready to hit back'));
     else if (u.anger >= 12) state.push('irritated');
@@ -255,6 +275,14 @@
     new_interest: ["I'm suddenly curious about {w}.", 'I feel pulled toward {w} now.', 'Maybe {w} is my true calling.'],
     new_role: ['I shall be a {w}.', 'The kingdom needs a {w}.', '{W} it is, then.'],
     celebrate: ['What a day!', 'Good times.'],
+    sleepy: ['Time to rest.', 'My bed is calling.', 'What a long day...', 'Goodnight, everyone.'],
+    dream: ['Mmm... bread...', 'Zzz...', '...golden fields...', 'No... five more minutes...', '...so many stars...', 'Zzz... zzz...'],
+    watch: ['I have the watch tonight.', 'Sleep well. I will guard the walls.', 'My eyes stay open till dawn.'],
+    alarm: ['Enemies at the gates!', 'Wake up! We are under attack!', 'To arms! Raiders!'],
+    woken: ['Raiders?! In the dark?!', 'Not now... I was sleeping!', 'To arms, even half-asleep!', 'Who attacks at night?!'],
+    raid: ['Strike while they sleep!', 'We march under the moon.', 'The night is ours.'],
+    tired_fight: ['So... tired...', "I can't lift my sword...", 'My arms are lead.'],
+    yawn: ['*yawn*', 'So sleepy...'],
   };
 
   const POEM_A = ['The wind', 'A star', 'The river', 'Our home', 'The moon', 'My heart', 'The field'];
@@ -270,5 +298,5 @@
     return s;
   }
 
-  K.words = { tierOf, TRAITS, TRAIT_KEYS, ROLES, ROLE_KEYS, SKILL_NOUN, describe, line, BANK, hungerWord };
+  K.words = { tierOf, TRAITS, TRAIT_KEYS, ROLES, ROLE_KEYS, SKILL_NOUN, describe, line, BANK, hungerWord, energyWord };
 })();

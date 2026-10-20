@@ -11,7 +11,8 @@ const fail = (m) => { problems++; if (problems < 25) console.log('  PROBLEM:', m
 
 for (const seed of seeds) {
   const w = K.sim.createWorld({ seed, units: 20 });
-  const seen = { say: 0, hit: 0, spell: 0, war: 0, birth: 0, love: 0, found: 0, fell: 0, death: 0 };
+  const seen = { say: 0, hit: 0, spell: 0, war: 0, birth: 0, love: 0, found: 0, fell: 0, death: 0, raid: 0, alarm: 0, wake: 0 };
+  let nightSleep = 0, nightTotal = 0, maxWatch = 0;
   const roleHist = {};
   let maxPop = 0, maxK = 0, peakSay = 0;
   const t0 = Date.now();
@@ -29,6 +30,8 @@ for (const seed of seeds) {
       if (![u.x, u.y, u.hearts, u.hunger, u.anger].every(Number.isFinite)) fail(`NaN on ${u.name}`);
       if (u.x < 0 || u.y < 0 || u.x >= w.w || u.y >= w.h) fail(`${u.name} off map ${u.x},${u.y}`);
       if (u.hearts > u.maxHearts + 1e-9 || u.hearts <= 0) fail(`${u.name} hearts ${u.hearts}/${u.maxHearts}`);
+      if (!Number.isFinite(u.energy) || u.energy < 0 || u.energy > 100) fail(`${u.name} energy ${u.energy}`);
+      if (u.sleep && (u.fight || u.flee)) fail(`${u.name} fights in their sleep`);
       if (u.hunger < 0 || u.hunger > 5) fail(`${u.name} hunger ${u.hunger}`);
       if (u.maxHearts < 6 || u.maxHearts > 20) fail(`${u.name} maxHearts ${u.maxHearts}`);
       const key = u.x + ',' + u.y;
@@ -56,6 +59,9 @@ for (const seed of seeds) {
       const g = k.granary;
       if (g.bread < 0 || g.meat < 0) fail(`negative food in ${k.name}`);
     }
+    { const h = K.util.hourOf(w.time);
+      if (h >= 1 && h < 4) { for (const u of w.alive) { nightTotal++; if (u.sleep) nightSleep++; } }
+      for (const k of w.kingdoms.values()) if (k.watch) maxWatch = Math.max(maxWatch, k.watch.size); }
     if (i % 1000 === 0) {
       for (const u of w.alive) if (u.role) roleHist[u.role] = (roleHist[u.role] || 0) + 1;
     }
@@ -65,6 +71,7 @@ for (const seed of seeds) {
   console.log(`seed ${seed}: pop ${w.alive.length} (peak ${maxPop}), kingdoms ${w.kingdoms.size} (peak ${maxK}), time ${w.time}s, ${ms}ms`);
   console.log('   ', kings || '(none)');
   console.log('    deaths', JSON.stringify(w.stats.deaths), 'births', w.stats.births, 'events', JSON.stringify(seen), 'peak bubbles/tick', peakSay);
+  console.log(`    asleep between 01:00 and 04:00: ${nightTotal ? Math.round(100 * nightSleep / nightTotal) : 0}% of souls, biggest night watch ${maxWatch}`);
   const spellers = w.alive.filter((u) => u.spells.size > 1).length;
   const lovers = w.alive.filter((u) => u.partner != null).length;
   const exes = w.alive.filter((u) => u.exes.length).length;

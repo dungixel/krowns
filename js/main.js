@@ -7,6 +7,7 @@
   const startEl = $('start'), gameEl = $('game');
   let view = null, world = null;
   let speed = 1, paused = false, acc = 0, last = 0, ended = false, holdAlpha = 1;
+  let lastClockHtml = '', lastDark = -1;
   const TICK_MS = 1000;           // one second of world time per tick at 1x
   const POP = 20;                 // souls in a new world
 
@@ -77,7 +78,7 @@
 
   // ---------------------------------------------------------- the chronicle
   const feedEl = $('feed'), histEl = $('history');
-  const day = (t) => 'Day ' + (Math.floor(t / 120) + 1);
+  const day = (t) => { const c = K.util.clock(t); return 'Day ' + c.day + ' ' + c.text; };
   function scrollHistory() { histEl.scrollTop = histEl.scrollHeight; }
   function pushLog(text) {
     const html = view.markup(text);
@@ -117,8 +118,10 @@
   }
 
   function updateHud() {
-    const t = world.time, m = Math.floor(t / 60), s = t % 60;
-    $('hud-time').textContent = `${day(t)} · ${m}:${String(s).padStart(2, '0')}`;
+    const c = K.util.clock(world.time), h = c.hour;
+    const ico = h >= 5.5 && h < 7.5 ? 'sunrise' : h >= 7.5 && h < 18 ? 'sun' : h >= 18 && h < 20.5 ? 'sunset' : 'moon-stars';
+    const html = `${icon(ico, 14)}<span>Day ${c.day} · ${c.text}</span>`;
+    if (html !== lastClockHtml) { lastClockHtml = html; $('hud-time').innerHTML = html; }
     const n = world.alive.length, kn = world.kingdoms.size;
     $('hud-count').textContent = `${n} soul${n === 1 ? '' : 's'} · ${kn} kingdom${kn === 1 ? '' : 's'}`;
   }
@@ -154,5 +157,12 @@
     }
     if (!paused && !ended) holdAlpha = Math.min(1, acc / TICK_MS);
     view.draw(now, holdAlpha);
+    // keep the on-screen text readable when the world turns dark
+    const dk = view.light.dark > 0.55 ? 1 : 0;
+    if (dk !== lastDark) {
+      lastDark = dk;
+      gameEl.style.setProperty('--hud-ink', dk ? 'rgb(236,240,252)' : '');
+      gameEl.style.setProperty('--hud-soft', dk ? 'rgb(176,186,212)' : '');
+    }
   }
 })();

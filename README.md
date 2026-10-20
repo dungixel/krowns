@@ -29,7 +29,11 @@ Names in blue-ish text inside the panel are clickable and jump to that unit.
 
 ## What is in the world right now
 
-- **Time:** one step per second. A unit can do one thing per second; some things take longer (eating takes one second per hunger point).
+- **Time:** one step per second, and every step is 10 minutes of world time. A whole day takes 2 minutes 24 seconds at normal speed. The clock next to the day number shows the time (a new world starts at 08:00). A unit can do one thing per step; some things take longer (eating takes one step per hunger point).
+- **Day and night:** the world is white by day, orange at sunrise and sunset, and dark desaturated blue at night. Castles light up at night.
+- **Rest:** every soul has a hidden *rest* trait (from "dozy" to "tireless") that decides how fast they tire and how well they sleep. Around 21:00 everyone walks home and goes to sleep (a little *zz* appears above them), and they wake at dawn. Sleepyheads sleep in. A tired soul fights worse: blows go wide and spells fizzle. Someone who is completely exhausted collapses and naps.
+- **Night watch:** when a kingdom is at war, its most rested swordsmen stay awake as sentries (an eye icon and a lantern). Keen-eyed sentries spot enemies sooner. When they sound the alarm, everyone wakes up.
+- **Night raids:** a kingdom at war may march against its enemy in the dark. Sleepers cannot defend themselves, so a hit on a sleeper does more damage, and a castle with no one awake to defend it can be overrun. Raiders are tired the next day.
 - **Hearts** (6 to 20, average 10). They drop from fights, poison, burning and starving. They come back through a mage's healing, or by eating while hungry.
 - **Hunger** falls 0.5 every 10 seconds. At 1 to 2 a unit starts looking for food if it is close enough. At 0 it loses a heart every 2 seconds.
 - **Hidden stats at birth:** strength, magic, temperament, cooking, farming, poetry, hunting, charisma, sociability, curiosity, loyalty and courage. Children inherit a third from each parent and a third is random.
@@ -43,7 +47,7 @@ Names in blue-ish text inside the panel are clickable and jump to that unit.
 
 ## Not built yet (ideas from the design notes)
 
-Different governments and tyrants, more classes and hidden traits, saving worlds to an account (Supabase), your own art for the units.
+Different governments and tyrants, more classes and hidden traits, weather and seasons, saving worlds to an account (Supabase), your own art for the units.
 
 ## For tinkerers
 

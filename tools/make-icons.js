@@ -7,7 +7,8 @@ const root = path.join(__dirname, '..');
 const outline = ['crown', 'building-castle', 'flame', 'droplet', 'swords', 'sword', 'skull', 'x', 'spiral', 'wheat', 'bread',
   'meat', 'feather', 'wand', 'chef-hat', 'bow', 'player-play', 'player-pause', 'player-track-next', 'refresh', 'volume',
   'volume-off', 'heart', 'messages', 'plant', 'paw', 'users', 'heart-broken', 'hourglass', 'sparkles', 'book', 'info-circle',
-  'arrows-maximize', 'leaf', 'bolt', 'ghost', 'shield', 'chevron-down', 'chevron-up', 'flag', 'cross', 'tool', 'zoom-in', 'zoom-out'];
+  'arrows-maximize', 'leaf', 'bolt', 'ghost', 'shield', 'chevron-down', 'chevron-up', 'flag', 'cross', 'tool', 'zoom-in', 'zoom-out',
+  'sun', 'moon-stars', 'sunrise', 'sunset', 'zzz', 'eye', 'bed'];
 const filled = ['heart', 'crown', 'flame'];
 
 function inner(file) {

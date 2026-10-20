@@ -131,7 +131,7 @@
       }
       return h;
     }
-    const dayOf = (t) => 'Day ' + (Math.floor(t / 120) + 1);
+    const dayOf = (t) => { const c = K.util.clock(t); return 'Day ' + c.day + ' ' + c.text; };
 
     function updatePanel(force) {
       const w = V.world, sel = V.sel;
@@ -146,6 +146,8 @@
         let tags = '';
         if (k) tags += `<span class="tag" style="color:${col}">${k.ruler === u.id ? ic('crown', 13) : ''}${esc(k.name)}</span>`;
         if (r) tags += `<span class="tag w-${r.cat}">${ic(roleIcon(u.role), 13)}${r.label}</span>`;
+        if (u.alive && u.sleep) tags += `<span class="tag w-rest">${ic('zzz', 13)}asleep</span>`;
+        else if (u.alive && k && k.watch && k.watch.has(u.id)) tags += `<span class="tag w-status">${ic('eye', 13)}on watch</span>`;
         head = `<div class="p-title"><span class="p-dot" style="background:${k ? k.color.fill : FREE_COLOR};border-color:${k ? k.color.line : FREE_LINE}"></span>` +
           `<span class="p-name">${esc(u.name)}</span><button class="p-x" title="Close">${ic('x', 16)}</button></div>` +
           (tags ? `<div class="p-tags">${tags}</div>` : '') +
@@ -269,6 +271,8 @@
             break;
           }
           case 'war': K.audio.sfx('war', 1); break;
+          case 'alarm': addFx('ring', e.x, e.y, '#e5484d', 1300, 5); K.audio.sfx('war', onScreenVol(e.x, e.y) || 0.4); break;
+          case 'raid': K.audio.sfx('war', 0.6); break;
           case 'peace': K.audio.sfx('peace', 1); break;
           default: break;
         }
@@ -335,7 +339,15 @@
       const a01 = clamp(alpha, 0, 1);
       const e = 0.55 * a01 + 0.45 * ease(a01);   // glide between tiles, with a soft start and stop
       ctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
-      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, V.W, V.H);
+      // the colour of the sky: white by day, orange at dawn and dusk, dark desaturated blue at night
+      const L = K.util.lightAt(K.util.hourOf(w.time - 1 + a01));
+      V.light = L;
+      const d = L.dark;
+      const mix = (a, b) => a.map((v, i) => Math.round(v + (b[i] - v) * d)).join(',');
+      const gridC = mix([60, 60, 90], [175, 190, 235]);
+      const inkC = `rgb(${mix([43, 43, 43], [232, 236, 250])})`;
+      const night = d > 0.5;
+      ctx.fillStyle = `rgb(${L.rgb.join(',')})`; ctx.fillRect(0, 0, V.W, V.H);
 
       // soft grid, one square per step a unit can take (fades out when zoomed far away)
       if (s >= 6) {
@@ -348,15 +360,15 @@
         ctx.beginPath();
         for (let i = i0; i <= i1; i++) { if (i % 8 === 0) continue; const x = Math.round(V.cam.x + i * s) + 0.5; ctx.moveTo(x, top); ctx.lineTo(x, bot); }
         for (let j = j0; j <= j1; j++) { if (j % 8 === 0) continue; const y = Math.round(V.cam.y + j * s) + 0.5; ctx.moveTo(left, y); ctx.lineTo(right, y); }
-        ctx.strokeStyle = `rgba(60,60,90,${0.055 * fade})`; ctx.stroke();
+        ctx.strokeStyle = `rgba(${gridC},${(0.055 + 0.02 * d) * fade})`; ctx.stroke();
         // every 8th line a touch stronger, to help the eye on a big map
         ctx.beginPath();
         for (let i = i0; i <= i1; i++) { if (i % 8) continue; const x = Math.round(V.cam.x + i * s) + 0.5; ctx.moveTo(x, top); ctx.lineTo(x, bot); }
         for (let j = j0; j <= j1; j++) { if (j % 8) continue; const y = Math.round(V.cam.y + j * s) + 0.5; ctx.moveTo(left, y); ctx.lineTo(right, y); }
-        ctx.strokeStyle = `rgba(60,60,90,${0.1 * fade})`; ctx.stroke();
+        ctx.strokeStyle = `rgba(${gridC},${(0.1 + 0.04 * d) * fade})`; ctx.stroke();
       }
       // world edge
-      ctx.strokeStyle = '#e6e6e8'; ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgb(${mix([230, 230, 232], [85, 96, 128])})`; ctx.lineWidth = 1;
       ctx.strokeRect(V.cam.x, V.cam.y, w.w * s, w.h * s);
 
       // the tile under the pointer, and the tile of the selected unit
@@ -366,7 +378,7 @@
         if (fill) { ctx.fillStyle = fill; ctx.fill(); }
         if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke(); }
       };
-      if (V.hoverTile && s >= 6) tileBox(V.hoverTile.x, V.hoverTile.y, 'rgba(60,60,90,0.045)', 'rgba(60,60,90,0.16)');
+      if (V.hoverTile && s >= 6) tileBox(V.hoverTile.x, V.hoverTile.y, `rgba(${gridC},0.06)`, `rgba(${gridC},0.2)`);
       if (V.sel && V.sel.type === 'unit') {
         const su = w.units.get(V.sel.id);
         if (su && su.alive) {
@@ -380,7 +392,7 @@
         const rad = 6 + k.members.size * 0.55, R = Math.ceil(rad), r2 = rad * rad;
         const inside = (dx, dy) => dx * dx + dy * dy <= r2;
         const hue = k.color.hue;
-        ctx.fillStyle = `hsla(${hue},70%,80%,0.17)`;
+        ctx.fillStyle = `hsla(${hue},70%,${80 - 14 * d}%,${0.17 + 0.07 * d})`;
         ctx.beginPath();
         for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
           if (!inside(dx, dy)) continue;
@@ -409,7 +421,7 @@
       for (const k of w.kingdoms.values()) {
         for (const p of k.farms) {
           const x = sx(p.x) - s * 0.5, y = sy(p.y) - s * 0.5;
-          ctx.fillStyle = `hsla(${k.color.hue},45%,90%,1)`; ctx.fillRect(x + 1, y + 1, s - 2, s - 2);
+          ctx.fillStyle = `hsla(${k.color.hue},45%,${90 - 40 * d}%,1)`; ctx.fillRect(x + 1, y + 1, s - 2, s - 2);
           ctx.strokeStyle = k.color.line; ctx.lineWidth = 1; ctx.strokeRect(x + 1.5, y + 1.5, s - 3, s - 3);
           if (p.state === 'growing') {
             const g = clamp(p.growth, 0, 1), r = (s * 0.14) + s * 0.22 * g;
@@ -419,14 +431,25 @@
           }
         }
       }
+      // torchlight around each capital when it gets dark
+      if (d > 0.12) {
+        for (const k of w.kingdoms.values()) {
+          const x = sx(k.cx), y = sy(k.cy), gr = s * (3.2 + (k.watch && k.watch.size ? 1.2 : 0));
+          const g = ctx.createRadialGradient(x, y, s * 0.3, x, y, gr);
+          g.addColorStop(0, `rgba(255,196,110,${0.5 * d})`); g.addColorStop(1, 'rgba(255,196,110,0)');
+          ctx.fillStyle = g; ctx.fillRect(x - gr, y - gr, gr * 2, gr * 2);
+        }
+      }
       // capitals: one square each
       for (const k of w.kingdoms.values()) {
         const x = sx(k.cx), y = sy(k.cy);
+        const nameCol = night ? `hsl(${k.color.hue},65%,80%)` : k.color.dark;
         ctx.beginPath(); ctx.roundRect(x - s / 2 + 1, y - s / 2 + 1, s - 2, s - 2, Math.min(6, s * 0.2));
-        ctx.fillStyle = `hsla(${k.color.hue},60%,84%,0.9)`; ctx.fill();
+        ctx.fillStyle = `hsla(${k.color.hue},60%,${84 - 36 * d}%,0.92)`; ctx.fill();
         ctx.strokeStyle = k.color.line; ctx.lineWidth = 1.5; ctx.stroke();
-        drawIcon('building-castle', x, y, s * 0.82, k.color.dark);
-        ctx.fillStyle = k.color.dark; ctx.font = `600 ${Math.max(9, Math.min(13, s * 0.5))}px ui-sans-serif, system-ui, sans-serif`;
+        drawIcon('building-castle', x, y, s * 0.82, nameCol);
+        K.icons.image('building-castle', k.color.dark); K.icons.image('building-castle', `hsl(${k.color.hue},65%,80%)`);   // keep both ready
+        ctx.fillStyle = nameCol; ctx.font = `600 ${Math.max(9, Math.min(13, s * 0.5))}px ui-sans-serif, system-ui, sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
         ctx.fillText(k.name, x, y + s * 0.5 + 3);
         if (k.wars.size) drawIcon('swords', x + s * 0.62, y - s * 0.62, Math.max(10, s * 0.6), '#d9534f');
@@ -445,7 +468,7 @@
         const x = sx(a.px + (a.x - a.px) * e), y = sy(a.py + (a.y - a.py) * e);
         const r = s * (a.size === 1 ? 0.2 : a.size === 2 ? 0.3 : 0.45);
         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = '#8c6a4a'; ctx.fill();
+        ctx.fillStyle = `rgb(${mix([140, 106, 74], [200, 164, 122])})`; ctx.fill();
       }
       // units
       const hov = V.hover, sel = V.sel && V.sel.type === 'unit' ? V.sel.id : null;
@@ -457,23 +480,34 @@
         u._sx = x; u._sy = y;
         const k = u.kingdom != null ? w.kingdoms.get(u.kingdom) : null;
         const moving = u.px !== u.x || u.py !== u.y;
-        blob(x, y, R, t, u.id * 1.7, moving ? 0.13 : 0.08);
+        const asleep = !!u.sleep;
+        const sentry = !!(k && k.watch && k.watch.has(u.id));
+        if (sentry && s >= 8) {   // a sentry's lantern
+          const lr = s * 1.5, g = ctx.createRadialGradient(x, y, R * 0.4, x, y, lr);
+          g.addColorStop(0, `rgba(255,205,120,${0.45 * d})`); g.addColorStop(1, 'rgba(255,205,120,0)');
+          ctx.fillStyle = g; ctx.fillRect(x - lr, y - lr, lr * 2, lr * 2);
+        }
+        ctx.globalAlpha = asleep ? 0.62 : 1;
+        blob(x, y, R * (asleep ? 0.94 : 1), t, u.id * 1.7, asleep ? 0.035 : moving ? 0.13 : 0.08);
         ctx.fillStyle = k ? k.color.fill : FREE_COLOR; ctx.fill();
         ctx.lineWidth = 1.2; ctx.strokeStyle = k ? k.color.line : FREE_LINE; ctx.stroke();
+        ctx.globalAlpha = 1;
         if (u.id === sel) {
           ctx.beginPath(); ctx.arc(x, y, R + 4, 0, Math.PI * 2);
-          ctx.strokeStyle = '#3b3b3b'; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.strokeStyle = inkC; ctx.lineWidth = 1.5; ctx.stroke();
         }
         // wounded: a thin heart line under the unit
         if (u.hearts < u.maxHearts && s >= 11) {
           const bw = R * 1.9;
-          ctx.fillStyle = '#ececec'; ctx.fillRect(x - bw / 2, y + R + 3, bw, 2.5);
+          ctx.fillStyle = `rgb(${mix([236, 236, 236], [92, 100, 128])})`; ctx.fillRect(x - bw / 2, y + R + 3, bw, 2.5);
           ctx.fillStyle = '#e5484d'; ctx.fillRect(x - bw / 2, y + R + 3, bw * clamp(u.hearts / u.maxHearts, 0, 1), 2.5);
         }
         // little signs above the head
         if (s >= 11) {
           const icons = [];
           if (k && k.ruler === u.id) icons.push(['crown', k.color.dark, 'filled']);
+          if (asleep) icons.push(['zzz', night ? '#c6d0ff' : '#7a86b8']);
+          else if (sentry) icons.push(['eye', night ? '#ffd27a' : '#c48a00']);
           if (u.fight) icons.push(['swords', '#d9534f']);
           if (u.status.burn > 0) icons.push(['flame', '#f08c00']);
           if (u.status.poison > 0) icons.push(['droplet', '#2f9e44']);
@@ -482,7 +516,7 @@
           icons.forEach((ico, i) => drawIcon(ico[0], x + (i - (icons.length - 1) / 2) * isz * 1.05, y - R - isz * 0.62, isz, ico[1], ico[2]));
         }
         if (u.id === sel || u.id === hov) {
-          ctx.fillStyle = '#555'; ctx.font = `500 ${Math.max(10, Math.min(12, s * 0.5))}px ui-sans-serif, system-ui, sans-serif`;
+          ctx.fillStyle = `rgb(${mix([85, 85, 85], [214, 220, 240])})`; ctx.font = `500 ${Math.max(10, Math.min(12, s * 0.5))}px ui-sans-serif, system-ui, sans-serif`;
           ctx.textAlign = 'center'; ctx.textBaseline = 'top';
           ctx.fillText(u.name, x, y + R + (u.hearts < u.maxHearts ? 9 : 5));
         }
@@ -580,6 +614,7 @@
     panelEl.addEventListener('wheel', (ev) => ev.stopPropagation(), { passive: true });
     globalThis.addEventListener('resize', resize);
 
+    V.light = K.util.lightAt(8);
     V.zoomBy = zoomBy; V.pan = pan;
     V.resize = resize; V.fit = fit; V.setWorld = setWorld; V.draw = draw; V.handleEvents = handleEvents;
     V.select = select; V.TS = TS;
