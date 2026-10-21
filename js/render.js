@@ -345,9 +345,9 @@
     const dt = Math.min(0.1, Math.max(0, now - lastT)); lastT = now; frameDt = dt;
     const v = R.view; V = v;
     advanceZoom(dt);
-    // follow the selected unit
-    if (R.follow && R.selected && (R.selected.type === 'unit' || R.selected.type === 'creature')) {
-      const u = W.byId.get(R.selected.id);
+    // follow the selected unit (or the knight you walk with)
+    if (R.walkId || (R.follow && R.selected && (R.selected.type === 'unit' || R.selected.type === 'creature'))) {
+      const u = W.byId.get(R.walkId || R.selected.id);
       if (u) { const p = entityPos(W, u, W.t); v.cx += (p.px + 8 - v.cx) * Math.min(1, dt * 6); v.cy += (p.py + 8 - v.cy) * Math.min(1, dt * 6); }
     }
     v.ox = Math.round(v.w / 2 - v.cx * v.S); v.oy = Math.round(v.h / 2 - v.cy * v.S);
@@ -426,7 +426,7 @@
     items.sort((a, b) => a.y - b.y);
 
     // ---- 4. shadows (multiply, desaturated purple), cast away from the sun; all before the things that cast them
-    const clock = K.sim.clockAt(W.t + R.frac);
+    const clock = R.fixedHour !== undefined ? { hour: R.fixedHour } : K.sim.clockAt(W.t + R.frac);
     updateSun(clock.hour);
     {
       const lc0 = lightColor(clock.hour);
@@ -743,7 +743,7 @@
       const cx = sxOf(it.px + 8);
       let nameY = syOf(top - 3);
       if (e.kind === 'unit') {
-        const show = s >= 3 || (s === 2 && (e.job === 'king' || e.id === selId || e.id === hovId)) || e.id === selId || e.id === hovId;
+        const show = !W.walk && (s >= 3 || (s === 2 && (e.job === 'king' || e.id === selId || e.id === hovId)) || e.id === selId || e.id === hovId);
         if (show) {
           ctx.font = '700 ' + namePx + 'px Lexend, system-ui, sans-serif';
           const kingMark = e.job === 'king' ? '♕ ' : '';

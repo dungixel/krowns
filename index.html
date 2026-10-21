@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en" data-v="14">
+<html lang="en" data-v="15">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Krowns</title>
 <meta name="description" content="Krowns - a tiny kingdom simulation where everyone lives their own life.">
-<link rel="stylesheet" href="css/style.css?v=14">
+<link rel="stylesheet" href="css/style.css?v=15">
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -35,6 +35,7 @@
 </aside>
 <div id="logbox" class="card"><h4>What is happening</h4><ul id="loglist"></ul></div>
 <div id="seedlabel"></div>
+<button id="btn-walkback" class="card" title="Back to the menu (Esc)">&larr; Menu</button>
 <div id="toast"></div>
 
 <div id="start" class="show">
@@ -43,28 +44,30 @@
     <p>A tiny kingdom where everyone lives their own life. Watch, click, zoom, and see what happens.</p>
     <div class="seedrow"><input id="seed" inputmode="numeric" placeholder="World number (empty = random)"><button id="btn-dice" title="Random number"></button></div>
     <button id="btn-start">Loading...</button>
+    <button id="btn-walk">Walk around with a knight</button>
     <div class="hint">Drag to move &middot; mouse wheel or pinch to zoom &middot; click anyone</div>
   </div>
 </div>
 
-<script src="data/game-data.js?v=14"></script>
-<script src="js/icons-data.js?v=14"></script>
-<script src="js/util.js?v=14"></script>
-<script src="js/data.js?v=14"></script>
-<script src="js/names.js?v=14"></script>
-<script src="js/sim/core.js?v=14"></script>
-<script src="js/sim/units.js?v=14"></script>
-<script src="js/sim/kingdom.js?v=14"></script>
-<script src="js/sim/social.js?v=14"></script>
-<script src="js/sim/creatures.js?v=14"></script>
-<script src="js/sim/events.js?v=14"></script>
-<script src="js/sim/ai.js?v=14"></script>
-<script src="js/sim/jobs.js?v=14"></script>
-<script src="js/sim/index.js?v=14"></script>
-<script src="js/render.js?v=14"></script>
-<script src="js/audio.js?v=14"></script>
-<script src="js/ui.js?v=14"></script>
-<script src="js/main.js?v=14"></script>
+<script src="data/game-data.js?v=15"></script>
+<script src="js/icons-data.js?v=15"></script>
+<script src="js/util.js?v=15"></script>
+<script src="js/data.js?v=15"></script>
+<script src="js/names.js?v=15"></script>
+<script src="js/sim/core.js?v=15"></script>
+<script src="js/sim/units.js?v=15"></script>
+<script src="js/sim/kingdom.js?v=15"></script>
+<script src="js/sim/social.js?v=15"></script>
+<script src="js/sim/creatures.js?v=15"></script>
+<script src="js/sim/events.js?v=15"></script>
+<script src="js/sim/ai.js?v=15"></script>
+<script src="js/sim/jobs.js?v=15"></script>
+<script src="js/sim/index.js?v=15"></script>
+<script src="js/render.js?v=15"></script>
+<script src="js/audio.js?v=15"></script>
+<script src="js/ui.js?v=15"></script>
+<script src="js/walk.js?v=15"></script>
+<script src="js/main.js?v=15"></script>
 <script>
   // the icons of the interface buttons
   (function () {

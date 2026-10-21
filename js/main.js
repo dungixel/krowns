@@ -5,7 +5,7 @@
   const sim = K.sim, R = K.render, ui = K.ui;
   const $ = (id) => document.getElementById(id);
 
-  const game = (K.game = { W: null, speed: 1, acc: 0, last: 0, running: false });
+  const game = (K.game = { W: null, speed: 1, acc: 0, last: 0, running: false, mode: 'sim' });
 
   function applyColors() {
     const r = document.documentElement.style;
@@ -34,11 +34,43 @@
     ui.logCount = -1;
   };
 
+  // ---- the "walk around" mode: nothing but the map and one knight
+  game.beginWalk = function (seedText) {
+    K.audio.unlock();
+    const seed = seedText && /^\d+$/.test(seedText.trim()) ? +seedText.trim() >>> 0 : undefined;
+    game.mode = 'walk';
+    document.body.classList.add('walkmode');
+    const W = K.walk.start(seed);
+    game.W = W; R.world = W;
+    ui.select(null); R.follow = false;
+    R.walkId = K.walk.knight.id; R.fixedHour = 10; R.frac = 0;
+    R.resize();
+    R.view.S = R.fitScale(18);
+    R.centerOn(W.view.startX, W.view.startY);
+    game.last = performance.now();
+    $('start').classList.remove('show');
+    game.setSpeed(1);
+  };
+  game.toMenu = function () {
+    if (game.mode !== 'walk') return;
+    game.mode = 'sim';
+    document.body.classList.remove('walkmode');
+    R.walkId = null; R.fixedHour = undefined;
+    game.W = sim.newGame({ seed: 7 }); R.world = game.W; R.view.S = R.fitScale(52); R.centerOn(game.W.view.startX, game.W.view.startY);
+    for (let i = 0; i < 50; i++) sim.step(game.W, sim.STEP);
+    game.showStart();
+  };
+
   function frame(now) {
     requestAnimationFrame(frame);
     const W = game.W;
     if (!W) return;
     const dt = Math.min(0.25, (now - game.last) / 1000); game.last = now;
+    if (game.mode === 'walk') {
+      if (!$('start').classList.contains('show')) K.walk.update(W, dt);
+      R.frac = 0; R.draw(W, now / 1000);
+      return;
+    }
     if (game.speed > 0) {
       game.acc += dt * game.speed;
       let n = 0;
@@ -71,12 +103,14 @@
 
     cv.addEventListener('pointerdown', (ev) => {
       K.audio.unlock();
+      if (game.mode === 'walk') return;
       cv.setPointerCapture(ev.pointerId);
       const p = cssToDev(ev); pointers.set(ev.pointerId, p);
       if (pointers.size === 1) { drag = { x: p.x, y: p.y, sx: p.x, sy: p.y }; moved = 0; }
       if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), acc: 0 }; drag = null; }
     });
     cv.addEventListener('pointermove', (ev) => {
+      if (game.mode === 'walk') return;
       const p = cssToDev(ev);
       if (pointers.has(ev.pointerId)) pointers.set(ev.pointerId, p);
       if (pinch && pointers.size === 2) {
@@ -98,6 +132,7 @@
       }
     });
     const up = (ev) => {
+      if (game.mode === 'walk') return;
       const p = cssToDev(ev);
       const wasDrag = drag && Math.hypot(p.x - drag.sx, p.y - drag.sy) > 8 * R.view.dpr;
       pointers.delete(ev.pointerId);
@@ -121,6 +156,13 @@
     const keys = new Set();
     window.addEventListener('keydown', (ev) => {
       if (ev.target.tagName === 'INPUT') return;
+      if (game.mode === 'walk') {
+        const k = ev.key.toLowerCase();
+        if (k === 'escape') { game.toMenu(); return; }
+        if (k === '+' || k === '=') R.zoomStep(1); else if (k === '-') R.zoomStep(-1);
+        else if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) { ev.preventDefault(); K.walk.keys.add(k); }
+        return;
+      }
       keys.add(ev.key.toLowerCase());
       if (ev.key === ' ') { ev.preventDefault(); game.setSpeed(game.speed === 0 ? 1 : 0); }
       if (ev.key === '+' || ev.key === '=') R.zoomStep(1);
@@ -129,7 +171,8 @@
       if (ev.key.toLowerCase() === 'f') { R.follow = !R.follow; ui.refreshPanel(true); }
       if (ev.key === '1') game.setSpeed(1); if (ev.key === '2') game.setSpeed(2); if (ev.key === '3') game.setSpeed(4);
     });
-    window.addEventListener('keyup', (ev) => keys.delete(ev.key.toLowerCase()));
+    window.addEventListener('keyup', (ev) => { keys.delete(ev.key.toLowerCase()); K.walk.keys.delete(ev.key.toLowerCase()); });
+    window.addEventListener('blur', () => { keys.clear(); K.walk.keys.clear(); });
     setInterval(() => {
       let dx = 0, dy = 0;
       if (keys.has('arrowleft') || keys.has('a')) dx += 1; if (keys.has('arrowright') || keys.has('d')) dx -= 1;
@@ -150,10 +193,13 @@
     catch (e) { $('btn-start').textContent = 'Could not load the images'; console.error(e); return; }
     $('btn-start').disabled = false; $('btn-start').textContent = 'Generate world';
     $('btn-start').onclick = () => game.begin($('seed').value);
+    $('btn-walk').onclick = () => game.beginWalk($('seed').value);
+    $('btn-walkback').onclick = () => game.toMenu();
     $('btn-dice').onclick = () => { $('seed').value = String((Math.random() * 1e9) >>> 0); };
     const q = new URLSearchParams(location.search);
     if (q.get('seed')) $('seed').value = q.get('seed');
     if (q.get('auto') !== null) game.begin($('seed').value);
+    if (q.get('walk') !== null) game.beginWalk($('seed').value);
     game.setSpeed(1);
     requestAnimationFrame(frame);
     // a quiet little world in the background of the start screen
