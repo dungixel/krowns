@@ -322,7 +322,10 @@
   const FEET = 8;   // units stand with their feet half a tile lower than their tile, so they can walk behind the upper half of trees and structures
   function entityPos(W, e, t) {
     let px = e.x * TILE, py = e.y * TILE, lift = 0, p = 0;
-    if (e.hop) {
+    if (e.free) {      // walking freely (the "walk around" mode): any position, not just whole tiles
+      px = e.fx * TILE; py = e.fy * TILE;
+      if (e.hop) { p = e.walkP || 0; lift = S('unit.hopHeightPx', 2) * Math.sin(Math.PI * p); }
+    } else if (e.hop) {
       p = clamp((e.hop.t + R.frac) / e.hop.dur, 0, 1);
       px = e.hop.fx * TILE + (e.x - e.hop.fx) * TILE * p;
       py = e.hop.fy * TILE + (e.y - e.hop.fy) * TILE * p;

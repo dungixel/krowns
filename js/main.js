@@ -43,6 +43,8 @@
     const W = K.walk.start(seed);
     game.W = W; R.world = W;
     ui.select(null); R.follow = false;
+    const kn = K.walk.knight, bar = (v, m, c, ic) => '<div class="bar"><span class="bi" style="color:' + c + '">' + K.icon(ic, 14) + '</span><div class="bt"><i style="width:' + Math.max(0, Math.min(1, v / m)) * 100 + '%;background:' + c + '"></i></div><b>' + (Math.round(v * 2) / 2) + '<small>/' + m + '</small></b></div>';
+    $('walkhud').innerHTML = bar(kn.hearts, sim.maxHearts(kn), K.C('bar.hearts'), 'heart') + bar(kn.hunger, sim.hungerMax(), K.C('bar.hunger'), 'meat');
     R.walkId = K.walk.knight.id; R.fixedHour = 10; R.frac = 0;
     R.resize();
     R.view.S = R.fitScale(18);

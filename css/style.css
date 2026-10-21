@@ -101,3 +101,5 @@ button { font: inherit; color: inherit; }
 #btn-walkback { display: none; position: fixed; left: 12px; top: 12px; z-index: 5; border: 0; padding: 9px 14px; font: inherit; font-weight: 700; font-size: 14px; color: var(--text); cursor: pointer; }
 body.walkmode #btn-walkback { display: block; }
 body.walkmode #topleft, body.walkmode #topright, body.walkmode #hover, body.walkmode #panel, body.walkmode #logbox, body.walkmode #seedlabel, body.walkmode #toast { display: none !important; }
+#walkhud { display: none; position: fixed; right: 12px; top: 12px; z-index: 5; width: 210px; padding: 8px 14px; }
+body.walkmode #walkhud { display: block; }
