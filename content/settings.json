@@ -704,6 +704,14 @@
   "Guessed": true
  },
  {
+  "Key": "spin.snapToPixelGrid",
+  "Value": "0",
+  "Unit": "0 or 1",
+  "Group": "Combat",
+  "Description": "0 = tumbling bodies and flung trees/grass turn perfectly smoothly (while turning, their pixels are turned too, so they look slanted; they are square again when they lie still). 1 = every frame is re-painted onto the game pixels so all pixels stay square, but the edges shimmer.",
+  "Guessed": true
+ },
+ {
   "Key": "defeat.grassRegrowSeconds",
   "Value": "30",
   "Unit": "seconds",

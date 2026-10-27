@@ -1,7 +1,7 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-27T20:42:29.266Z",
+ "generatedAt": "2026-10-27T20:45:42.196Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -195,6 +195,7 @@ globalThis.Krowns.data = {
   "defeat.smashScenery": 1,
   "defeat.smashRadiusTiles": 0.85,
   "defeat.debrisStrength": 0.3,
+  "spin.snapToPixelGrid": 0,
   "defeat.grassRegrowSeconds": 30,
   "defeat.treeRegrowSeconds": 0,
   "shake.hitPixels": 2.5,

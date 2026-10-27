@@ -295,7 +295,7 @@
     const row = (ww, yy) => { const sx0 = Math.round(sxOf(x - ww / 2)), sy0 = Math.round(syOf(yy)); ctx.fillRect(sx0, sy0, Math.round(sxOf(x + ww / 2)) - sx0, Math.round(syOf(yy + 1)) - sy0); };
     row(w - 4, y); row(w, y + 1); row(w - 4, y + 2);
   }
-  // Smooth spinning that keeps every pixel the same size and square: the picture is turned by any angle, but it is re-painted every frame
+  // Spinning. By default the picture is simply turned smoothly. With spin.snapToPixelGrid = 1 it keeps every pixel the same size and square: the picture is turned by any angle, but it is re-painted every frame
   // onto the game-pixel grid (every game pixel takes the colour of the picture pixel that lands on it), so nothing is ever slanted or stretched.
   const spinData = new WeakMap(), spinBuf = {};
   function spinSource(img) {
@@ -305,6 +305,16 @@
   }
   // (px, py) = the game pixel the turning point lands on; (pv, mid) = the turning point inside the picture; the picture mirrors if flip
   function drawSpun(img, px, py, ang, pv, mid, flip) {
+    if (!S('spin.snapToPixelGrid', 0)) {                                    // true smooth turning at screen resolution (no re-painting onto the game pixels)
+      const s = V.S;
+      ctx.save();
+      ctx.translate(sxOf(px), syOf(py));
+      ctx.rotate(ang);
+      if (flip) ctx.scale(-1, 1);
+      ctx.drawImage(img, 0, 0, img.width, img.height, -pv * s, -mid * s, img.width * s, img.height * s);
+      ctx.restore();
+      return;
+    }
     const src = spinSource(img), w = img.width, h = img.height, D = 2 * Math.ceil(Math.hypot(w, h) / 2 + 2), s = V.S;
     const buf = spinBuf[D] || (spinBuf[D] = (() => { const c = mkCanvas(D, D); return { c, g: c.getContext('2d') }; })());
     const out = buf.g.createImageData(D, D), cs = Math.cos(ang), sn = Math.sin(ang), sd = src.data, od = out.data;
