@@ -24,10 +24,15 @@ for (const seed of [1, 2, 3, 4, 5]) {
   }
   if (!n.name) fail('neighbour has no name');
 }
-const up = K.voice.plan('Are you here?', 'neutral');
-if (!(up[11].mult > up[0].mult)) fail('a question should rise at the end');
-const down = K.voice.plan('It is quiet.', 'neutral');
-if (!(down[10].mult < down[0].mult)) fail('a statement should fall at the end');
-const sad = K.voice.plan('Hello there', 'sad'), happy = K.voice.plan('Hello there', 'happy');
-if (!(sad[0].mult < happy[0].mult)) fail('sad should be lower than happy');
+const notes = (txt, mood) => K.voice.plan(txt, mood || 'neutral').filter(Boolean);
+const endPitch = (x) => x.mult * x.glide;
+const q = notes('Are you here?'), d = notes('It is quiet.'), e = notes('What a beautiful day!');
+if (!(endPitch(q[q.length - 1]) > q[0].mult * 1.2)) fail('a question should rise at the end');
+if (!(endPitch(d[d.length - 1]) < d[0].mult)) fail('a statement should fall at the end');
+if (!(endPitch(e[e.length - 1]) < e[1].mult)) fail('an exclamation should fall at the end');
+const avg = (a) => a.reduce((s, x) => s + x.mult, 0) / a.length;
+if (!(avg(notes('Hello there', 'sad')) < avg(notes('Hello there', 'happy')))) fail('sad should be lower than happy');
+const words = K.voice.plan('beautiful', 'neutral').filter(Boolean).length;
+if (words !== 3) fail('beautiful should have 3 syllables, got ' + words);
+if (K.voice.plan('my', 'neutral').filter(Boolean).length !== 1) fail('"my" should have one sound (y counts as a vowel)');
 console.log('OK');

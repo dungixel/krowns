@@ -217,15 +217,15 @@
  },
  {
   "Key": "voice.letterSeconds",
-  "Value": "0.1",
+  "Value": "0.13",
   "Unit": "seconds",
   "Group": "Voice",
-  "Description": "How long each letter sounds.",
+  "Description": "How long a syllable (a vowel blip) sounds.",
   "Guessed": true
  },
  {
   "Key": "voice.randomness",
-  "Value": "0.01",
+  "Value": "0.004",
   "Unit": "x",
   "Group": "Voice",
   "Description": "Every letter is a tiny bit higher or lower at random (0.07 = up to 7%).",
