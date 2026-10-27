@@ -244,7 +244,23 @@
   "Value": "0.24",
   "Unit": "seconds",
   "Group": "Voice",
-  "Description": "How long a syllable (a vowel blip) sounds.",
+  "Description": "How long every vowel sounds (the same for all vowels).",
+  "Guessed": true
+ },
+ {
+  "Key": "voice.mSeconds",
+  "Value": "0.09",
+  "Unit": "seconds",
+  "Group": "Voice",
+  "Description": "How long the \"mm\" hum of the letter m lasts (before or after its vowel).",
+  "Guessed": true
+ },
+ {
+  "Key": "voice.hum",
+  "Value": "1",
+  "Unit": "0 or 1",
+  "Group": "Voice",
+  "Description": "1 = the letter m makes a hum, 0 = silent consonants only.",
   "Guessed": true
  },
  {

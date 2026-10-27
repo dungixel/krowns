@@ -62,9 +62,15 @@
         if (k === 0 && WH.has(wd.t.toLowerCase()) && !/(\.\.\.|…)/.test(tail)) wh = true;      // "What...?" is a confused yes/no style rise
         wd.last = k === words.length - 1;
         let groups = [], g, re = /[aeiou]+/gi;
-        while ((g = re.exec(wd.t))) groups.push({ at: wd.at + g.index, v: g[0][0].toLowerCase() });
-        if (!groups.length) { const y = wd.t.search(/y/i); if (y >= 0) groups.push({ at: wd.at + y, v: 'y' }); }
-        groups.forEach((gr, j) => syl.push({ idx: base + gr.at, vow: gr.v, word: k, j, nj: groups.length, wd, small: SMALL.has(wd.t.toLowerCase()) }));
+        while ((g = re.exec(wd.t))) groups.push({ at: wd.at + g.index, len: g[0].length, v: g[0][0].toLowerCase() });
+        if (!groups.length) { const y = wd.t.search(/y/i); if (y >= 0) groups.push({ at: wd.at + y, len: 1, v: 'y' }); }
+        groups.forEach((gr, j) => {
+          // an "m" right before the vowels is hummed before it ("my", "me"), an "m" right after them at the end of the word is hummed after it ("hum")
+          const a = gr.at - wd.at; let b = a; while (b > 0 && /m/i.test(wd.t[b - 1])) b--;
+          const rest = wd.t.slice(a + gr.len).replace(/^'/, '');
+          const post = /^m/i.test(rest) && (rest.length === 1 || !/[aeiouy]/i.test(rest[1]));
+          syl.push({ idx: base + gr.at - (a - b), vow: gr.v, word: k, j, nj: groups.length, wd, small: SMALL.has(wd.t.toLowerCase()), pre: S('voice.hum', 1) && b < a, post: !!S('voice.hum', 1) && post });
+        });
       });
       const n = syl.length; if (!n) continue;
       // the pitch of every syllable, in semitones above the base pitch
@@ -81,21 +87,21 @@
         s += m.bounce * (k % 2 ? 1 : -1) + m.drift * pos;                                // happy bounces, sad sinks
         y.s = s * m.range;
         y.loud = (y.small ? 0.82 : 1) * (y.j === 0 ? 1.08 : 1);
-        y.dur = 1; y.end = 1;
+        y.end = 1;
       });
       // the ends: of a phrase (comma), and of the sentence
       syl.forEach((y, k) => {
         const lastOfWord = y.j === y.nj - 1;
-        if (y.wd.endsPhrase && lastOfWord) { y.s += 1.2; y.end = 1.06; y.dur = 1.25; }          // a comma: lifts a little, "more to come"
+        if (y.wd.endsPhrase && lastOfWord) { y.s += 1.2; y.end = 1.06; }          // a comma: lifts a little, "more to come"
       });
       const L = syl[n - 1];
       if (kind === 'q' && !wh) {
         const lw = syl.filter((y) => y.word === lastWord);
         lw.forEach((y, i) => { if (i < lw.length - 1) y.s += 0.5; });
-        L.s += 5; L.end = 1.22; L.dur = 1.7;                                       // a yes/no question climbs on its last syllable
-      } else if (kind === 'q') { L.s -= 1.2; L.end = 1.06 + m.end; L.dur = 1.4; }   // "what / where / why" questions fall, then lift a little
-      else if (kind === 'e') { L.s -= 1.5; L.end = 0.89; L.dur = 1.5; L.loud *= 1.05; }
-      else { L.s -= 2.2; L.end = 0.9 + m.end; L.dur = trailing ? 2.2 : 1.6; if (trailing) { L.s -= 1.5; L.end = 0.86; } }
+        L.s += 5; L.end = 1.22;                                       // a yes/no question climbs on its last syllable
+      } else if (kind === 'q') { L.s -= 1.2; L.end = 1.06 + m.end; }   // "what / where / why" questions fall, then lift a little
+      else if (kind === 'e') { L.s -= 1.5; L.end = 0.89; L.loud *= 1.05; }
+      else { L.s -= 2.2; L.end = 0.9 + m.end; if (trailing) { L.s -= 1.5; L.end = 0.86; } }
       // every sound leans toward the pitch of the NEXT sound: up if the next one is higher, down if it is lower
       const lean = S('voice.glideToNext', 0.8);
       syl.forEach((y, k) => {
@@ -104,7 +110,7 @@
           const diff = syl[k + 1].s - y.s;          // semitones up (+) or down (-) to the next sound
           glide = Math.abs(diff) < 0.25 ? 1 : semi(Math.max(-6, Math.min(6, Math.sign(diff) * Math.max(1.3, Math.abs(diff) * lean))));   // always an audible swing
         }
-        out[y.idx] = { mult: semi(m.base + y.s), glide, loud: y.loud * m.loud * (kind === 'e' ? 1.2 : 1), dur: y.dur * m.dur, vow: y.vow };
+        out[y.idx] = { mult: semi(m.base + y.s), glide, loud: y.loud * m.loud * (kind === 'e' ? 1.2 : 1), dur: m.dur, vow: y.vow, pre: y.pre, post: y.post };
       });
     }
     return out;
@@ -122,14 +128,20 @@
     if (gain < 0.015) return;      // too far away to be heard
     voice.budget--;
     const f0 = v.pitch * p.mult * (1 + (Math.random() * 2 - 1) * S('voice.randomness', 0.004));
-    const now = c.currentTime, dur = S('voice.letterSeconds', 0.14) * p.dur, t1 = now + dur;
+    // sounds of one speaker never step on each other: a new one waits until the one before has finished
+    const dur = S('voice.letterSeconds', 0.24) * p.dur, hum = S('voice.mSeconds', 0.09), pre = p.pre ? hum : 0, post = p.post ? hum : 0;
+    const start = Math.max(c.currentTime, v.freeAt || 0), tv = start + pre, te = tv + dur, t1 = te + post;
+    if (start - c.currentTime > 0.7) return;      // far behind (a very fast bubble): skip instead of piling up
+    v.freeAt = t1;
     const vol = 0.12 * p.loud * Math.min(1, gain);
-    // a smooth swell: quick soft start, stays, gentle tail (the next syllable starts while this one is still fading)
+    // a smooth swell: quick soft start (quieter during an "m" hum), stays while the pitch swings, then fades
     const env = c.createGain();
-    env.gain.setValueAtTime(0.0001, now);
-    env.gain.linearRampToValueAtTime(vol, now + 0.03);
-    env.gain.linearRampToValueAtTime(vol * 0.9, now + dur * 0.7);
-    env.gain.linearRampToValueAtTime(0.0001, t1);      // stays full while the pitch swings, then fades quickly
+    env.gain.setValueAtTime(0.0001, start);
+    if (pre) { env.gain.linearRampToValueAtTime(vol * 0.7, start + 0.03); env.gain.linearRampToValueAtTime(vol, tv + 0.06); }
+    else env.gain.linearRampToValueAtTime(vol, start + 0.03);
+    env.gain.linearRampToValueAtTime(vol * 0.9, tv + dur * 0.7);
+    if (post) { env.gain.linearRampToValueAtTime(vol * 0.9, te); env.gain.linearRampToValueAtTime(vol * 0.6, te + 0.03); env.gain.linearRampToValueAtTime(0.0001, t1); }
+    else env.gain.linearRampToValueAtTime(0.0001, te);
     // the whole voice is softened (more when the speaker is far away)
     const soft = c.createBiquadFilter(); soft.type = 'lowpass'; soft.Q.value = 0.5;
     soft.frequency.value = 4500 * (0.4 + 0.6 * Math.min(1, gain));
@@ -138,15 +150,22 @@
     else soft.connect(voice.master);
     // the buzz: its pitch glides as the plan says
     const o = c.createOscillator(); o.setPeriodicWave(voice.wave);
-    o.frequency.setValueAtTime(f0 * 0.96, now); o.frequency.linearRampToValueAtTime(f0, now + 0.05); o.frequency.setValueAtTime(f0, now + dur * 0.15); o.frequency.linearRampToValueAtTime(f0 * p.glide, now + dur * 0.9);      // a little "boop" up at the start of every sound
-    // the mouth: two resonances that make the vowel
-    const f = VOWEL[p.vow] || VOWEL.a;
-    [[f[0], 1, 5], [f[1], 2.6, 7], [3300, 0.5 * v.bright, 6]].forEach(([hz, g, q]) => {
-      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = hz * v.formant; bp.Q.value = q;
-      const gg = c.createGain(); gg.gain.value = g * 3;
+    if (pre) { o.frequency.setValueAtTime(f0, start); o.frequency.setValueAtTime(f0, tv); }
+    else { o.frequency.setValueAtTime(f0 * 0.96, tv); o.frequency.linearRampToValueAtTime(f0, tv + 0.05); }      // a little "boop" up at the start of every sound
+    o.frequency.setValueAtTime(f0, tv + dur * 0.15); o.frequency.linearRampToValueAtTime(f0 * p.glide, tv + dur * 0.9);
+    if (post) o.frequency.setValueAtTime(f0 * p.glide, t1);
+    // the mouth: two resonances that make the vowel (closed lips for "m": a low, muffled hum)
+    const f = VOWEL[p.vow] || VOWEL.a, nasal = [250, 1000];
+    [[0, 1, 5], [1, 2.6, 7], [2, 0.5 * v.bright, 6]].forEach(([k, g, q]) => {
+      const hz = k < 2 ? f[k] * v.formant : 3300 * v.formant, mhz = k < 2 ? nasal[k] * v.formant : hz;
+      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = q;
+      const gg = c.createGain(), full = g * 3, closed = full * (k === 0 ? 1 : 0.12);
+      if (pre) { bp.frequency.setValueAtTime(mhz, start); bp.frequency.setValueAtTime(mhz, tv); bp.frequency.linearRampToValueAtTime(hz, tv + 0.07); gg.gain.setValueAtTime(closed, start); gg.gain.setValueAtTime(closed, tv); gg.gain.linearRampToValueAtTime(full, tv + 0.07); }
+      else { bp.frequency.value = hz; gg.gain.value = full; }
+      if (post) { bp.frequency.setValueAtTime(hz, te - 0.02); bp.frequency.linearRampToValueAtTime(mhz, te + 0.04); gg.gain.setValueAtTime(full, te - 0.02); gg.gain.linearRampToValueAtTime(closed, te + 0.04); }
       o.connect(bp); bp.connect(gg); gg.connect(env);
     });
-    o.start(now); o.stop(t1 + 0.02);
+    o.start(start); o.stop(t1 + 0.02);
   };
 
   try { voice.muted = localStorage.getItem('krowns.muted') === '1'; } catch (e) { /* not important */ }
