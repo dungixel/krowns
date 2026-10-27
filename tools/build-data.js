@@ -28,44 +28,6 @@ for (const r of read('colors.json')) {
   out.colors[r.Key.trim()] = h.startsWith('#') ? h : Number(h);
 }
 
-// jobs
-out.jobs = {};
-for (const r of read('jobs.json')) {
-  if (r['Not available yet']) continue;          // ticked in Notion = not in the game yet
-  const id = slug(r.Name);
-  out.jobs[id] = {
-    id, name: r.Name, cls: r.Class, dps: num(r['Damage per second (in hearts)']), range: num(r['Range (tiles)']) || 1,
-    sprite: r.Sprite, tint: r.Tint || '', icon: r.Icon, color: r.Color, ambition: num(r['Ambition weight']),
-    minGood: r['Min evil-good'] === undefined || r['Min evil-good'] === '' ? -10 : num(r['Min evil-good']),
-    maxGood: r['Max evil-good'] === undefined || r['Max evil-good'] === '' ? 10 : num(r['Max evil-good']),
-    maxPerKingdom: num(r['Max per kingdom']), work: r.Work, variantOf: r['Variant of'] ? slug(r['Variant of']) : '',
-    guessed: !!r.Guessed, description: r.description || '',
-  };
-}
-
-// creatures
-out.creatures = {};
-for (const r of read('creatures.json')) {
-  const id = slug(r.Name);
-  const st = String(r['Status on hit'] || '').split(':');
-  out.creatures[id] = {
-    id, name: r.Name, sprite: r.Sprite, behavior: r.Behavior, hearts: num(r.Hearts), dps: num(r['Damage per second (in hearts)']),
-    speed: num(r['Speed (tiles/s)']) || 1, food: num(r['Food drop']), weight: num(r['Spawn weight']), nightOnly: !!r['Night only'],
-    flies: !!r.Flies, facesLeft: String(r['Sprite faces'] || '').toLowerCase() === 'left', status: st[0] || '', statusChance: st[1] ? Number(st[1]) : 0, guessed: !!r.Guessed, description: r.description || '',
-  };
-}
-
-// structures and items
-out.structures = {};
-for (const r of read('structures.json')) {
-  const id = slug(r.Name);
-  out.structures[id] = {
-    id, name: r.Name, kind: r.Kind, sprite: r.Sprite || '', color: r['Placeholder color'] || r.Color, label: r.Label || '',
-    w: num(r['Width (tiles)']) || 1, h: num(r['Height (tiles)']) || 1, hearts: num(r.Hearts), wood: num(r['Wood cost']),
-    gold: num(r['Gold cost']), buildSeconds: num(r['Build seconds']), icon: r.Icon, iconColor: r.Color, description: r.Description || '',
-  };
-}
-
 // animations
 out.animations = {};
 for (const r of read('animations.json')) {
@@ -85,6 +47,5 @@ fs.mkdirSync(path.join(root, 'data'), { recursive: true });
 const js = '// GENERATED from the Notion page "krowns 1.0" by tools/build-data.js - do not edit by hand.\n' +
   'globalThis.Krowns = globalThis.Krowns || {};\nglobalThis.Krowns.data = ' + JSON.stringify(out, null, 1) + ';\n';
 fs.writeFileSync(path.join(root, 'data', 'game-data.js'), js);
-console.log('data/game-data.js written:', Object.keys(out.settings).length, 'settings,', Object.keys(out.jobs).length, 'jobs,',
-  Object.keys(out.creatures).length, 'creatures,', Object.keys(out.structures).length, 'structures,', Object.keys(out.colors).length, 'colors,',
-  Object.values(out.speech).reduce((a, b) => a + b.length, 0), 'speech lines');
+console.log('data/game-data.js written:', Object.keys(out.settings).length, 'settings,', Object.keys(out.colors).length, 'colors,',
+  Object.keys(out.animations).length, 'animations,', Object.values(out.speech).reduce((a, b) => a + b.length, 0), 'speech lines');

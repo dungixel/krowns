@@ -1,105 +1,27 @@
-/* Krowns - interface styles. Colours come from the Notion "Colors" table (set by js/main.js as --panel, --text...). */
+/* Krowns - styles. Colours come from the Notion "Colors" table (js/main.js sets --panel, --text...). */
 @font-face { font-family: 'Lexend'; font-weight: 400; font-style: normal; font-display: swap; src: url('../assets/fonts/lexend-latin-400-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Lexend'; font-weight: 700; font-style: normal; font-display: swap; src: url('../assets/fonts/lexend-latin-700-normal.woff2') format('woff2'); }
 
-:root { --panel: #ffffff; --text: #2f2c36; --soft: #8a8593; --line: #ece8f0; --barback: #ece8f0; --accent: #957fae; --radius: 16px; --shadow: 0 6px 22px rgba(47, 44, 54, .18); }
+:root { --panel: #ffffff; --text: #2f2c36; --soft: #8a8593; --line: #ece8f0; --accent: #957fae; --radius: 16px; --shadow: 0 6px 22px rgba(47, 44, 54, .18); }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #221c30; font-family: 'Lexend', system-ui, sans-serif; color: var(--text); touch-action: none; }
 #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; touch-action: none; }
-.ic { display: inline-flex; vertical-align: -3px; }
-.ic svg { display: block; }
 button { font: inherit; color: inherit; }
-
 .card { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); }
-#topleft { position: fixed; left: 12px; top: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; max-width: calc(100vw - 24px); }
-#clock { display: flex; align-items: center; gap: 8px; padding: 9px 14px; font-size: 15px; }
-#clock .ci { color: var(--accent); display: inline-flex; }
-#clock b { font-weight: 700; }
-#clock .tm i { display: inline-block; width: 0.72em; text-align: center; font-style: normal; }
-#clock .tm { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; background: var(--line); border-radius: 9px; padding: 2px 8px; }
-#pop { padding: 9px 13px; font-size: 14px; color: var(--soft); display: flex; align-items: center; gap: 4px; }
-#topright { position: fixed; right: 12px; top: 12px; display: flex; gap: 6px; padding: 6px; align-items: center; max-width: calc(100vw - 24px); flex-wrap: wrap; justify-content: flex-end; }
-#topright button { border: 0; background: transparent; width: 38px; height: 38px; border-radius: 11px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: var(--text); font-weight: 700; font-size: 13px; }
-#topright button:hover { background: var(--line); }
-#topright button.on { background: var(--accent); color: #fff; }
-#topright .sep { width: 1px; height: 22px; background: var(--line); margin: 0 2px; }
 
-#hover { position: fixed; z-index: 5; pointer-events: none; padding: 10px 12px; min-width: 190px; max-width: 250px; opacity: 0; transform: translateY(4px); transition: opacity .12s, transform .12s; font-size: 13px; }
-#hover.show { opacity: 1; transform: none; }
-#hover .h1, #panel h2 { font-weight: 700; font-size: 16px; margin: 0 0 4px; }
-.namechip { display: inline-block; color: #2a2433; border-radius: 10px; padding: 1px 11px 2px; }
-#panel h2 small { color: var(--soft); font-weight: 400; }
-.sub { color: var(--soft); font-size: 12.5px; line-height: 1.5; }
-.sub b { color: var(--text); }
-.dim { color: var(--soft); opacity: .8; }
-
-.bar { display: flex; align-items: center; gap: 7px; margin: 5px 0; font-size: 12px; }
-.bar .bi { display: inline-flex; width: 16px; justify-content: center; }
-.bar .bt { flex: 1; height: 8px; background: var(--barback); border-radius: 6px; overflow: hidden; position: relative; }
-.bar .bt i { display: block; height: 100%; border-radius: 6px; }
-.bar .bt.gd { background: linear-gradient(90deg, #ffb3b3, #ece8f0 50%, #b8f0c9); }
-.bar .bt.gd i { position: absolute; top: -2px; width: 4px; height: 12px; margin-left: -2px; background: var(--text); border-radius: 3px; }
-.bar b { min-width: 42px; text-align: right; font-variant-numeric: tabular-nums; }
-.bar b small { color: var(--soft); font-weight: 400; }
-
-#panel { position: fixed; right: 12px; top: 72px; width: 320px; max-height: calc(100vh - 150px); overflow: auto; padding: 16px 16px 14px; z-index: 4; display: none; font-size: 13px; touch-action: pan-y; }
-#panel.open { display: block; animation: pop .16s ease-out; }
-@keyframes pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-#panel h3 { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); margin: 14px 0 4px; font-weight: 700; }
-#panel .desc { font-size: 12.5px; color: var(--soft); margin: 6px 0 8px; line-height: 1.45; }
-#panel .now { margin: 8px 0 4px; font-weight: 700; font-size: 13px; }
-#panel a { color: var(--accent); cursor: pointer; text-decoration: none; font-weight: 700; }
-#panel a:hover { text-decoration: underline; }
-#panel-tools { position: absolute; right: 10px; top: 10px; display: flex; gap: 4px; }
-#panel-tools button { border: 0; background: var(--line); width: 30px; height: 30px; border-radius: 9px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
-#panel-tools button.on { background: var(--accent); color: #fff; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; font-size: 12px; }
-.chip { display: inline-block; background: var(--line); border-radius: 20px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 12px; }
-.row { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: 12.5px; }
-.row b { margin-left: auto; }
-.rl { margin: 0; padding-left: 16px; font-size: 12px; color: var(--soft); }
-.inv { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0; }
-.inv > div { background: var(--line); border-radius: 12px; padding: 10px 6px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.inv b { font-size: 20px; }
-.inv small { color: var(--soft); font-size: 11px; }
-
-#logbox { position: fixed; left: 12px; bottom: 12px; width: 330px; max-width: calc(100vw - 24px); max-height: 40vh; padding: 10px 12px; display: none; overflow: auto; z-index: 3; touch-action: pan-y; }
-#logbox.open { display: block; }
-#logbox h4 { margin: 0 0 6px; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); }
-#loglist { list-style: none; margin: 0; padding: 0; font-size: 12.5px; }
-#loglist li { padding: 4px 0; border-bottom: 1px solid var(--line); cursor: pointer; line-height: 1.35; }
-#loglist li b { color: var(--soft); font-weight: 700; font-size: 11px; margin-right: 4px; }
-#seedlabel { position: fixed; right: 14px; bottom: 10px; color: rgba(255, 255, 255, .75); font-size: 11px; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); pointer-events: none; }
-#toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(10px); background: var(--text); color: #fff; padding: 9px 16px; border-radius: 12px; font-size: 13px; opacity: 0; transition: .2s; pointer-events: none; z-index: 20; }
-#toast.show { opacity: 1; transform: translateX(-50%); }
+#menu { display: none; position: fixed; left: 12px; top: 12px; z-index: 5; border: 0; padding: 9px 14px; font-weight: 700; font-size: 14px; cursor: pointer; }
+body.playing #menu { display: block; }
 
 #start { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; background: rgba(34, 28, 48, .55); backdrop-filter: blur(3px); }
 #start.show { display: flex; }
-#start .box { width: min(92vw, 400px); padding: 28px 26px 22px; text-align: center; }
+#start .box { width: min(92vw, 380px); padding: 28px 26px 24px; text-align: center; }
 #start h1 { margin: 0 0 4px; font-size: 38px; letter-spacing: .02em; }
 #start p { margin: 4px 0 18px; color: var(--soft); font-size: 14px; line-height: 1.5; }
-#start .seedrow { display: flex; gap: 8px; margin-bottom: 14px; }
-#start input { flex: 1; min-width: 0; border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; font: inherit; color: var(--text); background: var(--panel); text-align: center; }
+#start input { width: 100%; border: 2px solid var(--line); border-radius: 12px; padding: 11px 12px; margin-bottom: 14px; font: inherit; font-size: 16px; color: var(--text); background: var(--panel); text-align: center; }
 #start input:focus { outline: none; border-color: var(--accent); }
-#btn-dice { border: 0; background: var(--line); border-radius: 12px; width: 46px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-#btn-start { width: 100%; border: 0; background: var(--accent); color: #fff; font-weight: 700; font-size: 16px; padding: 14px; border-radius: 14px; cursor: pointer; box-shadow: 0 4px 0 rgba(0, 0, 0, .15); }
-#btn-start:disabled { opacity: .6; cursor: wait; }
-#btn-start:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, .15); }
-#start .hint { margin-top: 14px; font-size: 11.5px; color: var(--soft); }
-
-@media (max-width: 720px) {
-  #panel { left: 8px; right: 8px; top: auto; bottom: 8px; width: auto; max-height: 46vh; }
-  #logbox { bottom: auto; top: 64px; max-height: 50vh; }
-  #topright { top: 62px; }
-  #pop { display: none; }
-}
-#loglist a.un { font-weight: 700; cursor: pointer; } #loglist a.un:hover { text-decoration: underline; }
-
-/* "Walk around" mode: nothing on the screen except the world and a way back */
-#btn-walk { width: 100%; margin-top: 10px; border: 2px solid var(--line); background: transparent; color: var(--text); font: inherit; font-weight: 700; font-size: 14px; padding: 11px; border-radius: 14px; cursor: pointer; }
-#btn-walk:hover { background: var(--line); }
-#btn-walkback { display: none; position: fixed; left: 12px; top: 12px; z-index: 5; border: 0; padding: 9px 14px; font: inherit; font-weight: 700; font-size: 14px; color: var(--text); cursor: pointer; }
-body.walkmode #btn-walkback { display: block; }
-body.walkmode #topleft, body.walkmode #topright, body.walkmode #hover, body.walkmode #panel, body.walkmode #logbox, body.walkmode #seedlabel, body.walkmode #toast { display: none !important; }
-#walkhud { display: none; position: fixed; right: 12px; top: 12px; z-index: 5; width: 210px; padding: 8px 14px; }
-body.walkmode #walkhud { display: block; }
+#start .go { width: 100%; border: 0; background: var(--accent); color: #fff; font-weight: 700; font-size: 16px; padding: 14px; border-radius: 14px; cursor: pointer; box-shadow: 0 4px 0 rgba(0, 0, 0, .15); }
+#start .go:disabled { opacity: .5; cursor: default; }
+#start .hint { margin-top: 14px; font-size: 12px; color: var(--soft); }
+#step-name { display: none; }
+#start.naming #step-title { display: none; }
+#start.naming #step-name { display: block; }

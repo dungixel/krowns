@@ -1,80 +1,41 @@
 <!doctype html>
-<html lang="en" data-v="16">
+<html lang="en" data-v="2">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Krowns</title>
-<meta name="description" content="Krowns - a tiny kingdom simulation where everyone lives their own life.">
-<link rel="stylesheet" href="css/style.css?v=16">
+<meta name="description" content="Krowns - a tiny meadow.">
+<link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
 <canvas id="game"></canvas>
-
-<div id="topleft">
-  <div id="clock" class="card"></div>
-  <div id="pop" class="card"></div>
-</div>
-<div id="topright" class="card">
-  <button id="btn-pause" title="Pause (space)"></button>
-  <button id="btn-1x" title="Normal speed (1)">1x</button>
-  <button id="btn-2x" title="Faster (2)">2x</button>
-  <button id="btn-4x" title="Fastest (3)">4x</button>
-  <span class="sep"></span>
-  <button id="btn-zout" title="Zoom out (-)"></button>
-  <button id="btn-zin" title="Zoom in (+)"></button>
-  <span class="sep"></span>
-  <button id="btn-log" title="Event log"></button>
-  <button id="btn-sound" title="Sound"></button>
-  <button id="btn-new" title="New world"></button>
-</div>
-
-<div id="hover" class="card"></div>
-<aside id="panel" class="card">
-  <div id="panel-tools"><button id="btn-follow" title="Follow (F)">F</button><button id="panel-close" title="Close (Esc)">x</button></div>
-  <div id="panel-body"></div>
-</aside>
-<div id="logbox" class="card"><h4>What is happening</h4><ul id="loglist"></ul></div>
-<div id="walkhud" class="card"></div>
-<div id="seedlabel"></div>
-<button id="btn-walkback" class="card" title="Back to the menu (Esc)">&larr; Menu</button>
-<div id="toast"></div>
+<button id="menu" class="card" title="Menu (Esc)">&larr; Menu</button>
 
 <div id="start" class="show">
   <div class="box card">
-    <h1>Krowns</h1>
-    <p>A tiny kingdom where everyone lives their own life. Watch, click, zoom, and see what happens.</p>
-    <div class="seedrow"><input id="seed" inputmode="numeric" placeholder="World number (empty = random)"><button id="btn-dice" title="Random number"></button></div>
-    <button id="btn-start">Loading...</button>
-    <button id="btn-walk">Walk around with a knight</button>
-    <div class="hint">Drag to move &middot; mouse wheel or pinch to zoom &middot; click anyone</div>
+    <div id="step-title">
+      <h1>Krowns</h1>
+      <p>A quiet meadow with trees. Somebody lives here.</p>
+      <button id="btn-play" class="go" disabled>Loading...</button>
+    </div>
+    <div id="step-name">
+      <h1>Who are you?</h1>
+      <p>Pick a name for your knight.</p>
+      <input id="name" maxlength="12" autocomplete="off" spellcheck="false" placeholder="Your name">
+      <button id="btn-go" class="go" disabled>Walk into the meadow</button>
+      <div class="hint">Move with WASD or the arrow keys &middot; mouse wheel zooms &middot; E makes your neighbour talk</div>
+    </div>
   </div>
 </div>
 
-<script src="data/game-data.js?v=16"></script>
-<script src="js/icons-data.js?v=16"></script>
-<script src="js/util.js?v=16"></script>
-<script src="js/data.js?v=16"></script>
-<script src="js/names.js?v=16"></script>
-<script src="js/sim/core.js?v=16"></script>
-<script src="js/sim/units.js?v=16"></script>
-<script src="js/sim/kingdom.js?v=16"></script>
-<script src="js/sim/social.js?v=16"></script>
-<script src="js/sim/creatures.js?v=16"></script>
-<script src="js/sim/events.js?v=16"></script>
-<script src="js/sim/ai.js?v=16"></script>
-<script src="js/sim/jobs.js?v=16"></script>
-<script src="js/sim/index.js?v=16"></script>
-<script src="js/render.js?v=16"></script>
-<script src="js/audio.js?v=16"></script>
-<script src="js/ui.js?v=16"></script>
-<script src="js/walk.js?v=16"></script>
-<script src="js/main.js?v=16"></script>
-<script>
-  // the icons of the interface buttons
-  (function () {
-    var K = globalThis.Krowns, b = function (id, name, size) { document.getElementById(id).innerHTML = K.icon(name, size || 20); };
-    b('btn-pause', 'player-pause'); b('btn-zout', 'zoom-out'); b('btn-zin', 'zoom-in'); b('btn-log', 'list-details'); b('btn-sound', 'volume'); b('btn-new', 'refresh'); b('btn-dice', 'dice-5', 22);
-  })();
-</script>
+<script src="data/game-data.js?v=2"></script>
+<script src="js/util.js?v=2"></script>
+<script src="js/data.js?v=2"></script>
+<script src="js/names.js?v=2"></script>
+<script src="js/world.js?v=2"></script>
+<script src="js/voice.js?v=2"></script>
+<script src="js/npc.js?v=2"></script>
+<script src="js/render.js?v=2"></script>
+<script src="js/main.js?v=2"></script>
 </body>
 </html>

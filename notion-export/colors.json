@@ -1,44 +1,128 @@
 [
-{"Key":"shadow.purple","Hex":"#957fae","Group":"Shadow","Description":"The desaturated purple used (multiply layer mode) for every shadow, and for the grass border of kingdoms."},
-{"Key":"shadow.opacity","Hex":"1","Group":"Shadow","Description":"Strength of the shadow layer (1 = full multiply)."},
-{"Key":"light.day","Hex":"#ffffff","Group":"Light","Description":"The world's colour at midday (white = no tint)."},
-{"Key":"light.orange","Hex":"#ffd3a6","Group":"Light","Description":"The world's colour at sunrise and sunset."},
-{"Key":"light.rose","Hex":"#c49292","Group":"Light","Description":"Between orange and night."},
-{"Key":"light.night","Hex":"#2e3650","Group":"Light","Description":"The world's colour at night: dark desaturated blue."},
-{"Key":"ui.panel","Hex":"#ffffff","Group":"UI","Description":"Panels and cards."},
-{"Key":"ui.text","Hex":"#2f2c36","Group":"UI","Description":"Soft black text."},
-{"Key":"ui.textSoft","Hex":"#8a8593","Group":"UI","Description":"Secondary text."},
-{"Key":"ui.line","Hex":"#ece8f0","Group":"UI","Description":"Thin separators."},
-{"Key":"ui.bubble","Hex":"#ffffff","Group":"UI","Description":"Speech bubble background."},
-{"Key":"ui.bubbleText","Hex":"#2f2c36","Group":"UI","Description":"Speech bubble text."},
-{"Key":"ui.nameOutline","Hex":"#2a2433","Group":"UI","Description":"Soft dark outline behind names so pastel names stay readable."},
-{"Key":"ui.barBack","Hex":"#ece8f0","Group":"UI","Description":"Empty part of bars."},
-{"Key":"icon.hearts","Hex":"#ff9fb4","Group":"Icons","Description":"Hearts icon."},
-{"Key":"icon.energy","Hex":"#ffd27a","Group":"Icons","Description":"Energy icon."},
-{"Key":"icon.hunger","Hex":"#ffb68a","Group":"Icons","Description":"Hunger icon."},
-{"Key":"icon.evilgood","Hex":"#b79cff","Group":"Icons","Description":"Evil-good icon."},
-{"Key":"icon.strength","Hex":"#8fd49a","Group":"Icons","Description":"Strength icon."},
-{"Key":"icon.longevity","Hex":"#ff9fd0","Group":"Icons","Description":"Longevity icon."},
-{"Key":"icon.job","Hex":"#9fc6ff","Group":"Icons","Description":"Job icon."},
-{"Key":"icon.kingdom","Hex":"#ffe08a","Group":"Icons","Description":"Kingdom icon."},
-{"Key":"icon.family","Hex":"#ffb3c6","Group":"Icons","Description":"Family icon."},
-{"Key":"icon.status.burn","Hex":"#ff9c7a","Group":"Icons","Description":"Burned."},
-{"Key":"icon.status.poison","Hex":"#b7e07a","Group":"Icons","Description":"Poisoned."},
-{"Key":"icon.status.sleep","Hex":"#b9c4ff","Group":"Icons","Description":"Sleeping."},
-{"Key":"icon.neutral","Hex":"#c8c2d2","Group":"Icons","Description":"Anything else."},
-{"Key":"name.pastel.1","Hex":"#ffc9de","Group":"Names","Description":"Names get one of these light pastel colors at random."},
-{"Key":"name.pastel.2","Hex":"#ffd9b3","Group":"Names","Description":""},
-{"Key":"name.pastel.3","Hex":"#fff0b3","Group":"Names","Description":""},
-{"Key":"name.pastel.4","Hex":"#d3f2b8","Group":"Names","Description":""},
-{"Key":"name.pastel.5","Hex":"#b8f0dc","Group":"Names","Description":""},
-{"Key":"name.pastel.6","Hex":"#b8e6ff","Group":"Names","Description":""},
-{"Key":"name.pastel.7","Hex":"#c9d3ff","Group":"Names","Description":""},
-{"Key":"name.pastel.8","Hex":"#e1c9ff","Group":"Names","Description":""},
-{"Key":"name.pastel.9","Hex":"#ffc9f0","Group":"Names","Description":""},
-{"Key":"name.pastel.10","Hex":"#ffd0c9","Group":"Names","Description":""},
-{"Key":"name.pastel.11","Hex":"#c9f5f2","Group":"Names","Description":""},
-{"Key":"name.pastel.12","Hex":"#f3e3c2","Group":"Names","Description":""},
-{"Key":"bar.hearts","Hex":"#ff9fb4","Group":"Health","Description":"Heart bar."},
-{"Key":"bar.energy","Hex":"#ffd27a","Group":"Health","Description":"Energy bar."},
-{"Key":"bar.hunger","Hex":"#ffb68a","Group":"Health","Description":"Hunger bar."}
+ {
+  "Key": "shadow.purple",
+  "Hex": "#957fae",
+  "Group": "Shadow",
+  "Description": "The desaturated purple used (multiply layer mode) for every shadow, and for the grass border of kingdoms."
+ },
+ {
+  "Key": "shadow.opacity",
+  "Hex": "1",
+  "Group": "Shadow",
+  "Description": "Strength of the shadow layer (1 = full multiply)."
+ },
+ {
+  "Key": "ui.panel",
+  "Hex": "#ffffff",
+  "Group": "UI",
+  "Description": "Panels and cards."
+ },
+ {
+  "Key": "ui.text",
+  "Hex": "#2f2c36",
+  "Group": "UI",
+  "Description": "Soft black text."
+ },
+ {
+  "Key": "ui.textSoft",
+  "Hex": "#8a8593",
+  "Group": "UI",
+  "Description": "Secondary text."
+ },
+ {
+  "Key": "ui.line",
+  "Hex": "#ece8f0",
+  "Group": "UI",
+  "Description": "Thin separators."
+ },
+ {
+  "Key": "ui.bubble",
+  "Hex": "#ffffff",
+  "Group": "UI",
+  "Description": "Speech bubble background."
+ },
+ {
+  "Key": "ui.bubbleText",
+  "Hex": "#2f2c36",
+  "Group": "UI",
+  "Description": "Speech bubble text."
+ },
+ {
+  "Key": "ui.nameOutline",
+  "Hex": "#2a2433",
+  "Group": "UI",
+  "Description": "Soft dark outline behind names so pastel names stay readable."
+ },
+ {
+  "Key": "name.pastel.1",
+  "Hex": "#ffc9de",
+  "Group": "Names",
+  "Description": "Names get one of these light pastel colors at random."
+ },
+ {
+  "Key": "name.pastel.2",
+  "Hex": "#ffd9b3",
+  "Group": "Names",
+  "Description": ""
+ },
+ {
+  "Key": "name.pastel.3",
+  "Hex": "#fff0b3",
+  "Group": "Names",
+  "Description": ""
+ },
+ {
+  "Key": "name.pastel.4",
+  "Hex": "#d3f2b8",
+  "Group": "Names",
+  "Description": ""
+ },
+ {
+  "Key": "name.pastel.5",
+  "Hex": "#b8f0dc",
+  "Group": "Names",
+  "Description": ""
+ },
+ {
+  "Key": "name.pastel.6",
+  "Hex": "#b8e6ff",
+  "Group": "Names",
+  "Description": ""
+ },
+ {
+  "Key": "name.pastel.7",
+  "Hex": "#c9d3ff",
+  "Group": "Names",
+  "Description": ""
+ },
+ {
+  "Key": "name.pastel.8",
+  "Hex": "#e1c9ff",
+  "Group": "Names",
+  "Description": ""
+ },
+ {
+  "Key": "name.pastel.9",
+  "Hex": "#ffc9f0",
+  "Group": "Names",
+  "Description": ""
+ },
+ {
+  "Key": "name.pastel.10",
+  "Hex": "#ffd0c9",
+  "Group": "Names",
+  "Description": ""
+ },
+ {
+  "Key": "name.pastel.11",
+  "Hex": "#c9f5f2",
+  "Group": "Names",
+  "Description": ""
+ },
+ {
+  "Key": "name.pastel.12",
+  "Hex": "#f3e3c2",
+  "Group": "Names",
+  "Description": ""
+ }
 ]
