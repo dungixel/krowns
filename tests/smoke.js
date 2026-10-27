@@ -24,28 +24,23 @@ for (const seed of [1, 2, 3, 4, 5]) {
   }
   if (!n.name) fail('neighbour has no name');
 }
-const notes = (txt, mood) => K.voice.plan(txt, mood || 'neutral').filter(Boolean);
-const endPitch = (x) => x.mult * x.glide;
+const notes = (txt, mood) => K.voice.plan(txt, mood || 'neutral').filter(Boolean);     // one beep per letter
 const q = notes('Are you here?'), d = notes('It is quiet.'), e = notes('What a beautiful day!');
-if (!(endPitch(q[q.length - 1]) > q[0].mult * 1.2)) fail('a question should rise at the end');
-if (!(endPitch(d[d.length - 1]) < d[0].mult)) fail('a statement should fall at the end');
-if (!(endPitch(e[e.length - 1]) < e[1].mult)) fail('an exclamation should fall at the end');
+if (q.length !== 10) fail('one beep per letter expected, got ' + q.length);
+if (!(q[q.length - 1].mult > q[0].mult * 1.2)) fail('a question should rise at the end');
+if (!(d[d.length - 1].mult < d[0].mult)) fail('a statement should fall at the end');
+if (!(e[e.length - 1].mult < e[1].mult)) fail('an exclamation should fall at the end');
 const avg = (a) => a.reduce((s, x) => s + x.mult, 0) / a.length;
 if (!(avg(notes('Hello there', 'sad')) < avg(notes('Hello there', 'happy')))) fail('sad should be lower than happy');
-const words = K.voice.plan('beautiful', 'neutral').filter(Boolean).length;
-if (words !== 3) fail('beautiful should have 3 syllables, got ' + words);
-if (K.voice.plan('my', 'neutral').filter(Boolean).length !== 1) fail('"my" should have one sound (y counts as a vowel)');
+for (const l of K.lines()) {          // the melody has no sudden jumps between neighbouring letters
+  for (const sentence of l.text.split(/(?<=[.!?])\s+/)) {
+    const pl = notes(sentence, l.mood);
+    for (let i = 1; i < pl.length; i++) if (Math.abs(Math.log2(pl[i].mult / pl[i - 1].mult)) > 0.65) fail('pitch jumps inside: ' + sentence);
+  }
+}
 for (const l of K.lines()) {
   const pl = K.voice.plan(l.text, l.mood);
   if (!pl.some(Boolean)) fail('no sound at all in: ' + l.text);
   if (!['neutral', 'happy', 'sad', 'angry'].includes(l.mood)) fail('unknown mood for: ' + l.text);
-}
-{
-  const pl = notes('Hello there my friend', 'neutral');
-  for (let k = 0; k < pl.length - 2; k++) {
-    const nextHigher = pl[k + 1].mult > pl[k].mult * 1.01, nextLower = pl[k + 1].mult < pl[k].mult * 0.99;
-    if (nextHigher && !(pl[k].glide > 1)) fail('a sound should lean up toward a higher next sound (syllable ' + k + ')');
-    if (nextLower && !(pl[k].glide < 1)) fail('a sound should lean down toward a lower next sound (syllable ' + k + ')');
-  }
 }
 console.log('OK');

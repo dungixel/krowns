@@ -232,43 +232,19 @@
   "Guessed": true
  },
  {
+  "Key": "voice.beepSeconds",
+  "Value": "0.08",
+  "Unit": "seconds",
+  "Group": "Voice",
+  "Description": "How long each letter's beep lasts.",
+  "Guessed": true
+ },
+ {
   "Key": "voice.hearTiles",
   "Value": "16",
   "Unit": "tiles",
   "Group": "Voice",
   "Description": "How far away a voice can be heard at all. The closer you are, the louder, and far voices also sound duller and come from their side.",
-  "Guessed": true
- },
- {
-  "Key": "voice.letterSeconds",
-  "Value": "0.24",
-  "Unit": "seconds",
-  "Group": "Voice",
-  "Description": "How long every vowel sounds (the same for all vowels).",
-  "Guessed": true
- },
- {
-  "Key": "voice.mSeconds",
-  "Value": "0.09",
-  "Unit": "seconds",
-  "Group": "Voice",
-  "Description": "How long the \"mm\" hum of the letter m lasts (before or after its vowel).",
-  "Guessed": true
- },
- {
-  "Key": "voice.hum",
-  "Value": "1",
-  "Unit": "0 or 1",
-  "Group": "Voice",
-  "Description": "1 = the letter m makes a hum, 0 = silent consonants only.",
-  "Guessed": true
- },
- {
-  "Key": "voice.randomness",
-  "Value": "0.004",
-  "Unit": "x",
-  "Group": "Voice",
-  "Description": "Every letter is a tiny bit higher or lower at random (0.07 = up to 7%).",
   "Guessed": true
  },
  {
@@ -284,15 +260,7 @@
   "Value": "330",
   "Unit": "Hz",
   "Group": "Voice",
-  "Description": "The neighbour's voice pitch. Every character gets its own value (this is NOT tied to anything else).",
-  "Guessed": true
- },
- {
-  "Key": "voice.npc.formant",
-  "Value": "1.3",
-  "Unit": "x",
-  "Group": "Voice",
-  "Description": "1 = a grown-up mouth, higher = a smaller, cuter mouth.",
+  "Description": "Base pitch of the neighbour's beeps. Higher is squeakier, lower is calmer.",
   "Guessed": true
  },
  {
@@ -300,7 +268,7 @@
   "Value": "1",
   "Unit": "0-1.5",
   "Group": "Voice",
-  "Description": "How airy and sharp the consonants are.",
+  "Description": "How much sparkle the neighbour's beep has (0 = a plain soft tone, 1.5 = very sparkly).",
   "Guessed": true
  }
 ]

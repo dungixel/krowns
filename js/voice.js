@@ -1,16 +1,12 @@
-// Krowns - the voice. Every vowel of a speech bubble is "sung" as a soft little sound, a bit like Animal Crossing: one per syllable.
-// Nothing is recorded. A warm buzz (the voice) goes through two filters (the mouth) that make it sound like "ah / eh / ee / oh / oo",
-// so you hear WHICH vowel it is. Consonants are silent.
+// Krowns - the voice. Every letter that appears in a speech bubble makes one very soft, cute little beep (nothing human-like).
+// Nothing is recorded. The beep is a pure round tone with a tiny "boop" up at the start and a soft fade.
 // The pitch is NOT random: it follows the melody of the sentence (voice.plan): statements come down, questions go up at the end,
 // exclamations start high, commas lift a little, important words get a small peak, happy is higher and bouncy, sad is lower and sinks.
 // The pitch of a character's voice is just a number.
 (function () {
   const K = (globalThis.Krowns = globalThis.Krowns || {});
   const S = K.S;
-  const voice = (K.voice = { ctx: null, master: null, wave: null, muted: false, budget: 0 });
-
-  // mouth shapes: the two main resonances (Hz) of each vowel. The vowel never changes the pitch.
-  const VOWEL = { a: [800, 1250], e: [520, 1900], i: [310, 2350], o: [500, 900], u: [330, 850], y: [310, 2350] };
+  const voice = (K.voice = { ctx: null, master: null, muted: false, budget: 0 });
 
   voice.unlock = function () {
     if (voice.ctx) { if (voice.ctx.state === 'suspended') voice.ctx.resume(); return; }
@@ -19,18 +15,15 @@
       if (!AC) return;
       const c = (voice.ctx = new AC());
       voice.master = c.createGain(); voice.master.gain.value = voice.muted ? 0 : S('voice.volume', 0.5);
-      const re = new Float32Array(41), im = new Float32Array(41);          // a warm buzz: the higher tones fade out gradually
-      for (let n = 1; n < 41; n++) im[n] = 1 / Math.pow(n, 0.9);
-      voice.wave = c.createPeriodicWave(re, im);
-      const comp = c.createDynamicsCompressor();                                                        // letters overlap: keep them from getting loud
+      const comp = c.createDynamicsCompressor();                                                        // beeps overlap a little: keep them from getting loud
       voice.master.connect(comp); comp.connect(c.destination);
     } catch (e) { voice.ctx = null; }
   };
   voice.setMuted = function (m) { voice.muted = m; if (voice.master) voice.master.gain.value = m ? 0 : S('voice.volume', 0.5); };
   voice.newFrame = function () { voice.budget = 4; };     // never more than a few letters per frame
 
-  // the voice of a character: { pitch (Hz), formant (1 = grown up, higher = smaller and cuter), bright (0..1.5) }
-  voice.npcVoice = () => ({ pitch: S('voice.npc.pitchHz', 280), formant: S('voice.npc.formant', 1.2), bright: S('voice.npc.brightness', 1) });
+  // the voice of a character: { pitch (Hz), bright (0..1.5: how much sparkle the beep has) }
+  voice.npcVoice = () => ({ pitch: S('voice.npc.pitchHz', 330), bright: S('voice.npc.brightness', 1) });
 
   // ---- intonation: how the pitch moves across a sentence, so it sounds like it means what it says
   const MOOD = {
@@ -62,17 +55,14 @@
         if (k === 0 && WH.has(wd.t.toLowerCase()) && !/(\.\.\.|…)/.test(tail)) wh = true;      // "What...?" is a confused yes/no style rise
         wd.last = k === words.length - 1;
         let groups = [], g, re = /[aeiou]+/gi;
-        while ((g = re.exec(wd.t))) groups.push({ at: wd.at + g.index, len: g[0].length, v: g[0][0].toLowerCase() });
-        if (!groups.length) { const y = wd.t.search(/y/i); if (y >= 0) groups.push({ at: wd.at + y, len: 1, v: 'y' }); }
-        groups.forEach((gr, j) => {
-          // an "m" right before the vowels is hummed before it ("my", "me"), an "m" right after them at the end of the word is hummed after it ("hum")
-          const a = gr.at - wd.at; let b = a; while (b > 0 && /m/i.test(wd.t[b - 1])) b--;
-          const rest = wd.t.slice(a + gr.len).replace(/^'/, '');
-          const post = /^m/i.test(rest) && (rest.length === 1 || !/[aeiouy]/i.test(rest[1]));
-          syl.push({ idx: base + gr.at - (a - b), vow: gr.v, word: k, j, nj: groups.length, wd, small: SMALL.has(wd.t.toLowerCase()), pre: S('voice.hum', 1) && b < a, post: !!S('voice.hum', 1) && post });
-        });
+        while ((g = re.exec(wd.t))) groups.push({ at: wd.at + g.index });
+        if (!groups.length) { const y = wd.t.search(/y/i); if (y >= 0) groups.push({ at: wd.at + y }); }
+        groups.forEach((gr, j) => syl.push({ idx: base + gr.at, word: k, j, nj: groups.length, wd, small: SMALL.has(wd.t.toLowerCase()) }));
       });
-      const n = syl.length; if (!n) continue;
+      const letters = [];
+      for (let i = 0; i < sent.length; i++) if (/[A-Za-z0-9]/.test(sent[i])) letters.push(base + i);
+      const n = syl.length;
+      if (!n) { letters.forEach((i) => { out[i] = { mult: semi(m.base), loud: m.loud, dur: m.dur }; }); continue; }
       // the pitch of every syllable, in semitones above the base pitch
       const acc = kind === 'q' ? 0.6 : kind === 'e' ? 1.8 : 1;
       let pk = 0;
@@ -104,13 +94,26 @@
       else { L.s -= 2.2; L.end = 0.9 + m.end; if (trailing) { L.s -= 1.5; L.end = 0.86; } }
       // every sound leans toward the pitch of the NEXT sound: up if the next one is higher, down if it is lower
       const lean = S('voice.glideToNext', 0.8);
-      syl.forEach((y, k) => {
+      const anchors = syl.map((y, k) => {
         let glide = y.end;
         if (glide === 1 && k < n - 1) {
-          const diff = syl[k + 1].s - y.s;          // semitones up (+) or down (-) to the next sound
-          glide = Math.abs(diff) < 0.25 ? 1 : semi(Math.max(-6, Math.min(6, Math.sign(diff) * Math.max(1.3, Math.abs(diff) * lean))));   // always an audible swing
+          const diff = syl[k + 1].s - y.s;          // semitones up (+) or down (-) to the next vowel
+          glide = Math.abs(diff) < 0.25 ? 1 : semi(Math.max(-6, Math.min(6, Math.sign(diff) * Math.max(1.3, Math.abs(diff) * lean))));
         }
-        out[y.idx] = { mult: semi(m.base + y.s), glide, loud: y.loud * m.loud * (kind === 'e' ? 1.2 : 1), dur: m.dur, vow: y.vow, pre: y.pre, post: y.post };
+        const P = semi(m.base + y.s);
+        return { idx: y.idx, P, Q: P * glide, loud: y.loud * m.loud * (kind === 'e' ? 1.2 : 1) };
+      });
+      // the melody runs through the whole sentence: every letter gets the pitch of the melody at its place
+      // (a vowel is the "note"; the letters around it slide from one note to the next, and after the last note to the sentence's ending)
+      const endIdx = letters[letters.length - 1];
+      letters.forEach((i) => {
+        let k = 0; while (k + 1 < anchors.length && anchors[k + 1].idx <= i) k++;
+        const a = anchors[k], nx = anchors[k + 1];
+        let pitch;
+        if (i < anchors[0].idx) pitch = anchors[0].P;
+        else if (nx) { const t = (i - a.idx) / (nx.idx - a.idx); pitch = a.P * Math.pow(nx.P / a.P, t * t * (3 - 2 * t)); }      // a smooth slide from one note to the next
+        else { const t = endIdx > a.idx ? (i - a.idx) / (endIdx - a.idx) : 0; pitch = a.P * Math.pow(a.Q / a.P, t); }
+        out[i] = { mult: pitch, loud: a.loud, dur: m.dur };
       });
     }
     return out;
@@ -119,53 +122,35 @@
   // how loud a voice is for a listener `d` tiles away: full when close, nothing at voice.hearTiles and beyond
   voice.hearing = function (d) { const x = Math.max(0, 1 - d / S('voice.hearTiles', 16)); return x * Math.sqrt(x); };
 
-  // speak one blip. gain 0..1 (from voice.hearing: quieter when far away), pan -1 (left) .. 1 (right) = where the speaker is.
-  // p = one entry of voice.plan (silent characters have none)
+  // beep for one letter. gain 0..1 (from voice.hearing: quieter when far away), pan -1 (left) .. 1 (right) = where the speaker is.
+  // p = one entry of voice.plan (spaces and punctuation have none, so they stay silent)
   voice.say = function (ch, v, gain, p, pan) {
     const c = voice.ctx;
     if (!p || !c || voice.muted || voice.budget <= 0 || c.state !== 'running') return;
     gain = gain === undefined ? 1 : gain;
     if (gain < 0.015) return;      // too far away to be heard
     voice.budget--;
-    const f0 = v.pitch * p.mult * (1 + (Math.random() * 2 - 1) * S('voice.randomness', 0.004));
-    // sounds of one speaker never step on each other: a new one waits until the one before has finished
-    const dur = S('voice.letterSeconds', 0.24) * p.dur, hum = S('voice.mSeconds', 0.09), pre = p.pre ? hum : 0, post = p.post ? hum : 0;
-    const start = Math.max(c.currentTime, v.freeAt || 0), tv = start + pre, te = tv + dur, t1 = te + post;
-    if (start - c.currentTime > 0.7) return;      // far behind (a very fast bubble): skip instead of piling up
-    v.freeAt = t1;
-    const vol = 0.12 * p.loud * Math.min(1, gain);
-    // a smooth swell: quick soft start (quieter during an "m" hum), stays while the pitch swings, then fades
+    const f0 = v.pitch * p.mult;
+    const now = c.currentTime, dur = S('voice.beepSeconds', 0.08) * p.dur, t1 = now + dur;
+    const vol = 0.15 * p.loud * Math.min(1, gain);
+    // very soft: a gentle start and a smooth fade
     const env = c.createGain();
-    env.gain.setValueAtTime(0.0001, start);
-    if (pre) { env.gain.linearRampToValueAtTime(vol * 0.7, start + 0.03); env.gain.linearRampToValueAtTime(vol, tv + 0.06); }
-    else env.gain.linearRampToValueAtTime(vol, start + 0.03);
-    env.gain.linearRampToValueAtTime(vol * 0.9, tv + dur * 0.7);
-    if (post) { env.gain.linearRampToValueAtTime(vol * 0.9, te); env.gain.linearRampToValueAtTime(vol * 0.6, te + 0.03); env.gain.linearRampToValueAtTime(0.0001, t1); }
-    else env.gain.linearRampToValueAtTime(0.0001, te);
-    // the whole voice is softened (more when the speaker is far away)
+    env.gain.setValueAtTime(0.0001, now);
+    env.gain.linearRampToValueAtTime(vol, now + 0.012);
+    env.gain.exponentialRampToValueAtTime(0.0001, t1);
     const soft = c.createBiquadFilter(); soft.type = 'lowpass'; soft.Q.value = 0.5;
-    soft.frequency.value = 4500 * (0.4 + 0.6 * Math.min(1, gain));
+    soft.frequency.value = 3600 * (0.4 + 0.6 * Math.min(1, gain));      // far beeps are duller
     env.connect(soft);
-    if (c.createStereoPanner && pan) { const sp = c.createStereoPanner(); sp.pan.value = Math.max(-1, Math.min(1, pan)); soft.connect(sp); sp.connect(voice.master); }      // and it comes from its side
+    if (c.createStereoPanner && pan) { const sp = c.createStereoPanner(); sp.pan.value = Math.max(-1, Math.min(1, pan)); soft.connect(sp); sp.connect(voice.master); }      // and come from their side
     else soft.connect(voice.master);
-    // the buzz: its pitch glides as the plan says
-    const o = c.createOscillator(); o.setPeriodicWave(voice.wave);
-    if (pre) { o.frequency.setValueAtTime(f0, start); o.frequency.setValueAtTime(f0, tv); }
-    else { o.frequency.setValueAtTime(f0 * 0.96, tv); o.frequency.linearRampToValueAtTime(f0, tv + 0.05); }      // a little "boop" up at the start of every sound
-    o.frequency.setValueAtTime(f0, tv + dur * 0.15); o.frequency.linearRampToValueAtTime(f0 * p.glide, tv + dur * 0.9);
-    if (post) o.frequency.setValueAtTime(f0 * p.glide, t1);
-    // the mouth: two resonances that make the vowel (closed lips for "m": a low, muffled hum)
-    const f = VOWEL[p.vow] || VOWEL.a, nasal = [250, 1000];
-    [[0, 1, 5], [1, 2.6, 7], [2, 0.5 * v.bright, 6]].forEach(([k, g, q]) => {
-      const hz = k < 2 ? f[k] * v.formant : 3300 * v.formant, mhz = k < 2 ? nasal[k] * v.formant : hz;
-      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = q;
-      const gg = c.createGain(), full = g * 3, closed = full * (k === 0 ? 1 : 0.12);
-      if (pre) { bp.frequency.setValueAtTime(mhz, start); bp.frequency.setValueAtTime(mhz, tv); bp.frequency.linearRampToValueAtTime(hz, tv + 0.07); gg.gain.setValueAtTime(closed, start); gg.gain.setValueAtTime(closed, tv); gg.gain.linearRampToValueAtTime(full, tv + 0.07); }
-      else { bp.frequency.value = hz; gg.gain.value = full; }
-      if (post) { bp.frequency.setValueAtTime(hz, te - 0.02); bp.frequency.linearRampToValueAtTime(mhz, te + 0.04); gg.gain.setValueAtTime(full, te - 0.02); gg.gain.linearRampToValueAtTime(closed, te + 0.04); }
-      o.connect(bp); bp.connect(gg); gg.connect(env);
-    });
-    o.start(start); o.stop(t1 + 0.02);
+    // a pure round tone with a faint sparkle an octave above, and a tiny "boop" up at the start
+    const o = c.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(f0 * 0.96, now); o.frequency.linearRampToValueAtTime(f0, now + 0.02);
+    const o2 = c.createOscillator(); o2.type = 'sine';
+    o2.frequency.setValueAtTime(f0 * 1.92, now); o2.frequency.linearRampToValueAtTime(f0 * 2, now + 0.02);
+    const g2 = c.createGain(); g2.gain.value = 0.14 * v.bright;
+    o.connect(env); o2.connect(g2); g2.connect(env);
+    o.start(now); o2.start(now); o.stop(t1 + 0.02); o2.stop(t1 + 0.02);
   };
 
   try { voice.muted = localStorage.getItem('krowns.muted') === '1'; } catch (e) { /* not important */ }
