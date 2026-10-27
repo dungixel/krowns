@@ -3,7 +3,7 @@
 A tiny meadow with trees. You are a knight (you choose the name), and one neighbour lives here.
 Live: https://dungixel.github.io/krowns/
 
-Move with **WASD / arrow keys** - mouse wheel or **+ / -** zooms - **E** makes the neighbour talk - **M** mutes - **Esc** goes back to the menu.
+Move with **WASD / arrow keys** - mouse wheel or **+ / -** zooms - **1-9, 0** or the list at the bottom left pick what the neighbour says (**E** repeats it) - **M** mutes - **Esc** goes back to the menu.
 
 The earlier, much bigger version (kingdoms, jobs, wars, hunger...) is kept on the branch `v1-full`.
 
@@ -13,7 +13,7 @@ The earlier, much bigger version (kingdoms, jobs, wars, hunger...) is kept on th
 |---|---|
 | `index.html`, `css/style.css` | The page, the title screen and the name screen |
 | `js/world.js` | The meadow (trees, grass) and how bodies walk (freely, sliding along trees) |
-| `js/npc.js` | The neighbour: strolls, and says test sentences (his personality comes later) |
+| `js/npc.js` | The neighbour: strolls, and says the sentences you pick (his personality comes later) |
 | `js/voice.js` | The voice: every letter of a speech bubble makes a made-up sound, with intonation |
 | `js/render.js` | Drawing: ground, grass, trees, shadows, names, speech bubbles |
 | `js/main.js` | Start, game loop, keyboard |
