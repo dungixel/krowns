@@ -1,5 +1,6 @@
-// Krowns - the voice. Every vowel of a speech bubble makes a soft musical "blip" (one blip per syllable), a bit like Animal Crossing.
-// Nothing is recorded, and it does not try to sound human (fake speech sounds creepy). Consonants are silent.
+// Krowns - the voice. Every vowel of a speech bubble is "sung" as a soft little sound, a bit like Animal Crossing: one per syllable.
+// Nothing is recorded. A warm buzz (the voice) goes through two filters (the mouth) that make it sound like "ah / eh / ee / oh / oo",
+// so you hear WHICH vowel it is. Consonants are silent.
 // The pitch is NOT random: it follows the melody of the sentence (voice.plan): statements come down, questions go up at the end,
 // exclamations start high, commas lift a little, important words get a small peak, happy is higher and bouncy, sad is lower and sinks.
 // The pitch of a character's voice is just a number.
@@ -8,8 +9,8 @@
   const S = K.S;
   const voice = (K.voice = { ctx: null, master: null, wave: null, muted: false, budget: 0 });
 
-  // how open (bright) each vowel sounds: the cut-off (Hz) of the soft filter. The vowel never changes the pitch.
-  const VOWEL = { a: 2300, e: 3000, i: 3800, o: 1900, u: 1500, y: 3400 };
+  // mouth shapes: the two main resonances (Hz) of each vowel. The vowel never changes the pitch.
+  const VOWEL = { a: [800, 1250], e: [520, 1900], i: [310, 2350], o: [500, 900], u: [330, 850], y: [310, 2350] };
 
   voice.unlock = function () {
     if (voice.ctx) { if (voice.ctx.state === 'suspended') voice.ctx.resume(); return; }
@@ -18,6 +19,9 @@
       if (!AC) return;
       const c = (voice.ctx = new AC());
       voice.master = c.createGain(); voice.master.gain.value = voice.muted ? 0 : S('voice.volume', 0.5);
+      const re = new Float32Array(41), im = new Float32Array(41);          // a warm buzz: the higher tones fade out gradually
+      for (let n = 1; n < 41; n++) im[n] = 1 / Math.pow(n, 0.9);
+      voice.wave = c.createPeriodicWave(re, im);
       const comp = c.createDynamicsCompressor();                                                        // letters overlap: keep them from getting loud
       voice.master.connect(comp); comp.connect(c.destination);
     } catch (e) { voice.ctx = null; }
@@ -114,28 +118,31 @@
     if (gain < 0.015) return;      // too far away to be heard
     voice.budget--;
     const f0 = v.pitch * p.mult * (1 + (Math.random() * 2 - 1) * S('voice.randomness', 0.004));
-    const now = c.currentTime, dur = S('voice.letterSeconds', 0.13) * p.dur, t1 = now + dur;
-    const vol = 0.3 * p.loud * Math.min(1, gain);
-    // a round little note: quick soft start, a body that stays, a gentle tail
+    const now = c.currentTime, dur = S('voice.letterSeconds', 0.14) * p.dur, t1 = now + dur;
+    const vol = 0.12 * p.loud * Math.min(1, gain);
+    // a smooth swell: quick soft start, stays, gentle tail (the next syllable starts while this one is still fading)
     const env = c.createGain();
     env.gain.setValueAtTime(0.0001, now);
-    env.gain.linearRampToValueAtTime(vol, now + 0.012);
-    env.gain.linearRampToValueAtTime(vol * 0.8, now + dur * 0.6);
+    env.gain.linearRampToValueAtTime(vol, now + 0.018);
+    env.gain.linearRampToValueAtTime(vol * 0.85, now + dur * 0.6);
     env.gain.exponentialRampToValueAtTime(0.0001, t1);
-    // a soft filter: this is the only thing the vowel changes
-    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.7;
-    lp.frequency.value = (VOWEL[p.vow] || 2500) * v.formant * v.bright * (0.45 + 0.55 * Math.min(1, gain));      // far voices sound duller
-    lp.connect(env);
-    if (c.createStereoPanner && pan) { const sp = c.createStereoPanner(); sp.pan.value = Math.max(-1, Math.min(1, pan)); env.connect(sp); sp.connect(voice.master); }      // and come from their side
-    else env.connect(voice.master);
-    // the note: a triangle wave (round and warm) plus a quiet octave above it (a bit of sparkle); the pitch glides as the plan says
-    const o = c.createOscillator(); o.type = 'triangle';
-    o.frequency.setValueAtTime(f0 * 0.985, now); o.frequency.linearRampToValueAtTime(f0, now + 0.025); o.frequency.linearRampToValueAtTime(f0 * p.glide, t1);
-    const o2 = c.createOscillator(); o2.type = 'sine';
-    o2.frequency.setValueAtTime(f0 * 1.97, now); o2.frequency.linearRampToValueAtTime(f0 * 2, now + 0.025); o2.frequency.linearRampToValueAtTime(f0 * 2 * p.glide, t1);
-    const g2 = c.createGain(); g2.gain.value = 0.2;
-    o.connect(lp); o2.connect(g2); g2.connect(lp);
-    o.start(now); o2.start(now); o.stop(t1 + 0.02); o2.stop(t1 + 0.02);
+    // the whole voice is softened (more when the speaker is far away)
+    const soft = c.createBiquadFilter(); soft.type = 'lowpass'; soft.Q.value = 0.5;
+    soft.frequency.value = 4500 * (0.4 + 0.6 * Math.min(1, gain));
+    env.connect(soft);
+    if (c.createStereoPanner && pan) { const sp = c.createStereoPanner(); sp.pan.value = Math.max(-1, Math.min(1, pan)); soft.connect(sp); sp.connect(voice.master); }      // and it comes from its side
+    else soft.connect(voice.master);
+    // the buzz: its pitch glides as the plan says
+    const o = c.createOscillator(); o.setPeriodicWave(voice.wave);
+    o.frequency.setValueAtTime(f0 * 0.985, now); o.frequency.linearRampToValueAtTime(f0, now + 0.03); o.frequency.linearRampToValueAtTime(f0 * p.glide, t1);
+    // the mouth: two resonances that make the vowel
+    const f = VOWEL[p.vow] || VOWEL.a;
+    [[f[0], 1, 6], [f[1], 2.6, 8], [3300, 0.5 * v.bright, 6]].forEach(([hz, g, q]) => {
+      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = hz * v.formant; bp.Q.value = q;
+      const gg = c.createGain(); gg.gain.value = g * 3;
+      o.connect(bp); bp.connect(gg); gg.connect(env);
+    });
+    o.start(now); o.stop(t1 + 0.02);
   };
 
   try { voice.muted = localStorage.getItem('krowns.muted') === '1'; } catch (e) { /* not important */ }
