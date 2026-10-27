@@ -17,7 +17,7 @@
  },
  {
   "Key": "world.treeDensity",
-  "Value": "0.08",
+  "Value": "0.11",
   "Unit": "fraction of tiles",
   "Group": "World",
   "Description": "How many tiles start with a tree (scattered everywhere).",
@@ -217,7 +217,7 @@
  },
  {
   "Key": "voice.letterSeconds",
-  "Value": "0.08",
+  "Value": "0.11",
   "Unit": "seconds",
   "Group": "Voice",
   "Description": "How long each letter sounds.",
