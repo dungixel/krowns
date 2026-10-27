@@ -253,6 +253,7 @@ for (const l of K.lines()) {
   const knights = () => W.bodies.filter((b) => b.kind === 'npc'), slimes = () => W.bodies.filter((b) => b.kind === 'slime' && !b.dead);
   if (knights().length !== K.S('knight.count', 10)) fail('there should be ' + K.S('knight.count', 10) + ' knights, not ' + knights().length);
   if (slimes().length !== K.S('slime.maxAlive', 10)) fail('there should be ' + K.S('slime.maxAlive', 10) + ' slimes at the start, not ' + slimes().length);
+  for (const k of knights()) if (Math.hypot(k.fx - W.w / 2, k.fy - W.h / 2) > K.S('knight.spawnRadiusTiles', 6) + 9) fail('knights should start in the middle of the map');
   if (new Set(knights().map((k) => k.name)).size !== knights().length) fail('knights should have different names');
   const trees0 = W.trees.length;
   for (const t of W.trees.splice(0, 25)) W.blk[t.y * W.w + t.x] = 0;          // 25 trees are gone (smashed)

@@ -19,7 +19,8 @@
     for (let i = 1; i < S('knight.count', 10); i++) {
       let name = K.names.make(rng); for (let k = 0; k < 20 && names.has(name); k++) name = K.names.make(rng);
       names.add(name);
-      const [x, y] = K.combat.farSpot(W, player, 10), [tx, ty] = K.world.freeTileNear(W, Math.round(x), Math.round(y), 8);
+      const a = rng() * Math.PI * 2, r = rng.range(1.5, S('knight.spawnRadiusTiles', 6));                          // they start in the middle of the map
+      const [tx, ty] = K.world.freeTileNear(W, Math.round(W.w / 2 + Math.cos(a) * r), Math.round(W.h / 2 + Math.sin(a) * r), 8);
       const b = K.world.addBody(W, { kind: 'npc', name, job: 'knight', color: rng.int(1, 12), sprite: 'knight', fx: tx, fy: ty, face: rng() < 0.5 ? -1 : 1 });
       b.ai = { mode: 'idle', until: W.t + rng.range(0.5, 3), goal: null };
     }

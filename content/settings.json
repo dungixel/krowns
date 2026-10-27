@@ -504,6 +504,14 @@
   "Guessed": true
  },
  {
+  "Key": "knight.spawnRadiusTiles",
+  "Value": "6",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "The knights start scattered within this many tiles of the middle of the map (where you start too).",
+  "Guessed": true
+ },
+ {
   "Key": "knight.huntTiles",
   "Value": "14",
   "Unit": "tiles",
