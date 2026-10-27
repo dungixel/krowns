@@ -7,5 +7,5 @@
   K.S = (key, def) => (D.settings[key] === undefined ? def : D.settings[key]);       // a setting, e.g. K.S('world.width')
   K.C = (key, def) => (D.colors[key] === undefined ? def : D.colors[key]);           // a colour, e.g. K.C('shadow.purple')
   K.anim = (id) => D.animations[id] || { stretch: 0, period: 1, height: 0, extra: {} };
-  K.lines = (category) => D.speech[category] || [];                                  // the sentences of one speech category
+  K.lines = () => D.speech;                                                          // the sentences the neighbour can say: [{ text, mood }]
 })();

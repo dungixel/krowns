@@ -32,6 +32,7 @@
   const MOOD = {
     neutral: { base: 0, range: 1, bounce: 0, drift: 0, speed: 1, dur: 1, loud: 1, end: 0 },
     happy: { base: 1.6, range: 1.3, bounce: 0.6, drift: 0, speed: 1.1, dur: 0.9, loud: 1.05, end: 0 },
+    angry: { base: 0.5, range: 1.5, bounce: 0, drift: 0, speed: 1.25, dur: 0.8, loud: 1.35, end: 0 },
     sad: { base: -1.8, range: 0.5, bounce: 0, drift: -2.5, speed: 0.78, dur: 1.3, loud: 0.75, end: -0.04 },
   };
   voice.moodSpeed = (mood) => (MOOD[mood] || MOOD.neutral).speed;
@@ -54,7 +55,7 @@
       const words = [];
       while ((w = wre.exec(sent))) { if (/[,;:]/.test(w[0])) { if (words.length) words[words.length - 1].endsPhrase = true; } else words.push({ t: w[0], at: w.index, endsPhrase: false }); }
       words.forEach((wd, k) => {
-        if (k === 0 && WH.has(wd.t.toLowerCase())) wh = true;
+        if (k === 0 && WH.has(wd.t.toLowerCase()) && !/(\.\.\.|…)/.test(tail)) wh = true;      // "What...?" is a confused yes/no style rise
         wd.last = k === words.length - 1;
         let groups = [], g, re = /[aeiou]+/gi;
         while ((g = re.exec(wd.t))) groups.push({ at: wd.at + g.index, v: g[0][0].toLowerCase() });

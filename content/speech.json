@@ -1,92 +1,50 @@
 [
  {
-  "Text": "The trees are quiet today.",
-  "Category": "test.neutral",
-  "Guessed": true
+  "Text": "Hello, you should be my neighbor!",
+  "Mood": "happy"
  },
  {
-  "Text": "Did you see that bird?",
-  "Category": "test.neutral",
-  "Guessed": true
+  "Text": "How come it's still hot in this meadow? It should be winter by now!",
+  "Mood": "neutral"
  },
  {
-  "Text": "Hey! Over here!",
-  "Category": "test.neutral",
-  "Guessed": true
+  "Text": "How are you, sir?",
+  "Mood": "neutral"
  },
  {
-  "Text": "I think it might rain later.",
-  "Category": "test.neutral",
-  "Guessed": true
+  "Text": "My name's Tero, and I'm a humble farmer.",
+  "Mood": "neutral"
  },
  {
-  "Text": "Where are you walking to?",
-  "Category": "test.neutral",
-  "Guessed": true
+  "Text": "Get out of my crops!",
+  "Mood": "angry"
  },
  {
-  "Text": "Nothing ever changes in this meadow.",
-  "Category": "test.neutral",
-  "Guessed": true
+  "Text": "What!",
+  "Mood": "angry"
  },
  {
-  "Text": "What a beautiful day!",
-  "Category": "test.happy",
-  "Guessed": true
+  "Text": "What...?",
+  "Mood": "neutral"
  },
  {
-  "Text": "I found a shiny stone!",
-  "Category": "test.happy",
-  "Guessed": true
+  "Text": "Uhum.",
+  "Mood": "neutral"
  },
  {
-  "Text": "Are you here to play with me?",
-  "Category": "test.happy",
-  "Guessed": true
+  "Text": "Oh, wow...",
+  "Mood": "neutral"
  },
  {
-  "Text": "The grass feels so soft today.",
-  "Category": "test.happy",
-  "Guessed": true
+  "Text": "Interesting...",
+  "Mood": "neutral"
  },
  {
-  "Text": "I love this meadow!",
-  "Category": "test.happy",
-  "Guessed": true
+  "Text": "Nope, I don't want that trade. Guys, this guy wants to trick me!",
+  "Mood": "angry"
  },
  {
-  "Text": "Hello, hello, hello!",
-  "Category": "test.happy",
-  "Guessed": true
- },
- {
-  "Text": "I miss the old days...",
-  "Category": "test.sad",
-  "Guessed": true
- },
- {
-  "Text": "Nobody comes here anymore.",
-  "Category": "test.sad",
-  "Guessed": true
- },
- {
-  "Text": "Why is it so quiet?",
-  "Category": "test.sad",
-  "Guessed": true
- },
- {
-  "Text": "I lost my favourite hat.",
-  "Category": "test.sad",
-  "Guessed": true
- },
- {
-  "Text": "It is going to be a lonely winter...",
-  "Category": "test.sad",
-  "Guessed": true
- },
- {
-  "Text": "Please don't go too far.",
-  "Category": "test.sad",
-  "Guessed": true
+  "Text": "I love taking care of my crops. Just look at them.",
+  "Mood": "happy"
  }
 ]

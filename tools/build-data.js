@@ -39,13 +39,12 @@ for (const r of read('animations.json')) {
   out.animations[slug(r.Animation)] = { stretch: num(r['Stretch (px)']), period: num(r['Period (s)']), height: num(r['Height (px)']), extra };
 }
 
-// speech: { idle: [..], ... }
-out.speech = {};
-for (const r of read('speech.json')) (out.speech[r.Category] = out.speech[r.Category] || []).push(r.Text);
+// speech: [ { text, mood }, ... ] in the order of the file
+out.speech = read('speech.json').map((r) => ({ text: String(r.Text).trim(), mood: String(r.Mood || 'neutral').trim() }));
 
 fs.mkdirSync(path.join(root, 'data'), { recursive: true });
 const js = '// GENERATED from content/*.json by tools/build-data.js - do not edit by hand.\n' +
   'globalThis.Krowns = globalThis.Krowns || {};\nglobalThis.Krowns.data = ' + JSON.stringify(out, null, 1) + ';\n';
 fs.writeFileSync(path.join(root, 'data', 'game-data.js'), js);
 console.log('data/game-data.js written:', Object.keys(out.settings).length, 'settings,', Object.keys(out.colors).length, 'colors,',
-  Object.keys(out.animations).length, 'animations,', Object.values(out.speech).reduce((a, b) => a + b.length, 0), 'speech lines');
+  Object.keys(out.animations).length, 'animations,', out.speech.length, 'speech lines');

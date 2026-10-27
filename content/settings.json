@@ -160,43 +160,27 @@
   "Guessed": true
  },
  {
+  "Key": "npc.name",
+  "Value": "Tero",
+  "Unit": "text",
+  "Group": "Neighbour",
+  "Description": "The neighbour's name.",
+  "Guessed": true
+ },
+ {
+  "Key": "npc.job",
+  "Value": "farmer",
+  "Unit": "text",
+  "Group": "Neighbour",
+  "Description": "What the neighbour does for a living.",
+  "Guessed": true
+ },
+ {
   "Key": "npc.walkTilesPerSecond",
   "Value": "1.3",
   "Unit": "tiles/s",
   "Group": "Neighbour",
   "Description": "How fast the neighbour strolls.",
-  "Guessed": true
- },
- {
-  "Key": "npc.firstTalkSeconds",
-  "Value": "3",
-  "Unit": "seconds",
-  "Group": "Neighbour",
-  "Description": "He says his first sentence after this long.",
-  "Guessed": true
- },
- {
-  "Key": "npc.talkMinSeconds",
-  "Value": "6",
-  "Unit": "seconds",
-  "Group": "Neighbour",
-  "Description": "After a sentence he is quiet for at least this long...",
-  "Guessed": true
- },
- {
-  "Key": "npc.talkMaxSeconds",
-  "Value": "12",
-  "Unit": "seconds",
-  "Group": "Neighbour",
-  "Description": "...and at most this long.",
-  "Guessed": true
- },
- {
-  "Key": "npc.hearTiles",
-  "Value": "14",
-  "Unit": "tiles",
-  "Group": "Neighbour",
-  "Description": "He only talks when you are this close.",
   "Guessed": true
  },
  {

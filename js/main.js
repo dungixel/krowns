@@ -25,7 +25,8 @@
     const player = K.world.addBody(W, { kind: 'player', name, color: W.rng.int(1, 12), sprite: 'knight', fx: tx, fy: ty, face: 1 });
     game.W = W; game.player = player; game.npc = K.npc.create(W, player);
     R.follow = player; R.zoomTarget = null; R.view.S = R.fitScale(18); R.centerOn(player);
-    keys.clear(); game.playing = true;
+    keys.clear(); game.playing = true; game.last = 0; buildLines();
+    $('lines').classList.remove('closed');
     document.body.classList.add('playing');
     $('start').classList.remove('show', 'naming');
   }
@@ -34,6 +35,27 @@
     document.body.classList.remove('playing');
     backdrop();
     $('start').classList.remove('naming'); $('start').classList.add('show');
+  }
+
+  // the list of sentences the neighbour can say
+  function buildLines() {
+    const list = $('lines-list'), lines = K.lines();
+    $('lines-title').textContent = S('npc.name', 'Neighbour') + ' the ' + S('npc.job', 'neighbour') + ' says...';
+    list.textContent = '';
+    lines.forEach((l, i) => {
+      const b = document.createElement('button'); b.dataset.i = i;
+      const n = document.createElement('b'); n.textContent = i < 10 ? (i + 1) % 10 : '';
+      const t = document.createElement('span'); t.textContent = l.text;
+      b.append(n, t); b.onclick = () => { say(i); b.blur(); };
+      list.appendChild(b);
+    });
+    $('lines-head').onclick = () => $('lines').classList.toggle('closed');
+  }
+  function say(i) {
+    if (!game.playing || !K.lines()[i]) return;
+    game.last = i; K.voice.unlock();
+    K.npc.sayLine(game.W, game.npc, i);
+    document.querySelectorAll('#lines-list button').forEach((b) => b.classList.toggle('on', Number(b.dataset.i) === i));
   }
 
   // the distance makes a voice quieter
@@ -68,7 +90,8 @@
       if (!game.playing) return;
       if (k === 'escape') { toMenu(); return; }
       if (k === '+' || k === '=') R.zoomStep(1); else if (k === '-') R.zoomStep(-1);
-      else if (k === 'e') { if (game.npc.ai.mode !== 'talk') K.npc.sayRandom(game.W, game.npc); }
+      else if (k === 'e') say(game.last);                         // say the same sentence again
+      else if (/^[0-9]$/.test(k)) say(k === '0' ? 9 : Number(k) - 1)
       else if (k === 'm') { K.voice.setMuted(!K.voice.muted); try { localStorage.setItem('krowns.muted', K.voice.muted ? '1' : '0'); } catch (e) { /* fine */ } }
       else if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) { ev.preventDefault(); keys.add(k); }
     });

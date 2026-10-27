@@ -1,7 +1,7 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-27T15:18:25.694Z",
+ "generatedAt": "2026-10-27T15:23:51.206Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -127,11 +127,9 @@ globalThis.Krowns.data = {
   "names.threeSyllableChance": 33,
   "names.twoWithEndingChance": 33,
   "player.speedTilesPerSecond": 3.4,
+  "npc.name": "Tero",
+  "npc.job": "farmer",
   "npc.walkTilesPerSecond": 1.3,
-  "npc.firstTalkSeconds": 3,
-  "npc.talkMinSeconds": 6,
-  "npc.talkMaxSeconds": 12,
-  "npc.hearTiles": 14,
   "bubble.lingerSeconds": 2.2,
   "voice.volume": 0.5,
   "voice.letterSeconds": 0.13,
@@ -210,30 +208,54 @@ globalThis.Krowns.data = {
    }
   }
  },
- "speech": {
-  "test.neutral": [
-   "The trees are quiet today.",
-   "Did you see that bird?",
-   "Hey! Over here!",
-   "I think it might rain later.",
-   "Where are you walking to?",
-   "Nothing ever changes in this meadow."
-  ],
-  "test.happy": [
-   "What a beautiful day!",
-   "I found a shiny stone!",
-   "Are you here to play with me?",
-   "The grass feels so soft today.",
-   "I love this meadow!",
-   "Hello, hello, hello!"
-  ],
-  "test.sad": [
-   "I miss the old days...",
-   "Nobody comes here anymore.",
-   "Why is it so quiet?",
-   "I lost my favourite hat.",
-   "It is going to be a lonely winter...",
-   "Please don't go too far."
-  ]
- }
+ "speech": [
+  {
+   "text": "Hello, you should be my neighbor!",
+   "mood": "happy"
+  },
+  {
+   "text": "How come it's still hot in this meadow? It should be winter by now!",
+   "mood": "neutral"
+  },
+  {
+   "text": "How are you, sir?",
+   "mood": "neutral"
+  },
+  {
+   "text": "My name's Tero, and I'm a humble farmer.",
+   "mood": "neutral"
+  },
+  {
+   "text": "Get out of my crops!",
+   "mood": "angry"
+  },
+  {
+   "text": "What!",
+   "mood": "angry"
+  },
+  {
+   "text": "What...?",
+   "mood": "neutral"
+  },
+  {
+   "text": "Uhum.",
+   "mood": "neutral"
+  },
+  {
+   "text": "Oh, wow...",
+   "mood": "neutral"
+  },
+  {
+   "text": "Interesting...",
+   "mood": "neutral"
+  },
+  {
+   "text": "Nope, I don't want that trade. Guys, this guy wants to trick me!",
+   "mood": "angry"
+  },
+  {
+   "text": "I love taking care of my crops. Just look at them.",
+   "mood": "happy"
+  }
+ ]
 };

@@ -35,4 +35,9 @@ if (!(avg(notes('Hello there', 'sad')) < avg(notes('Hello there', 'happy')))) fa
 const words = K.voice.plan('beautiful', 'neutral').filter(Boolean).length;
 if (words !== 3) fail('beautiful should have 3 syllables, got ' + words);
 if (K.voice.plan('my', 'neutral').filter(Boolean).length !== 1) fail('"my" should have one sound (y counts as a vowel)');
+for (const l of K.lines()) {
+  const pl = K.voice.plan(l.text, l.mood);
+  if (!pl.some(Boolean)) fail('no sound at all in: ' + l.text);
+  if (!['neutral', 'happy', 'sad', 'angry'].includes(l.mood)) fail('unknown mood for: ' + l.text);
+}
 console.log('OK');
