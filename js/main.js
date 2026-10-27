@@ -91,7 +91,7 @@
     R.draw(W, now / 1000);
   }
 
-  // Space: dodge toward the direction you hold (W A S D / arrows); if you hold nothing, toward the mouse pointer
+  // M: dodge toward the direction you hold (W A S D / arrows); if you hold nothing, toward the mouse pointer
   function playerDodge() {
     const p = game.player, W = game.W;
     let dx = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
@@ -105,7 +105,7 @@
     if (p.slash) { p.slash = null; p.slashFx = null; }               // a dodge cancels a slash
     K.combat.dodge(W, p, dx, dy);
   }
-  // click: slash toward the mouse pointer. M: slash toward the direction you hold (W A S D), else toward the pointer, else the way you face.
+  // click: slash toward the mouse pointer. Space: slash toward the direction you hold (W A S D), else toward the pointer, else the way you face.
   function playerSlash(fromClick) {
     const p = game.player;
     let dx = p.face, dy = 0;
@@ -126,8 +126,8 @@
       if (!game.playing) return;
       if (k === 'escape') { toMenu(); return; }
       if (k === '+' || k === '=') R.zoomStep(1); else if (k === '-') R.zoomStep(-1);
-      else if (k === ' ') { ev.preventDefault(); if (!ev.repeat) playerDodge(); }
-      else if (k === 'm') { if (!ev.repeat) playerSlash(false); }
+      else if (k === ' ') { ev.preventDefault(); if (!ev.repeat) playerSlash(false); }
+      else if (k === 'm') { if (!ev.repeat) playerDodge(); }
       else if (k === 'e') say(game.last);                         // say the same sentence again
       else if (/^[0-9]$/.test(k)) say(k === '0' ? 9 : Number(k) - 1)
       else if (k === 'n') { K.voice.setMuted(!K.voice.muted); try { localStorage.setItem('krowns.muted', K.voice.muted ? '1' : '0'); } catch (e) { /* fine */ } }

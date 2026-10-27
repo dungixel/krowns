@@ -1,7 +1,7 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-27T20:09:26.527Z",
+ "generatedAt": "2026-10-27T20:10:16.710Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
