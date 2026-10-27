@@ -87,7 +87,14 @@ for (const l of K.lines()) {
   for (const seed of [21, 22, 23, 24]) {
     const { W, p, n } = mk(seed);
     const od = K.combat.dodge, oh = K.combat.hurt;
-    K.combat.dodge = function (...a) { const r = od.apply(this, a); if (r && a[1] === n) dodges++; return r; };
+    K.combat.dodge = function (...a) {
+      const r = od.apply(this, a);
+      if (r && a[1] === n) {         // Tero never dodges for nothing: a slime must be winding up with its jump aimed at him
+        dodges++;
+        if (!W.bodies.some((s) => s.kind === 'slime' && s.atk && s.atk.state === 'wind' && K.combat.laneDistance(s, s.atk.dir, K.S('slime.lungeDistanceTiles', 2.8), n) < K.S('slime.hitRadiusTiles', 0.65) + 0.31)) fail('Tero dodged for no reason');
+      }
+      return r;
+    };
     K.combat.hurt = function (w, t, ...a) { const r = oh.call(this, w, t, ...a); if (r && t === n) hurt++; if (r && t.dead) kills++; return r; };
     let most = 0;
     for (let i = 0; i < 180 * 60; i++) {

@@ -428,7 +428,7 @@
   "Value": "0.09",
   "Unit": "s",
   "Group": "Combat",
-  "Description": "How early (before the slime jumps) the knight starts a dodge, at the earliest.",
+  "Description": "How early (before the slime jumps) the knight starts a dodge, at the earliest. He never dodges before the slime has chosen its direction.",
   "Guessed": true
  },
  {
@@ -445,22 +445,6 @@
   "Unit": "chance 0 to 1",
   "Group": "Combat",
   "Description": "Chance that the knight sees an attack coming and dodges it.",
-  "Guessed": true
- },
- {
-  "Key": "knight.dodgeAfterSlash",
-  "Value": "0.7",
-  "Unit": "chance 0 to 1",
-  "Group": "Combat",
-  "Description": "Chance that the knight dodges away right after slashing (hit and run).",
-  "Guessed": true
- },
- {
-  "Key": "knight.closeInDodgeTiles",
-  "Value": "4",
-  "Unit": "tiles",
-  "Group": "Combat",
-  "Description": "Farther than this from a slime, the knight sometimes dodges toward it to close the gap.",
   "Guessed": true
  },
  {
