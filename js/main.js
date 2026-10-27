@@ -81,8 +81,14 @@
     W.t += dt;
     if (game.playing) {
       const p = game.player;
-      const dx = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
-      const dy = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
+      const dx = (keys.has('d') ? 1 : 0) - (keys.has('a') ? 1 : 0);
+      const dy = (keys.has('s') ? 1 : 0) - (keys.has('w') ? 1 : 0);
+      // arrow keys attack: hold an arrow (or two for a diagonal) and you slash that way as often as the slash is ready
+      const ax = (keys.has('arrowright') ? 1 : 0) - (keys.has('arrowleft') ? 1 : 0), ay = (keys.has('arrowdown') ? 1 : 0) - (keys.has('arrowup') ? 1 : 0);
+      if (ax || ay) {
+        if (!game.aimSince) game.aimSince = now;
+        if (now - game.aimSince >= 50 && !p.ko && K.combat.canSlash(W, p)) K.combat.slash(W, p, Math.atan2(ay, ax));     // 50 ms so two arrows pressed together make a diagonal
+      } else game.aimSince = 0;
       if (!p.dodge && !p.kb && !p.ko && !p.slash) K.world.moveBody(W, p, dx, dy, dt, S('player.speedTilesPerSecond', 3.4));
       K.npc.update(W, game.npc, p, dt);
       K.combat.update(W, dt, p);
@@ -91,11 +97,11 @@
     R.draw(W, now / 1000);
   }
 
-  // M: dodge toward the direction you hold (W A S D / arrows); if you hold nothing, toward the mouse pointer
+  // M: dodge toward the direction you hold (W A S D); if you hold nothing, toward the mouse pointer
   function playerDodge() {
     const p = game.player, W = game.W;
-    let dx = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
-    let dy = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
+    let dx = (keys.has('d') ? 1 : 0) - (keys.has('a') ? 1 : 0);
+    let dy = (keys.has('s') ? 1 : 0) - (keys.has('w') ? 1 : 0);
     if (!dx && !dy && game.mouse) {
       const m = R.toWorld(game.mouse.x, game.mouse.y);
       dx = m.x - (p.fx + 0.5); dy = m.y - (p.fy + 0.62);
@@ -105,14 +111,11 @@
     if (p.slash) { p.slash = null; p.slashFx = null; }               // a dodge cancels a slash
     K.combat.dodge(W, p, dx, dy);
   }
-  // click: slash toward the mouse pointer. Space: slash toward the direction you hold (W A S D), else toward the pointer, else the way you face.
-  function playerSlash(fromClick) {
+  // click: slash toward the mouse pointer (the arrow keys slash in their own direction, see frame())
+  function playerSlash() {
     const p = game.player;
     let dx = p.face, dy = 0;
-    const kx = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
-    const ky = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
-    if (!fromClick && (kx || ky)) { dx = kx; dy = ky; }
-    else if (game.mouse) {
+    if (game.mouse) {
       const m = R.toWorld(game.mouse.x, game.mouse.y), mx = m.x - (p.fx + 0.5), my = m.y - (p.fy + 0.62);
       if (Math.hypot(mx, my) > 0.2) { dx = mx; dy = my; }
     }
@@ -126,7 +129,7 @@
       if (!game.playing) return;
       if (k === 'escape') { toMenu(); return; }
       if (k === '+' || k === '=') R.zoomStep(1); else if (k === '-') R.zoomStep(-1);
-      else if (k === ' ') { ev.preventDefault(); if (!ev.repeat) playerSlash(false); }
+      else if (k === ' ') ev.preventDefault();
       else if (k === 'm') { if (!ev.repeat) playerDodge(); }
       else if (k === 'e') say(game.last);                         // say the same sentence again
       else if (/^[0-9]$/.test(k)) say(k === '0' ? 9 : Number(k) - 1)
@@ -139,7 +142,7 @@
     $('game').addEventListener('pointerdown', (ev) => {
       if (!game.playing || ev.button !== 0) return;
       const r = ev.target.getBoundingClientRect(), d = R.view.dpr; game.mouse = { x: (ev.clientX - r.left) * d, y: (ev.clientY - r.top) * d };
-      playerSlash(true);
+      playerSlash();
     });
     $('game').addEventListener('pointermove', (ev) => { const r = ev.target.getBoundingClientRect(), d = R.view.dpr; game.mouse = { x: (ev.clientX - r.left) * d, y: (ev.clientY - r.top) * d }; });
     let wheel = 0;
