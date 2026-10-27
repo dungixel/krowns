@@ -1,4 +1,4 @@
-/* Krowns - styles. Colours come from the Notion "Colors" table (js/main.js sets --panel, --text...). */
+/* Krowns - styles. Colours come from content/colors.json (js/main.js sets --panel, --text...). */
 @font-face { font-family: 'Lexend'; font-weight: 400; font-style: normal; font-display: swap; src: url('../assets/fonts/lexend-latin-400-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Lexend'; font-weight: 700; font-style: normal; font-display: swap; src: url('../assets/fonts/lexend-latin-700-normal.woff2') format('woff2'); }
 

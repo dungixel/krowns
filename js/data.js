@@ -1,4 +1,4 @@
-// Krowns - read access to the game data that comes from Notion (data/game-data.js).
+// Krowns - read access to the game game content (numbers, colours, animations, speech) (data/game-data.js).
 (function () {
   const K = (globalThis.Krowns = globalThis.Krowns || {});
   const D = K.data;

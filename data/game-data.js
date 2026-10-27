@@ -1,7 +1,7 @@
-// GENERATED from the Notion page "krowns 1.0" by tools/build-data.js - do not edit by hand.
+// GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-27T14:58:40.038Z",
+ "generatedAt": "2026-10-27T15:02:24.119Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
