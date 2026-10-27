@@ -193,18 +193,18 @@
  },
  {
   "Key": "npc.job",
-  "Value": "farmer",
+  "Value": "knight",
   "Unit": "text",
   "Group": "Neighbour",
-  "Description": "What the neighbour does for a living.",
+  "Description": "What the neighbour is. Tero is a knight now (he fights slimes).",
   "Guessed": true
  },
  {
   "Key": "npc.sprite",
-  "Value": "farmer",
+  "Value": "knight",
   "Unit": "text",
   "Group": "Neighbour",
-  "Description": "Which picture the neighbour uses (assets/sprites/<name>.png).",
+  "Description": "Which picture in assets/sprites the neighbour uses (the knight).",
   "Guessed": true
  },
  {
@@ -269,6 +269,350 @@
   "Unit": "0-1.5",
   "Group": "Voice",
   "Description": "How much sparkle the neighbour's beep has (0 = a plain soft tone, 1.5 = very sparkly).",
+  "Guessed": true
+ },
+ {
+  "Key": "sprite.pivot.slime",
+  "Value": "7.5",
+  "Unit": "px",
+  "Group": "Units",
+  "Description": "Where the middle of the slime is inside its 16 pixel picture (it turns around this point).",
+  "Guessed": true
+ },
+ {
+  "Key": "dodge.distanceTiles",
+  "Value": "2.2",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "How far a normal dodge goes.",
+  "Guessed": true
+ },
+ {
+  "Key": "dodge.seconds",
+  "Value": "0.24",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "How long a dodge takes.",
+  "Guessed": true
+ },
+ {
+  "Key": "dodge.invulnerableSeconds",
+  "Value": "0.26",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "While dodging nothing can hurt the dodger (a little longer than the dodge itself).",
+  "Guessed": true
+ },
+ {
+  "Key": "dodge.cooldownSeconds",
+  "Value": "0.8",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "Wait after a dodge before the next one.",
+  "Guessed": true
+ },
+ {
+  "Key": "unit.hearts",
+  "Value": "5",
+  "Unit": "hearts",
+  "Group": "Combat",
+  "Description": "Hearts of a knight. (Nothing is shown on screen yet.)",
+  "Guessed": true
+ },
+ {
+  "Key": "unit.healEverySeconds",
+  "Value": "10",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "A knight gets one heart back this often when not hit.",
+  "Guessed": true
+ },
+ {
+  "Key": "unit.knockedOutSeconds",
+  "Value": "5",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "At zero hearts a knight is knocked out (drawn faded, cannot act) this long, then wakes up.",
+  "Guessed": true
+ },
+ {
+  "Key": "hit.invulnerableSeconds",
+  "Value": "0.5",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "After being hit nothing can hurt you for this long.",
+  "Guessed": true
+ },
+ {
+  "Key": "hit.knockbackTiles",
+  "Value": "0.9",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "How far a hit pushes you back.",
+  "Guessed": true
+ },
+ {
+  "Key": "hit.flashSeconds",
+  "Value": "0.22",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "How long the white flash lasts after a hit.",
+  "Guessed": true
+ },
+ {
+  "Key": "slash.rangeTiles",
+  "Value": "1.35",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "How far a knight slash reaches.",
+  "Guessed": true
+ },
+ {
+  "Key": "slash.arcDegrees",
+  "Value": "90",
+  "Unit": "degrees",
+  "Group": "Combat",
+  "Description": "The slash sweeps this wide.",
+  "Guessed": true
+ },
+ {
+  "Key": "slash.windupSeconds",
+  "Value": "0.14",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "The knight stops and prepares this long before the slash starts.",
+  "Guessed": true
+ },
+ {
+  "Key": "slash.seconds",
+  "Value": "0.2",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "How long the slash sweep takes.",
+  "Guessed": true
+ },
+ {
+  "Key": "slash.cooldownSeconds",
+  "Value": "0.7",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "Wait after a slash before the next one.",
+  "Guessed": true
+ },
+ {
+  "Key": "slash.damage",
+  "Value": "1",
+  "Unit": "hearts",
+  "Group": "Combat",
+  "Description": "Damage of a slash.",
+  "Guessed": true
+ },
+ {
+  "Key": "slash.knockbackTiles",
+  "Value": "1.0",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "How far a slash pushes a slime back.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.senseTiles",
+  "Value": "9",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "A knight neighbour notices slimes this close and fights them.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.reactionMinSeconds",
+  "Value": "0.09",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "How early (before the slime jumps) the knight starts a dodge, at the earliest.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.reactionMaxSeconds",
+  "Value": "0.2",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "...and at the latest.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.dodgeSkill",
+  "Value": "0.9",
+  "Unit": "chance 0 to 1",
+  "Group": "Combat",
+  "Description": "Chance that the knight sees an attack coming and dodges it.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.dodgeAfterSlash",
+  "Value": "0.7",
+  "Unit": "chance 0 to 1",
+  "Group": "Combat",
+  "Description": "Chance that the knight dodges away right after slashing (hit and run).",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.closeInDodgeTiles",
+  "Value": "4",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "Farther than this from a slime, the knight sometimes dodges toward it to close the gap.",
+  "Guessed": true
+ },
+ {
+  "Key": "npc.combatTilesPerSecond",
+  "Value": "2.6",
+  "Unit": "tiles/s",
+  "Group": "Combat",
+  "Description": "How fast the knight neighbour walks in a fight.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.hearts",
+  "Value": "3",
+  "Unit": "hearts",
+  "Group": "Combat",
+  "Description": "Hearts of a slime (a slash takes 1).",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.walkTilesPerSecond",
+  "Value": "0.9",
+  "Unit": "tiles/s",
+  "Group": "Combat",
+  "Description": "How fast a slime creeps toward the nearest unit.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.senseTiles",
+  "Value": "12",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "A slime goes for the nearest unit if it is this close.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.lungeRangeTiles",
+  "Value": "2.6",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "A slime starts its attack (a dodge that hurts) from this far.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.windupSeconds",
+  "Value": "0.55",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "How long a slime squashes and shakes before it jumps. This is the warning.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.aimLockSeconds",
+  "Value": "0.15",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "The slime picks its direction this long before it jumps, so you can dodge sideways.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.lungeDistanceTiles",
+  "Value": "2.8",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "How far the slime jumps.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.lungeSeconds",
+  "Value": "0.26",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "How long the jump takes.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.cooldownSeconds",
+  "Value": "1.8",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "Rest after a jump.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.hitRadiusTiles",
+  "Value": "0.65",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "Units this close to a jumping slime get hit.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.damage",
+  "Value": "1",
+  "Unit": "hearts",
+  "Group": "Combat",
+  "Description": "Damage of a slime jump.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.stunSeconds",
+  "Value": "0.4",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "A slime that was slashed cannot act this long.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.firstSpawnSeconds",
+  "Value": "6",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "The first slime appears this long after you start.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.spawnMinSeconds",
+  "Value": "18",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "A new slime appears at least this often...",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.spawnMaxSeconds",
+  "Value": "35",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "...and at most this often.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.maxAlive",
+  "Value": "3",
+  "Unit": "slimes",
+  "Group": "Combat",
+  "Description": "No new slime while this many are alive.",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.spawnMinTiles",
+  "Value": "9",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "Slimes appear at least this far from you...",
+  "Guessed": true
+ },
+ {
+  "Key": "slime.spawnMaxTiles",
+  "Value": "13",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "...and at most this far.",
   "Guessed": true
  }
 ]

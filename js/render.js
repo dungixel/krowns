@@ -13,7 +13,7 @@
   const loadImage = (url) => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('Could not load ' + url)); im.src = url; });
   R.loadAssets = async function (version) {
     const v = version ? '?v=' + version : '';
-    await Promise.all(['knight', 'base', 'farmer', 'tree'].map(async (n) => { images[n] = await loadImage('assets/sprites/' + n + '.png' + v); }));
+    await Promise.all(['knight', 'base', 'farmer', 'slime', 'tree'].map(async (n) => { images[n] = await loadImage('assets/sprites/' + n + '.png' + v); }));
     images.grassDetail = await loadImage('assets/world/grass-detail.png' + v);
     images.grassMap = await loadImage('assets/world/grass-map.png' + v);
     try { await document.fonts.load('700 16px Lexend'); await document.fonts.load('400 16px Lexend'); } catch (e) { /* a fallback font is used */ }
@@ -62,6 +62,8 @@
     if (Math.abs(s - R.zoomTarget) < 0.01) { s = R.zoomTarget; R.zoomTarget = null; }
     v.S = s;
   }
+  // a point on the canvas (device pixels) to a place in the world, in tiles
+  R.toWorld = (px, py) => ({ x: ((px - R.view.ox) / R.view.S) / TILE, y: ((py - R.view.oy) / R.view.S) / TILE });
   R.centerOn = (b) => { R.view.cx = b.fx * TILE + 8; R.view.cy = b.fy * TILE + 8 + FEET; };
   const sxOf = (wx) => wx * V.S + V.ox, syOf = (wy) => wy * V.S + V.oy;
 
@@ -171,8 +173,9 @@
   // ------------------------------------------------------------------ one frame
   const wave = (t, period, phase) => 0.5 + 0.5 * Math.sin(t * Math.PI * 2 / period + (phase || 0));
   const treeFlip = (tr) => ((tr.x * 7 + tr.y * 3) & 1) === 1;
-  function bodyPos(b) {
-    const lift = b.walkP > 0 || b.moving ? S('unit.hopHeightPx', 2) * Math.sin(Math.PI * b.walkP) : 0;
+  function bodyPos(b, t) {
+    let lift = b.walkP > 0 || b.moving ? S('unit.hopHeightPx', 2) * Math.sin(Math.PI * b.walkP) : 0;
+    if (b.dodge) lift = 4 * Math.sin(Math.PI * clamp((t - b.dodge.t0) / b.dodge.dur, 0, 1));          // a dodge is a little leap
     return { px: b.fx * TILE, py: b.fy * TILE + FEET, lift };
   }
 
@@ -182,7 +185,7 @@
     const v = R.view; V = v;
     advanceZoom(dt);
     if (R.follow) {     // the camera follows smoothly
-      const p = bodyPos(R.follow);
+      const p = bodyPos(R.follow, W.t);
       v.cx += (p.px + 8 - v.cx) * Math.min(1, dt * 6); v.cy += (p.py + 8 - v.cy) * Math.min(1, dt * 6);
     }
     v.ox = Math.round(v.w / 2 - v.cx * v.S); v.oy = Math.round(v.h / 2 - v.cy * v.S);
@@ -222,7 +225,7 @@
       if (px + 16 < vx0 || px > vx1 || py + 16 < vy0 - 8 || py > vy1 + 8) continue;
       items.push({ k: 'tree', y: py + 16, px, py, ref: tr });
     }
-    for (const b of W.bodies) { const p = bodyPos(b); items.push({ k: 'body', y: p.py + 16.1, px: p.px, py: p.py, lift: p.lift, ref: b }); }
+    for (const b of W.bodies) { const p = bodyPos(b, W.t); items.push({ k: 'body', y: p.py + 16.1, px: p.px, py: p.py, lift: p.lift, ref: b }); }
     items.sort((a, b) => a.y - b.y);
 
     // 3. shadows (multiply, desaturated purple), before the things that cast them
@@ -231,7 +234,7 @@
     ctx.globalAlpha = K.C('shadow.opacity', 1);
     for (const it of items) {
       if (it.k === 'tree') castShadow(images.tree, 'tree', it.px + 8, it.py + 15.5, treeFlip(it.ref));
-      else if (it.k === 'body') castShadow(images[it.ref.sprite], it.ref.sprite, it.px + 8, it.py + 15.5, it.ref.face < 0, pivotOf(it.ref.sprite));
+      else if (it.k === 'body' && !it.ref.dead) castShadow(images[it.ref.sprite], it.ref.sprite, it.px + 8, it.py + 15.5, it.ref.face < 0, pivotOf(it.ref.sprite));
     }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
 
@@ -241,6 +244,7 @@
       else if (it.k === 'tree') drawTree(W, it, dt, t);
       else drawBody(it, t);
     }
+    drawSlashes(W, t);
 
     // 5. words: names and speech bubbles
     drawTexts(W, t);
@@ -261,12 +265,61 @@
   // the middle of a unit's body inside its picture (content/settings.json: sprite.pivot.<name>); the picture turns around it
   const pivotOf = (name) => S('sprite.pivot.' + name, 8);
   function drawBody(it, t) {
-    const b = it.ref;
-    let extra;
-    if (b.moving) extra = K.anim('hop').stretch * Math.sin(Math.PI * b.walkP);
+    const b = it.ref, img = images[b.sprite], pivot = pivotOf(b.sprite);
+    let extra, ox = 0;
+    // a slime that is about to jump squashes and shakes (the warning)
+    const wind = b.atk && b.atk.state === 'wind' ? clamp((t - b.atk.t0) / Math.max(0.01, b.atk.until - b.atk.t0), 0, 1) : 0;
+    if (b.dodge) extra = 1.2 * Math.sin(Math.PI * clamp((t - b.dodge.t0) / b.dodge.dur, 0, 1));
+    else if (wind) { extra = -0.9 * wind; ox = Math.sin(t * 70) * 0.6 * wind; }
+    else if (b.moving) extra = K.anim('hop').stretch * Math.sin(Math.PI * b.walkP);
     else if (b.talkUntil && t < b.talkUntil) { const an = K.anim('talk'); extra = an.stretch * wave(t, an.period, b.phase); }
     else { const an = K.anim('breathe'); extra = an.stretch * wave(t, an.period, b.phase); }
-    blit(images[b.sprite], it.px + 8, it.py + 16 - it.lift, { flip: b.face < 0, extra, pivot: pivotOf(b.sprite) });
+    const alpha = b.dead ? clamp(1 - (t - b.deadAt) / 0.5, 0, 1) : b.ko ? 0.45 : 1;
+    const wy = it.py + 16 - it.lift, wx = it.px + 8 + ox, flip = b.face < 0;
+    // afterimages behind a dodging unit
+    if (b.trail && b.trail.length) {
+      const last = b.trail[b.trail.length - 1];
+      if (t - last.t > 0.3) b.trail = [];
+      else for (let i = 0; i < b.trail.length - 1; i += 3) {
+        const e = b.trail[i], age = t - e.t;
+        if (age > 0.22) continue;
+        blit(img, e.fx * TILE + 8, e.fy * TILE + FEET + 16 - it.lift, { flip: e.face < 0, extra: extra * 0.5, pivot, alpha: 0.38 * (1 - age / 0.22) });
+      }
+    }
+    blit(img, wx, wy, { flip, extra, pivot, alpha });
+    // a white flash when hurt, and just before a slime jumps
+    const flash = t < (b.flashUntil || 0) ? (b.flashUntil - t) / S('hit.flashSeconds', 0.22) : wind > 0.7 ? 0.55 * (0.5 + 0.5 * Math.sin(t * 50)) : 0;
+    if (flash > 0) blit(silhouette(img, b.sprite, '#ffffff'), wx, wy, { flip, extra, pivot, alpha: Math.min(0.85, flash) * alpha });
+  }
+
+  // the slash of a knight: a 90 degree sweep made of whole game pixels (like everything else), brightest at the head, fading behind it
+  function drawSlashes(W, t) {
+    const half = S('slash.arcDegrees', 90) * Math.PI / 360, r1 = S('slash.rangeTiles', 1.35) * TILE * 0.95, color = K.C('fx.slash', '#ffffff');
+    for (const b of W.bodies) {
+      const f = b.slashFx;
+      if (!f) continue;
+      const p = (t - f.t0) / f.dur;
+      if (p < 0) continue;
+      if (p > 1.5) { b.slashFx = null; continue; }
+      const head = -half + 2 * half * Math.min(1, p), fade = p > 1 ? 1 - (p - 1) / 0.5 : 1;
+      const pos = bodyPos(b, t), wx = pos.px + 8, wy = pos.py + 16 - pos.lift - 6;
+      const px = new Map();
+      for (let a = -half; a <= head; a += Math.PI / 180) {
+        const age = (head - a) / (2 * half), al = (1 - age * 0.85) * fade;
+        for (let r = r1 - 3.2; r <= r1; r += 0.5) {
+          const x = Math.floor(wx + Math.cos(f.ang + a) * r), y = Math.floor(wy + Math.sin(f.ang + a) * r), k = x * 4096 + y;
+          if (!(px.get(k) >= al)) px.set(k, al);
+        }
+      }
+      ctx.fillStyle = color;
+      for (const [k, al] of px) {
+        const x = Math.floor(k / 4096), y = k - x * 4096;
+        ctx.globalAlpha = Math.max(0.15, al);
+        const sx0 = Math.round(sxOf(x)), sy0 = Math.round(syOf(y));
+        ctx.fillRect(sx0, sy0, Math.round(sxOf(x + 1)) - sx0, Math.round(syOf(y + 1)) - sy0);
+      }
+      ctx.globalAlpha = 1;
+    }
   }
 
   // ------------------------------------------------------------------ names and speech bubbles
@@ -292,6 +345,7 @@
     for (const it of items) {
       if (it.k !== 'body') continue;
       const b = it.ref, cx = sxOf(it.px + 8);
+      if (b.noName) continue;
       let nameY = syOf(it.py - it.lift - 3);
       ctx.font = '700 ' + namePx + 'px Lexend, system-ui, sans-serif';
       outlinedText(b.name, cx, nameY, K.C('name.pastel.' + b.color, '#ffffff'), outline, Math.max(2, s * 0.8));

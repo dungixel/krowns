@@ -124,5 +124,11 @@
   "Hex": "#f3e3c2",
   "Group": "Names",
   "Description": ""
+ },
+ {
+  "Key": "fx.slash",
+  "Hex": "#ffffff",
+  "Group": "Effects",
+  "Description": "Colour of the knight slash sweep."
  }
 ]

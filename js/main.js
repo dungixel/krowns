@@ -76,11 +76,26 @@
       const p = game.player;
       const dx = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
       const dy = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
-      K.world.moveBody(W, p, dx, dy, dt, S('player.speedTilesPerSecond', 3.4));
+      if (!p.dodge && !p.kb && !p.ko) K.world.moveBody(W, p, dx, dy, dt, S('player.speedTilesPerSecond', 3.4));
       K.npc.update(W, game.npc, p, dt);
+      K.combat.update(W, dt, p);
     }
     K.voice.newFrame();
     R.draw(W, now / 1000);
+  }
+
+  // Space: dodge toward the direction you hold (W A S D / arrows); if you hold nothing, toward the mouse pointer
+  function playerDodge() {
+    const p = game.player, W = game.W;
+    let dx = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
+    let dy = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
+    if (!dx && !dy && game.mouse) {
+      const m = R.toWorld(game.mouse.x, game.mouse.y);
+      dx = m.x - (p.fx + 0.5); dy = m.y - (p.fy + 0.62);
+      if (Math.hypot(dx, dy) < 0.3) { dx = p.face; dy = 0; }
+    }
+    if (!dx && !dy) dx = p.face;
+    K.combat.dodge(W, p, dx, dy);
   }
 
   function bindInput() {
@@ -90,6 +105,7 @@
       if (!game.playing) return;
       if (k === 'escape') { toMenu(); return; }
       if (k === '+' || k === '=') R.zoomStep(1); else if (k === '-') R.zoomStep(-1);
+      else if (k === ' ') { ev.preventDefault(); if (!ev.repeat) playerDodge(); }
       else if (k === 'e') say(game.last);                         // say the same sentence again
       else if (/^[0-9]$/.test(k)) say(k === '0' ? 9 : Number(k) - 1)
       else if (k === 'm') { K.voice.setMuted(!K.voice.muted); try { localStorage.setItem('krowns.muted', K.voice.muted ? '1' : '0'); } catch (e) { /* fine */ } }
@@ -98,6 +114,7 @@
     window.addEventListener('keyup', (ev) => keys.delete(ev.key.toLowerCase()));
     window.addEventListener('blur', () => keys.clear());
     window.addEventListener('resize', () => R.resize());
+    $('game').addEventListener('pointermove', (ev) => { const r = ev.target.getBoundingClientRect(), d = R.view.dpr; game.mouse = { x: (ev.clientX - r.left) * d, y: (ev.clientY - r.top) * d }; });
     let wheel = 0;
     $('game').addEventListener('wheel', (ev) => {
       ev.preventDefault();

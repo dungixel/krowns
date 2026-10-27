@@ -1,9 +1,9 @@
 # Krowns
 
-A tiny meadow with trees. You are a knight (you choose the name), and one neighbour lives here.
+A tiny meadow with trees. You are a knight (you choose the name), and one neighbour, Tero, lives here. He is a knight too. Every now and then a slime shows up.
 Live: https://dungixel.github.io/krowns/
 
-Move with **WASD / arrow keys** - mouse wheel or **+ / -** zooms - **1-9, 0** or the floating "Tero says..." button at the bottom left (it opens the list) pick what the neighbour says (**E** repeats it) - **M** mutes - **Esc** goes back to the menu.
+Move with **WASD / arrow keys** - mouse wheel or **+ / -** zooms - **1-9, 0** or the floating "Tero says..." button at the bottom left (it opens the list) pick what the neighbour says (**E** repeats it) - **Space** dodges (toward the direction you hold, or toward the mouse pointer if you hold nothing) - **M** mutes - **Esc** goes back to the menu.
 
 The earlier, much bigger version (kingdoms, jobs, wars, hunger...) is kept on the branch `v1-full`.
 
@@ -13,7 +13,8 @@ The earlier, much bigger version (kingdoms, jobs, wars, hunger...) is kept on th
 |---|---|
 | `index.html`, `css/style.css` | The page, the title screen and the name screen |
 | `js/world.js` | The meadow (trees, grass) and how bodies walk (freely, sliding along trees) |
-| `js/npc.js` | The neighbour: strolls, and says the sentences you pick (his personality comes later) |
+| `js/npc.js` | The neighbour: strolls, says the sentences you pick, and fights slimes like a knight (dodges, slashes) |
+| `js/combat.js` | Dodge, slash, being hurt, and the slime (spawning, its warning and its jump) |
 | `js/voice.js` | The voice: every letter of a speech bubble makes a made-up sound, with intonation |
 | `js/render.js` | Drawing: ground, grass, trees, shadows (units turn around the middle of their body, `sprite.pivot.*`), names, speech bubbles |
 | `js/main.js` | Start, game loop, keyboard |
@@ -23,6 +24,12 @@ The earlier, much bigger version (kingdoms, jobs, wars, hunger...) is kept on th
 | `tests/smoke.js` | `node tests/smoke.js`: a quick check without a screen |
 
 The whole page is about 100 KB to download.
+
+## Fighting
+
+Three rules: **dodge** (a few tiles in one direction; nothing can hurt the dodger meanwhile), **slash** (a knight's 90 degree sweep) and **the slime attacks by dodging** (it squashes and shakes as a warning, locks its direction, then jumps; the jump hurts whoever it touches). Slimes go for the nearest unit.
+Tero sees the warning and dodges sideways just before the jump (he sometimes misses it: `knight.dodgeSkill`), dashes toward slimes that are far, slashes when close, and dodges away after a slash.
+Hearts are not shown on screen yet: a hit shows a white flash and a push back; at zero hearts a knight is knocked out for a few seconds and then wakes up. Slimes die after 3 slashes. All numbers are in `content/settings.json` (group Combat). The player cannot slash yet.
 
 ## The voice
 

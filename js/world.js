@@ -47,7 +47,8 @@
 
   // a new body: { name, sprite, color, fx, fy, face, ... }
   function addBody(W, o) {
-    const b = Object.assign({ face: 1, walkPhase: 0, walkP: 0, moving: false, phase: Math.random() * 6.28, bubble: null, talkUntil: 0 }, o);
+    const hearts = S('unit.hearts', 5);
+    const b = Object.assign({ face: 1, walkPhase: 0, walkP: 0, moving: false, phase: Math.random() * 6.28, bubble: null, talkUntil: 0, hp: hearts, maxHp: hearts }, o);
     W.bodies.push(b);
     return b;
   }
@@ -76,5 +77,21 @@
     return moved;
   }
 
-  K.world = { create: createWorld, freeTileNear, addBody, moveBody };
+  // pushed along by a dodge or a hit: slide `dist` tiles in direction (dx, dy), stopping at trees. Does not turn the body or make it hop.
+  function slideBody(W, b, dx, dy, dist) {
+    const len = Math.hypot(dx, dy);
+    if (!len || dist <= 0) return 0;
+    dx /= len; dy /= len;
+    const n = Math.max(1, Math.ceil(dist / 0.15)), sx = dx * dist / n, sy = dy * dist / n;
+    let moved = 0;
+    for (let i = 0; i < n; i++) {
+      const ox = b.fx, oy = b.fy;
+      if (sx && !blocked(W, b.fx + sx, b.fy)) b.fx += sx;
+      if (sy && !blocked(W, b.fx, b.fy + sy)) b.fy += sy;
+      moved += Math.hypot(b.fx - ox, b.fy - oy);
+    }
+    return moved;
+  }
+
+  K.world = { create: createWorld, freeTileNear, addBody, moveBody, slideBody, blocked };
 })();
