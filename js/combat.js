@@ -73,11 +73,28 @@
     const d = src ? combat.dirTo(src, t) : { x: -t.face, y: 0 };
     t.kb = { t0: W.t, dur: 0.18, dx: d.x, dy: d.y, dist: kbTiles === undefined ? S('hit.knockbackTiles', 0.9) : kbTiles, done: 0 };
     if (t.kind === 'slime') t.stunUntil = W.t + S('slime.stunSeconds', 0.4);
-    if (t.hp <= 0) {
-      if (t.kind === 'slime') { t.dead = true; t.deadAt = W.t; }
-      else { t.ko = true; t.koUntil = W.t + S('unit.knockedOutSeconds', 5); t.bubble = null; }
-    }
+    const lethal = t.hp <= 0;
+    if (lethal) defeat(W, t, d);
+    if (combat.onHurt) combat.onHurt(t, src, lethal);
     return true;
+  };
+
+  // defeated: the body is flung away like a ragdoll (it tumbles in quarter turns, hops twice), lies there a moment, flickers and disappears.
+  // A slime is gone for good. A knight comes back after a few seconds, where it landed, flickering, with some hearts.
+  function defeat(W, t, d) {
+    const fly = S('defeat.flySeconds', 0.9), rest = S('defeat.restSeconds', 0.35), flick = S('defeat.flickerSeconds', 0.8);
+    t.kb = null; t.bubble = null;
+    t.rag = { t0: W.t, fly, rest, flick, total: fly + rest + flick, dx: d.x, dy: d.y, dist: S('defeat.flyTiles', 5), done: 0, n: W.rng() < 0.5 ? 9 : 11, sign: d.x >= 0 ? 1 : -1 };
+    if (t.kind === 'slime') { t.dead = true; t.deadAt = W.t; }
+    else { t.ko = true; t.koUntil = W.t + t.rag.total + S('unit.knockedOutSeconds', 3); }
+  }
+  // how a ragdoll looks at time t: z = height in pixels, quarter = turns in 90 degree steps (signed), visible (false while it flickers off or is gone)
+  combat.ragPose = function (t, b) {
+    const r = b.rag, e = t - r.t0, pf = Math.min(1, Math.max(0, e / r.fly)), ease = 1 - (1 - pf) * (1 - pf);
+    let z = 0;
+    if (pf < 0.65) { const u = pf / 0.65; z = 18 * 4 * u * (1 - u); } else if (pf < 1) { const u = (pf - 0.65) / 0.35; z = 5 * 4 * u * (1 - u); }
+    const flicker = e >= r.fly + r.rest;
+    return { z, quarter: Math.floor(r.n * ease) * r.sign, visible: e < r.total && (!flicker || Math.floor((e - r.fly - r.rest) * 14) % 2 === 0), done: e >= r.total };
   };
 
   // ------------------------------------------------------------------ slimes
@@ -149,7 +166,15 @@
 
     for (const b of W.bodies) {
       // knocked out units wake up
-      if (b.ko && W.t >= b.koUntil) { b.ko = false; b.hp = Math.ceil(b.maxHp * 0.6); b.invulUntil = W.t + 1; b.healAt = W.t + S('unit.healEverySeconds', 10); }
+      if (b.ko && W.t >= b.koUntil) { b.ko = false; b.rag = null; b.hidden = false; b.flickerIn = W.t + 0.9; b.hp = Math.ceil(b.maxHp * 0.6); b.invulUntil = W.t + 1.5; b.healAt = W.t + S('unit.healEverySeconds', 10); }
+      // a ragdoll flies (fast first, then slower), then lies still
+      const rg = b.rag;
+      if (rg) {
+        const e = W.t - rg.t0, pf = Math.min(1, e / rg.fly), want = (1 - (1 - pf) * (1 - pf)) * rg.dist, step = want - rg.done;
+        if (step > 0) { K.world.slideBody(W, b, rg.dx, rg.dy, step); rg.done = want; }
+        stopHopping(b);
+        if (e >= rg.total) b.hidden = true;
+      }
       // hearts come back slowly
       if (!b.dead && !b.ko && b.maxHp && b.kind !== 'slime' && b.hp < b.maxHp && W.t >= (b.healAt || 0)) { b.hp++; b.healAt = W.t + S('unit.healEverySeconds', 10); }
       // dodge: slide, and a hurting dodge (the slime jump) hits whoever it touches
@@ -188,6 +213,6 @@
       }
     }
     // slimes that died have faded
-    if (W.bodies.some((b) => b.dead && W.t - b.deadAt > 0.5)) W.bodies = W.bodies.filter((b) => !(b.dead && W.t - b.deadAt > 0.5));
+    if (W.bodies.some((b) => b.dead && W.t - b.deadAt > (b.rag ? b.rag.total : 0.5))) W.bodies = W.bodies.filter((b) => !(b.dead && W.t - b.deadAt > (b.rag ? b.rag.total : 0.5)));
   };
 })();

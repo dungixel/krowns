@@ -329,10 +329,10 @@
  },
  {
   "Key": "unit.knockedOutSeconds",
-  "Value": "5",
+  "Value": "3",
   "Unit": "s",
   "Group": "Combat",
-  "Description": "At zero hearts a knight is knocked out (drawn faded, cannot act) this long, then wakes up.",
+  "Description": "A defeated knight is gone (it flies away and flickers out) and then stays away this long before it comes back, flickering, where it landed.",
   "Guessed": true
  },
  {
@@ -613,6 +613,78 @@
   "Unit": "px",
   "Group": "Units",
   "Description": "Height of the health bar over a head, in game pixels (plus a 1 px frame).",
+  "Guessed": true
+ },
+ {
+  "Key": "defeat.flyTiles",
+  "Value": "5",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "How far a defeated body is flung away.",
+  "Guessed": true
+ },
+ {
+  "Key": "defeat.flySeconds",
+  "Value": "0.9",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "How long the flight takes (it tumbles in quarter turns and hops twice).",
+  "Guessed": true
+ },
+ {
+  "Key": "defeat.restSeconds",
+  "Value": "0.35",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "It lies still this long...",
+  "Guessed": true
+ },
+ {
+  "Key": "defeat.flickerSeconds",
+  "Value": "0.8",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "...then flickers this long and is gone.",
+  "Guessed": true
+ },
+ {
+  "Key": "shake.hitPixels",
+  "Value": "2.5",
+  "Unit": "game px",
+  "Group": "Combat",
+  "Description": "How strong the screen shake of a hit is in the very middle of the screen, in game pixels (it is stronger the nearer a hit is to the middle; 0 turns shaking off).",
+  "Guessed": true
+ },
+ {
+  "Key": "shake.defeatMultiplier",
+  "Value": "1.8",
+  "Unit": "x",
+  "Group": "Combat",
+  "Description": "A hit that defeats somebody shakes this many times stronger.",
+  "Guessed": true
+ },
+ {
+  "Key": "shake.decaySeconds",
+  "Value": "0.22",
+  "Unit": "s",
+  "Group": "Combat",
+  "Description": "How quickly the shake dies down.",
+  "Guessed": true
+ },
+ {
+  "Key": "shake.others",
+  "Value": "1",
+  "Unit": "0 or 1",
+  "Group": "Combat",
+  "Description": "1 = every hit on screen shakes it. 0 = only hits you land (and hits on you, see shake.whenPlayerHurt).",
+  "Guessed": true
+ },
+ {
+  "Key": "shake.whenPlayerHurt",
+  "Value": "1",
+  "Unit": "0 or 1",
+  "Group": "Combat",
+  "Description": "When shake.others is 0: 1 = you getting hit still shakes the screen, 0 = it does not.",
   "Guessed": true
  }
 ]

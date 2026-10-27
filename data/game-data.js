@@ -1,7 +1,7 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-27T19:50:10.571Z",
+ "generatedAt": "2026-10-27T20:00:53.304Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -148,7 +148,7 @@ globalThis.Krowns.data = {
   "dodge.cooldownSeconds": 0.8,
   "unit.hearts": 5,
   "unit.healEverySeconds": 10,
-  "unit.knockedOutSeconds": 5,
+  "unit.knockedOutSeconds": 3,
   "hit.invulnerableSeconds": 0.5,
   "hit.knockbackTiles": 0.9,
   "hit.flashSeconds": 0.22,
@@ -183,7 +183,16 @@ globalThis.Krowns.data = {
   "slime.spawnMinTiles": 9,
   "slime.spawnMaxTiles": 13,
   "hpbar.pixelsPerHeart": 2,
-  "hpbar.heightPx": 2
+  "hpbar.heightPx": 2,
+  "defeat.flyTiles": 5,
+  "defeat.flySeconds": 0.9,
+  "defeat.restSeconds": 0.35,
+  "defeat.flickerSeconds": 0.8,
+  "shake.hitPixels": 2.5,
+  "shake.defeatMultiplier": 1.8,
+  "shake.decaySeconds": 0.22,
+  "shake.others": 1,
+  "shake.whenPlayerHurt": 1
  },
  "colors": {
   "shadow.purple": "#957fae",

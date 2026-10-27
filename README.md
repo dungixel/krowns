@@ -29,7 +29,7 @@ The whole page is about 100 KB to download.
 
 Three rules: **dodge** (a few tiles in one direction; nothing can hurt the dodger meanwhile), **slash** (a knight's 90 degree sweep) and **the slime attacks by dodging** (it squashes and shakes as a warning, locks its direction, then jumps; the jump hurts whoever it touches). Slimes go for the nearest unit.
 Tero only dodges when there is a reason: he sees a slime's warning, and if its jump would really hit him he dodges sideways just before it jumps (he sometimes misses it: `knight.dodgeSkill`). Otherwise he walks up to slimes, circles them and slashes when close.
-Every unit has a small pixel health bar over its head (red = hearts left, black = gone; `hpbar.*` in settings, `hp.*` colours). A hit shows a white flash and a push back; at zero hearts a knight is knocked out for a few seconds and then wakes up. Slimes die after 3 slashes. All numbers are in `content/settings.json` (group Combat).
+Every unit has a small pixel health bar over its head (red = hearts left, black = gone; `hpbar.*` in settings, `hp.*` colours). A hit shows a white flash and a push back. **Defeated** (zero hearts): the body is flung away like a ragdoll (it tumbles in quarter turns so pixels stay pixels, hops twice), lies still, flickers and disappears. A slime is gone for good (3 slashes); a knight comes back a few seconds later where it landed, flickering. Every hit on screen **shakes the screen** a little, more the nearer the hit is to the middle of the screen (`shake.*` in settings: `shake.others` 0 keeps only the shake from hits you land). All numbers are in `content/settings.json` (group Combat).
 
 ## The voice
 

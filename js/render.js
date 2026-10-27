@@ -31,6 +31,12 @@
   // ------------------------------------------------------------------ the view
   R.view = { cx: 0, cy: 0, S: 3, w: 800, h: 600, dpr: 1, ox: 0, oy: 0 };
   R.follow = null;         // the body the camera follows
+  R.shake = { power: 0, x: 0, y: 0, next: 0 };
+  // a hit at world pixel (wx, wy) shakes the screen: the nearer it is to the middle of the screen the stronger (nothing for hits off screen)
+  R.hitShake = function (wx, wy, strength) {
+    const v = R.view, half = Math.hypot(v.w, v.h) / 2 / v.S, f = Math.max(0, 1 - Math.hypot(wx - v.cx, wy - v.cy) / half);
+    if (f > 0) R.shake.power = Math.max(R.shake.power, strength * f);
+  };
   let canvas, ctx, lastT = 0, V, items = [];
   const zoomSteps = () => S('render.zoomSteps', [1, 2, 3, 4, 6, 8]);
 
@@ -176,6 +182,7 @@
   function bodyPos(b, t) {
     let lift = b.walkP > 0 || b.moving ? S('unit.hopHeightPx', 2) * Math.sin(Math.PI * b.walkP) : 0;
     if (b.dodge) lift = 4 * Math.sin(Math.PI * clamp((t - b.dodge.t0) / b.dodge.dur, 0, 1));          // a dodge is a little leap
+    if (b.rag) lift = K.combat.ragPose(t, b).z;
     return { px: b.fx * TILE, py: b.fy * TILE + FEET, lift };
   }
 
@@ -188,7 +195,12 @@
       const p = bodyPos(R.follow, W.t);
       v.cx += (p.px + 8 - v.cx) * Math.min(1, dt * 6); v.cy += (p.py + 8 - v.cy) * Math.min(1, dt * 6);
     }
-    v.ox = Math.round(v.w / 2 - v.cx * v.S); v.oy = Math.round(v.h / 2 - v.cy * v.S);
+    // screen shake: whole game pixels, changes about 40 times a second, dies down smoothly
+    const sh = R.shake;
+    sh.power *= Math.exp(-dt / Math.max(0.01, S('shake.decaySeconds', 0.22)));
+    if (sh.power < 0.35) { sh.power = 0; sh.x = sh.y = 0; }
+    else if (now >= sh.next) { sh.next = now + 1 / 40; sh.x = Math.round((Math.random() * 2 - 1) * sh.power); sh.y = Math.round((Math.random() * 2 - 1) * sh.power); }
+    v.ox = Math.round(v.w / 2 - v.cx * v.S) + Math.round(sh.x * v.S); v.oy = Math.round(v.h / 2 - v.cy * v.S) + Math.round(sh.y * v.S);
     const s = v.S, t = W.t;
     ctx.imageSmoothingEnabled = false;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -225,7 +237,7 @@
       if (px + 16 < vx0 || px > vx1 || py + 16 < vy0 - 8 || py > vy1 + 8) continue;
       items.push({ k: 'tree', y: py + 16, px, py, ref: tr });
     }
-    for (const b of W.bodies) { const p = bodyPos(b, W.t); items.push({ k: 'body', y: p.py + 16.1, px: p.px, py: p.py, lift: p.lift, ref: b }); }
+    for (const b of W.bodies) { if (b.hidden) continue; const p = bodyPos(b, W.t); items.push({ k: 'body', y: p.py + 16.1, px: p.px, py: p.py, lift: p.lift, ref: b }); }
     items.sort((a, b) => a.y - b.y);
 
     // 3. shadows (multiply, desaturated purple), before the things that cast them
@@ -234,7 +246,8 @@
     ctx.globalAlpha = K.C('shadow.opacity', 1);
     for (const it of items) {
       if (it.k === 'tree') castShadow(images.tree, 'tree', it.px + 8, it.py + 15.5, treeFlip(it.ref));
-      else if (it.k === 'body' && !it.ref.dead) castShadow(images[it.ref.sprite], it.ref.sprite, it.px + 8, it.py + 15.5, it.ref.face < 0, pivotOf(it.ref.sprite));
+      else if (it.k === 'body' && it.ref.rag) { if (K.combat.ragPose(t, it.ref).visible) groundBlob(it); }
+      else if (it.k === 'body') castShadow(images[it.ref.sprite], it.ref.sprite, it.px + 8, it.py + 15.5, it.ref.face < 0, pivotOf(it.ref.sprite));
     }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
 
@@ -264,7 +277,27 @@
 
   // the middle of a unit's body inside its picture (content/settings.json: sprite.pivot.<name>); the picture turns around it
   const pivotOf = (name) => S('sprite.pivot.' + name, 8);
+  // a flat little shadow under a ragdoll (it gets smaller the higher the body is); the standing shadow would be wrong for a tumbling body
+  function groundBlob(it) {
+    const z = it.lift, w = Math.max(4, 2 * Math.round(5 - z * 0.12)), x = Math.round(it.px + 8), y = Math.round(it.py + 14);
+    const row = (ww, yy) => { const sx0 = Math.round(sxOf(x - ww / 2)), sy0 = Math.round(syOf(yy)); ctx.fillRect(sx0, sy0, Math.round(sxOf(x + ww / 2)) - sx0, Math.round(syOf(yy + 1)) - sy0); };
+    row(w - 4, y); row(w, y + 1); row(w - 4, y + 2);
+  }
+  // a defeated body tumbling: turns only in exact quarter turns, so every pixel stays a pixel (no slanted ones)
+  function drawRagdoll(it, t) {
+    const b = it.ref, pose = K.combat.ragPose(t, b);
+    if (!pose.visible) return;
+    const img = images[b.sprite], pv = pivotOf(b.sprite), s = V.S, mid = (spriteTop(img) + img.height) / 2;
+    const q = ((pose.quarter % 4) + 4) % 4, c = [1, 0, -1, 0][q], sn = [0, 1, 0, -1][q];
+    ctx.save();
+    ctx.translate(Math.round(sxOf(it.px + 8)), Math.round(syOf(it.py + 16 - it.lift - (img.height - mid))));
+    ctx.transform(c, sn, -sn, c, 0, 0);
+    if (b.face < 0) ctx.scale(-1, 1);
+    ctx.drawImage(img, 0, 0, img.width, img.height, -Math.round(pv * s), -Math.round(mid * s), img.width * s, img.height * s);
+    ctx.restore();
+  }
   function drawBody(it, t) {
+    if (it.ref.rag) { drawRagdoll(it, t); return; }
     const b = it.ref, img = images[b.sprite], pivot = pivotOf(b.sprite);
     let extra, ox = 0;
     // a slime that is about to jump squashes and shakes (the warning)
@@ -274,7 +307,7 @@
     else if (b.moving) extra = K.anim('hop').stretch * Math.sin(Math.PI * b.walkP);
     else if (b.talkUntil && t < b.talkUntil) { const an = K.anim('talk'); extra = an.stretch * wave(t, an.period, b.phase); }
     else { const an = K.anim('breathe'); extra = an.stretch * wave(t, an.period, b.phase); }
-    const alpha = b.dead ? clamp(1 - (t - b.deadAt) / 0.5, 0, 1) : b.ko ? 0.45 : 1;
+    const alpha = t < (b.flickerIn || 0) ? (Math.floor(t * 14) % 2 === 0 ? 1 : 0.15) : 1;      // flickers when it comes back
     const wy = it.py + 16 - it.lift, wx = it.px + 8 + ox, flip = b.face < 0;
     // afterimages behind a dodging unit
     if (b.trail && b.trail.length) {
@@ -354,7 +387,7 @@
   }
   function drawHpBar(it) {
     const b = it.ref;
-    if (b.dead || !b.maxHp) return null;
+    if (b.dead || b.rag || !b.maxHp) return null;
     const img = images[b.sprite], ppx = S('hpbar.pixelsPerHeart', 2), h = S('hpbar.heightPx', 2), w = b.maxHp * ppx;
     // it glides with the unit exactly like the picture does (not snapped to the pixel grid and not hopping), and every game pixel of it
     // is drawn the same whole number of screen pixels wide, so it never shivers
@@ -374,6 +407,7 @@
     for (const it of items) {
       if (it.k !== 'body') continue;
       const b = it.ref, cx = sxOf(it.px + 8);
+      if (b.rag) continue;
       const barTop = drawHpBar(it);
       if (b.noName) continue;
       let nameY = barTop !== null ? barTop - Math.round(s * 1.5) : syOf(it.py - it.lift - 3);

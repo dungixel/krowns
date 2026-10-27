@@ -82,6 +82,33 @@ for (const l of K.lines()) {
     if (p.hp !== hp) fail('a dodging unit was hurt');
     if (K.combat.canDodge(W, p) && p.dodge) fail('cannot dodge twice at once');
   }
+  // defeat: flung away like a ragdoll, flickers and disappears; a knight comes back, a slime does not
+  {
+    const { W, p, n } = mk(13);
+    n.fx = p.fx + 25;
+    for (let dy = -4; dy <= 4; dy++) for (let dx = -8; dx <= 8; dx++) { const x = Math.round(p.fx) + dx, y = Math.round(p.fy) + dy; if (x > 0 && y > 0 && x < W.w - 1 && y < W.h - 1) W.blk[y * W.w + x] = 0; }
+    const s = K.combat.spawnSlime(W, p); s.fx = p.fx + 1; s.fy = p.fy; s.cd = 1e9; s.hp = 1;
+    const x0 = s.fx, tot = K.S('defeat.flySeconds', 0.9) + K.S('defeat.restSeconds', 0.35) + K.S('defeat.flickerSeconds', 0.8);
+    if (!K.combat.hurt(W, s, 1, p)) fail('could not hurt the slime');
+    if (!s.rag || !s.dead) fail('a defeated slime should become a ragdoll');
+    let sawOff = false, sawOn = false, maxZ = 0;
+    for (let i = 0; i < (tot + 0.5) * 60; i++) {
+      W.t += 1 / 60; K.combat.update(W, 1 / 60, null);
+      if (s.rag) { const pose = K.combat.ragPose(W.t, s); maxZ = Math.max(maxZ, pose.z); if (W.t - s.rag.t0 > s.rag.fly + s.rag.rest) { if (pose.visible) sawOn = true; else sawOff = true; } }
+    }
+    if (!(s.fx - x0 > 2.5)) fail('the ragdoll should be flung away from the hit (moved ' + (s.fx - x0).toFixed(2) + ')');
+    if (!(maxZ > 8)) fail('the ragdoll should fly up');
+    if (!(sawOn && sawOff)) fail('the body should flicker before it disappears');
+    if (W.bodies.includes(s)) fail('the defeated slime should be gone');
+    // a knight
+    p.hp = 1; p.invulUntil = 0;
+    K.combat.hurt(W, p, 1, null);
+    if (!p.ko || !p.rag) fail('a defeated knight should be knocked out as a ragdoll');
+    let hiddenSeen = false;
+    for (let i = 0; i < 20 * 60 && p.ko; i++) { W.t += 1 / 60; K.combat.update(W, 1 / 60, null); if (p.hidden) hiddenSeen = true; }
+    if (!hiddenSeen) fail('a defeated knight should disappear for a while');
+    if (p.ko || p.hidden || p.hp < 1) fail('a defeated knight should come back');
+  }
   // slimes appear now and then, never more than the limit, and Tero (a knight) deals with them
   let kills = 0, dodges = 0, hurt = 0;
   for (const seed of [21, 22, 23, 24]) {

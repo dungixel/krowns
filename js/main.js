@@ -66,6 +66,13 @@
     for (let i = from; i < to; i++) K.voice.say(b.bubble.text[i], b.voice, gain, b.bubble.plan[i], pan);
   };
 
+  // every hit shakes the screen a little (more the nearer the hit is to the middle of the screen). content/settings.json: shake.*
+  K.combat.onHurt = function (t, src, lethal) {
+    const p = game.player;
+    if (!(S('shake.others', 1) || src === p || (t === p && S('shake.whenPlayerHurt', 1)))) return;
+    R.hitShake(t.fx * 16 + 8, t.fy * 16 + 8 + 10, S('shake.hitPixels', 2.5) * (lethal ? S('shake.defeatMultiplier', 1.8) : 1));
+  };
+
   function frame(now) {
     requestAnimationFrame(frame);
     const W = game.W;
