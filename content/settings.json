@@ -598,5 +598,21 @@
   "Group": "Combat",
   "Description": "...and at most this far.",
   "Guessed": true
+ },
+ {
+  "Key": "hpbar.pixelsPerHeart",
+  "Value": "2",
+  "Unit": "px",
+  "Group": "Units",
+  "Description": "Width of the health bar over a head: this many game pixels per heart.",
+  "Guessed": true
+ },
+ {
+  "Key": "hpbar.heightPx",
+  "Value": "2",
+  "Unit": "px",
+  "Group": "Units",
+  "Description": "Height of the health bar over a head, in game pixels (plus a 1 px frame).",
+  "Guessed": true
  }
 ]

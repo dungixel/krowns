@@ -130,5 +130,17 @@
   "Hex": "#ffffff",
   "Group": "Effects",
   "Description": "Colour of the knight slash sweep."
+ },
+ {
+  "Key": "hp.fill",
+  "Hex": "#e0453f",
+  "Group": "UI",
+  "Description": "The red of a health bar (hearts left)."
+ },
+ {
+  "Key": "hp.empty",
+  "Hex": "#000000",
+  "Group": "UI",
+  "Description": "The frame of a health bar and the part that is gone."
  }
 ]

@@ -337,6 +337,37 @@
   function outlinedText(txt, x, y, fill, outline, lw) {
     ctx.lineJoin = 'round'; ctx.lineWidth = lw; ctx.strokeStyle = outline; ctx.strokeText(txt, x, y); ctx.fillStyle = fill; ctx.fillText(txt, x, y);
   }
+  // ------------------------------------------------------------------ the health bar over a head: red for the hearts left, black for the part that is gone
+  // (made of whole game pixels: 2 px per heart, 2 px high, with a 1 px black frame). Returns the screen y of its top, or null when there is none.
+  const tops = new WeakMap();
+  function spriteTop(img) {          // the first row of the picture that is not empty
+    if (tops.has(img)) return tops.get(img);
+    let top = 0;
+    try {
+      const c = mkCanvas(img.width, img.height), g = c.getContext('2d');
+      g.drawImage(img, 0, 0);
+      const d = g.getImageData(0, 0, img.width, img.height).data;
+      outer: for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) if (d[(y * img.width + x) * 4 + 3] > 0) { top = y; break outer; }
+    } catch (e) { /* keep 0 */ }
+    tops.set(img, top);
+    return top;
+  }
+  function drawHpBar(it) {
+    const b = it.ref;
+    if (b.dead || !b.maxHp) return null;
+    const img = images[b.sprite], ppx = S('hpbar.pixelsPerHeart', 2), h = S('hpbar.heightPx', 2), w = b.maxHp * ppx;
+    const x0 = Math.round(it.px + 8 - w / 2), y0 = Math.round(it.py + 16 - it.lift - img.height + spriteTop(img)) - 1 - h - 1;
+    const rect = (x, y, rw, rh, color) => {
+      ctx.fillStyle = color;
+      const sx0 = Math.round(sxOf(x)), sy0 = Math.round(syOf(y));
+      ctx.fillRect(sx0, sy0, Math.round(sxOf(x + rw)) - sx0, Math.round(syOf(y + rh)) - sy0);
+    };
+    const black = K.C('hp.empty', '#000000');
+    rect(x0 - 1, y0 - 1, w + 2, h + 2, black);                                   // the frame, and the part that is gone
+    if (b.hp > 0) rect(x0, y0, Math.max(0, b.hp) * ppx, h, K.C('hp.fill', '#e0453f'));
+    return syOf(y0 - 1);
+  }
+
   function drawTexts(W, t) {
     const s = V.S, outline = K.C('ui.nameOutline', '#2a2433');
     const namePx = Math.max(S('render.nameFontMinPx', 9), Math.round(S('render.nameFontWorldPx', 5.5) * s));
@@ -345,8 +376,9 @@
     for (const it of items) {
       if (it.k !== 'body') continue;
       const b = it.ref, cx = sxOf(it.px + 8);
+      const barTop = drawHpBar(it);
       if (b.noName) continue;
-      let nameY = syOf(it.py - it.lift - 3);
+      let nameY = barTop !== null ? barTop - Math.round(s * 1.5) : syOf(it.py - it.lift - 3);
       ctx.font = '700 ' + namePx + 'px Lexend, system-ui, sans-serif';
       outlinedText(b.name, cx, nameY, K.C('name.pastel.' + b.color, '#ffffff'), outline, Math.max(2, s * 0.8));
       nameY -= Math.round(namePx * 1.05);

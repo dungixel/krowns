@@ -76,7 +76,7 @@
       const p = game.player;
       const dx = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
       const dy = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
-      if (!p.dodge && !p.kb && !p.ko) K.world.moveBody(W, p, dx, dy, dt, S('player.speedTilesPerSecond', 3.4));
+      if (!p.dodge && !p.kb && !p.ko && !p.slash) K.world.moveBody(W, p, dx, dy, dt, S('player.speedTilesPerSecond', 3.4));
       K.npc.update(W, game.npc, p, dt);
       K.combat.update(W, dt, p);
     }
@@ -95,7 +95,18 @@
       if (Math.hypot(dx, dy) < 0.3) { dx = p.face; dy = 0; }
     }
     if (!dx && !dy) dx = p.face;
+    if (p.slash) { p.slash = null; p.slashFx = null; }               // a dodge cancels a slash
     K.combat.dodge(W, p, dx, dy);
+  }
+  // click: slash toward the mouse pointer. J: slash the way you face.
+  function playerSlash(useMouse) {
+    const p = game.player;
+    let dx = p.face, dy = 0;
+    if (useMouse && game.mouse) {
+      const m = R.toWorld(game.mouse.x, game.mouse.y), mx = m.x - (p.fx + 0.5), my = m.y - (p.fy + 0.62);
+      if (Math.hypot(mx, my) > 0.2) { dx = mx; dy = my; }
+    }
+    K.combat.slash(game.W, p, Math.atan2(dy, dx));
   }
 
   function bindInput() {
@@ -106,6 +117,7 @@
       if (k === 'escape') { toMenu(); return; }
       if (k === '+' || k === '=') R.zoomStep(1); else if (k === '-') R.zoomStep(-1);
       else if (k === ' ') { ev.preventDefault(); if (!ev.repeat) playerDodge(); }
+      else if (k === 'j') { if (!ev.repeat) playerSlash(false); }
       else if (k === 'e') say(game.last);                         // say the same sentence again
       else if (/^[0-9]$/.test(k)) say(k === '0' ? 9 : Number(k) - 1)
       else if (k === 'm') { K.voice.setMuted(!K.voice.muted); try { localStorage.setItem('krowns.muted', K.voice.muted ? '1' : '0'); } catch (e) { /* fine */ } }
@@ -114,6 +126,11 @@
     window.addEventListener('keyup', (ev) => keys.delete(ev.key.toLowerCase()));
     window.addEventListener('blur', () => keys.clear());
     window.addEventListener('resize', () => R.resize());
+    $('game').addEventListener('pointerdown', (ev) => {
+      if (!game.playing || ev.button !== 0) return;
+      const r = ev.target.getBoundingClientRect(), d = R.view.dpr; game.mouse = { x: (ev.clientX - r.left) * d, y: (ev.clientY - r.top) * d };
+      playerSlash(true);
+    });
     $('game').addEventListener('pointermove', (ev) => { const r = ev.target.getBoundingClientRect(), d = R.view.dpr; game.mouse = { x: (ev.clientX - r.left) * d, y: (ev.clientY - r.top) * d }; });
     let wheel = 0;
     $('game').addEventListener('wheel', (ev) => {

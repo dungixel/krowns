@@ -3,7 +3,7 @@
 A tiny meadow with trees. You are a knight (you choose the name), and one neighbour, Tero, lives here. He is a knight too. Every now and then a slime shows up.
 Live: https://dungixel.github.io/krowns/
 
-Move with **WASD / arrow keys** - mouse wheel or **+ / -** zooms - **1-9, 0** or the floating "Tero says..." button at the bottom left (it opens the list) pick what the neighbour says (**E** repeats it) - **Space** dodges (toward the direction you hold, or toward the mouse pointer if you hold nothing) - **M** mutes - **Esc** goes back to the menu.
+Move with **WASD / arrow keys** - mouse wheel or **+ / -** zooms - **1-9, 0** or the floating "Tero says..." button at the bottom left (it opens the list) pick what the neighbour says (**E** repeats it) - **click** slashes toward the mouse pointer (**J** slashes the way you face) - **Space** dodges (toward the direction you hold, or toward the mouse pointer if you hold nothing) - **M** mutes - **Esc** goes back to the menu.
 
 The earlier, much bigger version (kingdoms, jobs, wars, hunger...) is kept on the branch `v1-full`.
 
@@ -29,7 +29,7 @@ The whole page is about 100 KB to download.
 
 Three rules: **dodge** (a few tiles in one direction; nothing can hurt the dodger meanwhile), **slash** (a knight's 90 degree sweep) and **the slime attacks by dodging** (it squashes and shakes as a warning, locks its direction, then jumps; the jump hurts whoever it touches). Slimes go for the nearest unit.
 Tero only dodges when there is a reason: he sees a slime's warning, and if its jump would really hit him he dodges sideways just before it jumps (he sometimes misses it: `knight.dodgeSkill`). Otherwise he walks up to slimes, circles them and slashes when close.
-Hearts are not shown on screen yet: a hit shows a white flash and a push back; at zero hearts a knight is knocked out for a few seconds and then wakes up. Slimes die after 3 slashes. All numbers are in `content/settings.json` (group Combat). The player cannot slash yet.
+Every unit has a small pixel health bar over its head (red = hearts left, black = gone; `hpbar.*` in settings, `hp.*` colours). A hit shows a white flash and a push back; at zero hearts a knight is knocked out for a few seconds and then wakes up. Slimes die after 3 slashes. All numbers are in `content/settings.json` (group Combat).
 
 ## The voice
 

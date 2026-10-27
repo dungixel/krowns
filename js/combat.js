@@ -69,7 +69,7 @@
     t.invulUntil = W.t + S('hit.invulnerableSeconds', 0.5);
     t.flashUntil = W.t + S('hit.flashSeconds', 0.22);
     t.healAt = W.t + S('unit.healEverySeconds', 10);
-    t.slash = null; t.dodge = null; t.atk = null;
+    t.slash = null; t.slashFx = null; t.dodge = null; t.atk = null;
     const d = src ? combat.dirTo(src, t) : { x: -t.face, y: 0 };
     t.kb = { t0: W.t, dur: 0.18, dx: d.x, dy: d.y, dist: kbTiles === undefined ? S('hit.knockbackTiles', 0.9) : kbTiles, done: 0 };
     if (t.kind === 'slime') t.stunUntil = W.t + S('slime.stunSeconds', 0.4);

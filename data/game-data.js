@@ -1,7 +1,7 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-27T19:24:29.449Z",
+ "generatedAt": "2026-10-27T19:47:49.248Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -181,7 +181,9 @@ globalThis.Krowns.data = {
   "slime.spawnMaxSeconds": 35,
   "slime.maxAlive": 3,
   "slime.spawnMinTiles": 9,
-  "slime.spawnMaxTiles": 13
+  "slime.spawnMaxTiles": 13,
+  "hpbar.pixelsPerHeart": 2,
+  "hpbar.heightPx": 2
  },
  "colors": {
   "shadow.purple": "#957fae",
@@ -205,7 +207,9 @@ globalThis.Krowns.data = {
   "name.pastel.10": "#ffd0c9",
   "name.pastel.11": "#c9f5f2",
   "name.pastel.12": "#f3e3c2",
-  "fx.slash": "#ffffff"
+  "fx.slash": "#ffffff",
+  "hp.fill": "#e0453f",
+  "hp.empty": "#000000"
  },
  "animations": {
   "grass_sway": {
