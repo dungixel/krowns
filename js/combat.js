@@ -153,12 +153,33 @@
   // ------------------------------------------------------------------ slimes
   combat.spawnSlime = function (W, near) {
     const rng = W.rng, a = rng() * Math.PI * 2, r = rng.range(S('slime.spawnMinTiles', 9), S('slime.spawnMaxTiles', 13));
-    const x = Math.max(1, Math.min(W.w - 2, Math.round(near.fx + Math.cos(a) * r))), y = Math.max(1, Math.min(W.h - 2, Math.round(near.fy + Math.sin(a) * r)));
+    return combat.spawnSlimeAt(W, near.fx + Math.cos(a) * r, near.fy + Math.sin(a) * r);
+  };
+  // a slime on a free tile close to (x, y)
+  combat.spawnSlimeAt = function (W, x, y) {
+    const rng = W.rng;
+    x = Math.max(1, Math.min(W.w - 2, Math.round(x))); y = Math.max(1, Math.min(W.h - 2, Math.round(y)));
     const [tx, ty] = K.world.freeTileNear(W, x, y, 8);
     const hearts = S('slime.hearts', 3);
     const s = K.world.addBody(W, { kind: 'slime', name: 'Slime', noName: true, color: 1, sprite: 'slime', fx: tx, fy: ty, face: rng() < 0.5 ? -1 : 1, hp: hearts, maxHp: hearts, ai: { goal: null, until: W.t + rng.range(1, 3) } });
     return s;
   };
+
+  // the world starts with slime.maxAlive slimes, spread over the map but not right next to you
+  combat.populate = function (W, player) {
+    const rng = W.rng, want = S('slime.maxAlive', 10);
+    for (let i = 0; i < want; i++) { const [x, y] = farSpot(W, player, S('slime.spawnMinTiles', 9) + 3); combat.spawnSlimeAt(W, x, y); }
+    W.combat = { nextSpawn: W.t + rng.range(S('slime.spawnMinSeconds', 3), S('slime.spawnMaxSeconds', 7)) };
+  };
+  // a random spot on the map at least `minDist` tiles from `from`
+  function farSpot(W, from, minDist) {
+    for (let i = 0; i < 40; i++) {
+      const x = W.rng.range(2, W.w - 3), y = W.rng.range(2, W.h - 3);
+      if (!from || Math.hypot(x - from.fx, y - from.fy) >= minDist) return [x, y];
+    }
+    return [W.rng.range(2, W.w - 3), W.rng.range(2, W.h - 3)];
+  }
+  combat.farSpot = farSpot;
 
   function slimeAI(W, s, dt) {
     if (s.dead) return;
@@ -209,11 +230,11 @@
 
   combat.update = function (W, dt, player) {
     const rng = W.rng;
-    // slimes show up every now and then, a little way off
+    // slimes keep coming: whenever fewer than slime.maxAlive are alive, a new one shows up somewhere on the map (not next to you)
     const c = W.combat || (W.combat = { nextSpawn: W.t + S('slime.firstSpawnSeconds', 6) });
     if (player && W.t >= c.nextSpawn) {
-      c.nextSpawn = W.t + rng.range(S('slime.spawnMinSeconds', 18), S('slime.spawnMaxSeconds', 35));
-      if (W.bodies.filter((b) => b.kind === 'slime' && !b.dead).length < S('slime.maxAlive', 3)) combat.spawnSlime(W, player);
+      c.nextSpawn = W.t + rng.range(S('slime.spawnMinSeconds', 3), S('slime.spawnMaxSeconds', 7));
+      if (W.bodies.filter((b) => b.kind === 'slime' && !b.dead).length < S('slime.maxAlive', 10)) { const [x, y] = farSpot(W, player, S('slime.spawnMinTiles', 9) + 3); combat.spawnSlimeAt(W, x, y); }
     }
     for (const b of W.bodies) if (b.kind === 'slime') slimeAI(W, b, dt);
 

@@ -255,7 +255,7 @@
     ctx.fillStyle = K.C('shadow.purple', '#957fae');
     ctx.globalAlpha = K.C('shadow.opacity', 1);
     for (const it of items) {
-      if (it.k === 'tree') castShadow(images.tree, 'tree', it.px + 8, it.py + 15.5, treeFlip(it.ref));
+      if (it.k === 'tree') { const gp = grown(W, it.ref); ctx.globalAlpha = K.C('shadow.opacity', 1) * gp; castShadow(images.tree, 'tree', it.px + 8, it.py + 15.5, treeFlip(it.ref)); }
       else if (it.k === 'debris') { if (it.ref.kind === 'tree') groundBlob({ px: it.px - 8, py: it.py - 16, lift: it.lift }); }
       else if (it.k === 'body' && it.ref.rag) { if (K.combat.ragPose(t, it.ref).visible) groundBlob(it); }
       else if (it.k === 'body') castShadow(images[it.ref.sprite], it.ref.sprite, it.px + 8, it.py + 15.5, it.ref.face < 0, pivotOf(it.ref.sprite));
@@ -275,6 +275,8 @@
     drawTexts(W, t);
   };
 
+  // 0..1: a new tree fades in over tree.growSeconds
+  const grown = (W, tr) => tr.born === undefined ? 1 : clamp((W.t - tr.born) / Math.max(0.01, S('tree.growSeconds', 1.5)), 0, 1);
   function drawTree(W, it, dt, t) {
     const tr = it.ref;
     let behind = false;      // fades when somebody stands behind it
@@ -284,7 +286,7 @@
     const an = K.anim('tree_sway'), h = ((tr.x * 73856093) ^ (tr.y * 19349663)) >>> 0;
     const period = (an.extra.periodMin || 2.5) + ((h % 100) / 100) * ((an.extra.periodMax || 5.5) - (an.extra.periodMin || 2.5));
     const lean = an.stretch * (Math.sin(t * Math.PI * 2 / period + (h % 628) / 100) * 0.8 + 0.2 * Math.sin(t * 1.7 + (h >> 4) % 7));
-    blitLean(images.tree, it.px, it.py + 16, { alpha: tr.fade, flip: treeFlip(tr), lean });
+    blitLean(images.tree, it.px, it.py + 16, { alpha: tr.fade * grown(W, tr), flip: treeFlip(tr), lean });
   }
 
   // the middle of a unit's body inside its picture (content/settings.json: sprite.pivot.<name>); the picture turns around it

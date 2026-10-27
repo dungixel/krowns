@@ -13,6 +13,19 @@
     return b;
   };
 
+  // the other knights: they have a name and a colour, wander, hunt slimes and fight like Tero (they do not talk). Tero is one of knight.count.
+  npc.populate = function (W, player, tero) {
+    const rng = W.rng, names = new Set([tero.name, player.name]);
+    for (let i = 1; i < S('knight.count', 10); i++) {
+      let name = K.names.make(rng); for (let k = 0; k < 20 && names.has(name); k++) name = K.names.make(rng);
+      names.add(name);
+      const [x, y] = K.combat.farSpot(W, player, 10), [tx, ty] = K.world.freeTileNear(W, Math.round(x), Math.round(y), 8);
+      const b = K.world.addBody(W, { kind: 'npc', name, job: 'knight', color: rng.int(1, 12), sprite: 'knight', fx: tx, fy: ty, face: rng() < 0.5 ? -1 : 1 });
+      b.ai = { mode: 'idle', until: W.t + rng.range(0.5, 3), goal: null };
+    }
+  };
+  npc.all = (W) => W.bodies.filter((b) => b.kind === 'npc');
+
   // say a sentence: mood is neutral, happy, sad or angry (changes the melody of the voice and how fast he talks)
   npc.say = function (W, b, text, mood) {
     const cps = S('bubble.charsPerSecond', 14) * K.voice.moodSpeed(mood);
@@ -148,6 +161,19 @@
     if (fight(W, b, dt, player)) return;
     const a = b.ai, rng = W.rng;
     const dxp = player.fx - b.fx, dyp = player.fy - b.fy;
+    // no slime close enough to fight, but one somewhere not too far: go and find it
+    if (a.mode !== 'talk') {
+      let prey = null, pd = S('knight.huntTiles', 14);
+      for (const s of W.bodies) { if (s.kind !== 'slime' || s.dead) continue; const d = K.combat.dist(b, s); if (d < pd) { pd = d; prey = s; } }
+      if (prey) {
+        a.mode = 'hunt';
+        const to = K.combat.dirTo(b, prey);
+        const moved = K.world.moveBody(W, b, to.x, to.y, dt, S('npc.huntTilesPerSecond', 2.2));
+        if (moved < 1e-4) K.world.moveBody(W, b, -to.y, to.x, dt, S('npc.huntTilesPerSecond', 2.2));       // a tree in the way: slide along it
+        return;
+      }
+      if (a.mode === 'hunt') { a.mode = 'idle'; a.until = W.t + rng.range(1, 3); }
+    }
     if (a.mode === 'talk') {                           // stands still and looks at whoever is near
       if (Math.abs(dxp) > 0.5) b.face = dxp > 0 ? 1 : -1;
       K.world.moveBody(W, b, 0, 0, dt, 1);

@@ -93,5 +93,23 @@
     return moved;
   }
 
-  K.world = { create: createWorld, freeTileNear, addBody, moveBody, slideBody, blocked };
+  // trees grow at random: now and then a new tree appears on a free tile (never next to anybody), until there are about treeMaxFactor times
+  // as many as at the start. (Trees smashed by a flung body get replaced this way.)
+  function growTrees(W) {
+    if (!W.treeCap) W.treeCap = Math.round(W.trees.length * S('tree.maxFactor', 1.1));
+    if (W.nextTree === undefined) W.nextTree = W.t + 1;
+    if (W.t < W.nextTree) return false;
+    W.nextTree = W.t + W.rng.range(0.5, 1.5) * S('tree.growEverySeconds', 3);
+    if (W.trees.length >= W.treeCap) return false;
+    for (let i = 0; i < 25; i++) {
+      const x = W.rng.int(0, W.w - 1), y = W.rng.int(0, W.h - 1);
+      if (W.blk[y * W.w + x]) continue;
+      if (W.bodies.some((b) => !b.dead && Math.hypot(b.fx - x, b.fy - y) < 1.8)) continue;
+      W.blk[y * W.w + x] = 1; W.trees.push({ x, y, fade: 1, born: W.t });
+      return true;
+    }
+    return false;
+  }
+
+  K.world = { growTrees, create: createWorld, freeTileNear, addBody, moveBody, slideBody, blocked };
 })();

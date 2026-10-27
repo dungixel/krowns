@@ -32,6 +32,30 @@
   "Guessed": true
  },
  {
+  "Key": "tree.growEverySeconds",
+  "Value": "3",
+  "Unit": "seconds",
+  "Group": "World",
+  "Description": "On average a new tree grows somewhere every this many seconds (until there are tree.maxFactor times the trees there were at the start).",
+  "Guessed": true
+ },
+ {
+  "Key": "tree.maxFactor",
+  "Value": "1.1",
+  "Unit": "number",
+  "Group": "World",
+  "Description": "The forest stops growing at this many times the number of trees it started with (1.1 = ten percent more).",
+  "Guessed": true
+ },
+ {
+  "Key": "tree.growSeconds",
+  "Value": "1.5",
+  "Unit": "seconds",
+  "Group": "World",
+  "Description": "A new tree fades in over this long.",
+  "Guessed": true
+ },
+ {
   "Key": "grass.darken",
   "Value": "0.14",
   "Unit": "0 to 1",
@@ -472,6 +496,30 @@
   "Guessed": true
  },
  {
+  "Key": "knight.count",
+  "Value": "10",
+  "Unit": "knights",
+  "Group": "Combat",
+  "Description": "How many knights there are (Tero and the others, not counting you). A knocked-out knight comes back after unit.knockedOutSeconds, so there are always this many.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.huntTiles",
+  "Value": "14",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "A knight that sees no slime close by walks toward the nearest slime if it is closer than this.",
+  "Guessed": true
+ },
+ {
+  "Key": "npc.huntTilesPerSecond",
+  "Value": "2.2",
+  "Unit": "tiles per second",
+  "Group": "Combat",
+  "Description": "How fast a knight walks toward a slime it hunts.",
+  "Guessed": true
+ },
+ {
   "Key": "knight.playerThreat",
   "Value": "1",
   "Unit": "number",
@@ -593,26 +641,26 @@
  },
  {
   "Key": "slime.spawnMinSeconds",
-  "Value": "18",
+  "Value": "1",
   "Unit": "s",
   "Group": "Combat",
-  "Description": "A new slime appears at least this often...",
+  "Description": "A replacement slime appears after at least this long (when fewer than slime.maxAlive are alive)...",
   "Guessed": true
  },
  {
   "Key": "slime.spawnMaxSeconds",
-  "Value": "35",
+  "Value": "3",
   "Unit": "s",
   "Group": "Combat",
-  "Description": "...and at most this often.",
+  "Description": "...and after at most this long.",
   "Guessed": true
  },
  {
   "Key": "slime.maxAlive",
-  "Value": "3",
+  "Value": "10",
   "Unit": "slimes",
   "Group": "Combat",
-  "Description": "No new slime while this many are alive.",
+  "Description": "How many slimes there are. The world starts with this many, and whenever one is defeated another one appears somewhere on the map.",
   "Guessed": true
  },
  {

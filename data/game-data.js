@@ -1,12 +1,15 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-27T20:49:15.868Z",
+ "generatedAt": "2026-10-27T20:52:50.219Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
   "world.treeDensity": 0.11,
   "world.grassDetailDensity": 0.24,
+  "tree.growEverySeconds": 3,
+  "tree.maxFactor": 1.1,
+  "tree.growSeconds": 1.5,
   "grass.darken": 0.14,
   "render.zoomSteps": [
    1,
@@ -166,6 +169,9 @@ globalThis.Krowns.data = {
   "knight.dodgeSkill": 0.9,
   "knight.dodgeSkillVsPlayer": 0.7,
   "knight.grudgeSeconds": 12,
+  "knight.count": 10,
+  "knight.huntTiles": 14,
+  "npc.huntTilesPerSecond": 2.2,
   "knight.playerThreat": 1,
   "npc.combatTilesPerSecond": 2.6,
   "slime.hearts": 3,
@@ -181,9 +187,9 @@ globalThis.Krowns.data = {
   "slime.damage": 1,
   "slime.stunSeconds": 0.4,
   "slime.firstSpawnSeconds": 6,
-  "slime.spawnMinSeconds": 18,
-  "slime.spawnMaxSeconds": 35,
-  "slime.maxAlive": 3,
+  "slime.spawnMinSeconds": 1,
+  "slime.spawnMaxSeconds": 3,
+  "slime.maxAlive": 10,
   "slime.spawnMinTiles": 9,
   "slime.spawnMaxTiles": 13,
   "hpbar.pixelsPerHeart": 2,

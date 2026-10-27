@@ -245,4 +245,36 @@ for (const l of K.lines()) {
   console.log('smash: body flew ' + (p.fx - x0).toFixed(1) + ' tiles, smashed ' + (trees0 - W.trees.length) + ' trees and ' + (grass0 - W.grass.length) + ' grass tufts');
 }
 
+// a living world: 10 knights, 10 slimes (a defeated one is replaced), trees grow at random
+{
+  const W = K.world.create(61), [x, y] = K.world.freeTileNear(W, 48, 32, 10);
+  const p = K.world.addBody(W, { kind: 'player', name: 'P', fx: x, fy: y });
+  const n = K.npc.create(W, p); K.npc.populate(W, p, n); K.combat.populate(W, p);
+  const knights = () => W.bodies.filter((b) => b.kind === 'npc'), slimes = () => W.bodies.filter((b) => b.kind === 'slime' && !b.dead);
+  if (knights().length !== K.S('knight.count', 10)) fail('there should be ' + K.S('knight.count', 10) + ' knights, not ' + knights().length);
+  if (slimes().length !== K.S('slime.maxAlive', 10)) fail('there should be ' + K.S('slime.maxAlive', 10) + ' slimes at the start, not ' + slimes().length);
+  if (new Set(knights().map((k) => k.name)).size !== knights().length) fail('knights should have different names');
+  const trees0 = W.trees.length;
+  for (const t of W.trees.splice(0, 25)) W.blk[t.y * W.w + t.x] = 0;          // 25 trees are gone (smashed)
+  let kills = 0, minSlimes = 99, ko = 0;
+  const oh = K.combat.hurt;
+  K.combat.hurt = function (w, t, ...a) { const r = oh.call(this, w, t, ...a); if (r && t.kind === 'slime' && t.dead) kills++; if (r && t.kind === 'npc' && t.ko) ko++; return r; };
+  const t0 = Date.now();
+  for (let i = 0; i < 300 * 60; i++) {
+    W.t += 1 / 60;
+    for (const k of K.npc.all(W)) K.npc.update(W, k, p, 1 / 60);
+    K.combat.update(W, 1 / 60, p); K.world.growTrees(W);
+    if (i > 30 * 60) minSlimes = Math.min(minSlimes, slimes().length);
+    if (i % 600 === 0) for (const b of W.bodies) if (!(b.fx >= 0 && b.fy >= 0 && b.fx <= W.w - 1 && b.fy <= W.h - 1)) fail('body left the world');
+  }
+  K.combat.hurt = oh;
+  if (knights().length !== 10) fail('knights should never be lost, there are ' + knights().length);
+  if (kills < 10) fail('the knights should keep defeating slimes (' + kills + ')');
+  if (slimes().length < 8) fail('defeated slimes should be replaced (' + slimes().length + ' alive, ' + kills + ' defeated)');
+  if (W.trees.length <= trees0 - 25 + 15) fail('trees should grow back at random (' + W.trees.length + ' of ' + trees0 + ')');
+  if (W.trees.length > W.treeCap) fail('too many trees');
+  for (const t of W.trees) if (!W.blk[t.y * W.w + t.x]) fail('a tree should block its tile');
+  console.log('world: 5 minutes with 10 knights and 10 slimes: ' + kills + ' slimes defeated, ' + ko + ' knight knock-outs, ' + slimes().length + ' slimes alive, trees ' + (trees0 - 25) + ' -> ' + W.trees.length + ' (cap ' + W.treeCap + '), simulated in ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s');
+}
+
 console.log('OK');

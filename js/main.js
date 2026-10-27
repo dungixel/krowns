@@ -24,6 +24,7 @@
     const [tx, ty] = K.world.freeTileNear(W, Math.floor(W.w / 2), Math.floor(W.h / 2), 12);
     const player = K.world.addBody(W, { kind: 'player', name, color: W.rng.int(1, 12), sprite: 'knight', fx: tx, fy: ty, face: 1 });
     game.W = W; game.player = player; game.npc = K.npc.create(W, player);
+    K.npc.populate(W, player, game.npc); K.combat.populate(W, player);
     R.follow = player; R.zoomTarget = null; R.view.S = R.fitScale(18); R.centerOn(player);
     keys.clear(); game.playing = true; game.last = 0; buildLines();
     $('lines').classList.add('closed');
@@ -90,7 +91,8 @@
         if (now - game.aimSince >= 50 && !p.ko && K.combat.canSlash(W, p)) K.combat.slash(W, p, Math.atan2(ay, ax));     // 50 ms so two arrows pressed together make a diagonal
       } else game.aimSince = 0;
       if (!p.dodge && !p.kb && !p.ko && !p.slash) K.world.moveBody(W, p, dx, dy, dt, S('player.speedTilesPerSecond', 3.4));
-      K.npc.update(W, game.npc, p, dt);
+      for (const k of K.npc.all(W)) K.npc.update(W, k, p, dt);
+      K.world.growTrees(W);
       K.combat.update(W, dt, p);
     }
     K.voice.newFrame();
