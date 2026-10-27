@@ -100,7 +100,10 @@
       const lean = S('voice.glideToNext', 0.8);
       syl.forEach((y, k) => {
         let glide = y.end;
-        if (glide === 1 && k < n - 1) glide = semi(Math.max(-5, Math.min(5, lean * (syl[k + 1].s - y.s))));
+        if (glide === 1 && k < n - 1) {
+          const diff = syl[k + 1].s - y.s;          // semitones up (+) or down (-) to the next sound
+          glide = Math.abs(diff) < 0.25 ? 1 : semi(Math.max(-6, Math.min(6, Math.sign(diff) * Math.max(1.3, Math.abs(diff) * lean))));   // always an audible swing
+        }
         out[y.idx] = { mult: semi(m.base + y.s), glide, loud: y.loud * m.loud * (kind === 'e' ? 1.2 : 1), dur: y.dur * m.dur, vow: y.vow };
       });
     }
@@ -125,8 +128,8 @@
     const env = c.createGain();
     env.gain.setValueAtTime(0.0001, now);
     env.gain.linearRampToValueAtTime(vol, now + 0.03);
-    env.gain.linearRampToValueAtTime(vol * 0.85, now + dur * 0.6);
-    env.gain.exponentialRampToValueAtTime(0.0001, t1);
+    env.gain.linearRampToValueAtTime(vol * 0.9, now + dur * 0.7);
+    env.gain.linearRampToValueAtTime(0.0001, t1);      // stays full while the pitch swings, then fades quickly
     // the whole voice is softened (more when the speaker is far away)
     const soft = c.createBiquadFilter(); soft.type = 'lowpass'; soft.Q.value = 0.5;
     soft.frequency.value = 4500 * (0.4 + 0.6 * Math.min(1, gain));
@@ -135,7 +138,7 @@
     else soft.connect(voice.master);
     // the buzz: its pitch glides as the plan says
     const o = c.createOscillator(); o.setPeriodicWave(voice.wave);
-    o.frequency.setValueAtTime(f0 * 0.96, now); o.frequency.linearRampToValueAtTime(f0, now + 0.05); o.frequency.setValueAtTime(f0, now + dur * 0.35); o.frequency.linearRampToValueAtTime(f0 * p.glide, t1 - 0.01);      // a little "boop" up at the start of every sound
+    o.frequency.setValueAtTime(f0 * 0.96, now); o.frequency.linearRampToValueAtTime(f0, now + 0.05); o.frequency.setValueAtTime(f0, now + dur * 0.15); o.frequency.linearRampToValueAtTime(f0 * p.glide, now + dur * 0.9);      // a little "boop" up at the start of every sound
     // the mouth: two resonances that make the vowel
     const f = VOWEL[p.vow] || VOWEL.a;
     [[f[0], 1, 5], [f[1], 2.6, 7], [3300, 0.5 * v.bright, 6]].forEach(([hz, g, q]) => {
