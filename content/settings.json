@@ -225,7 +225,7 @@
  },
  {
   "Key": "voice.randomness",
-  "Value": "0.07",
+  "Value": "0.12",
   "Unit": "x",
   "Group": "Voice",
   "Description": "Every letter is a tiny bit higher or lower at random (0.07 = up to 7%).",
