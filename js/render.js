@@ -13,7 +13,7 @@
   const loadImage = (url) => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('Could not load ' + url)); im.src = url; });
   R.loadAssets = async function (version) {
     const v = version ? '?v=' + version : '';
-    await Promise.all(['knight', 'base', 'tree'].map(async (n) => { images[n] = await loadImage('assets/sprites/' + n + '.png' + v); }));
+    await Promise.all(['knight', 'base', 'farmer', 'tree'].map(async (n) => { images[n] = await loadImage('assets/sprites/' + n + '.png' + v); }));
     images.grassDetail = await loadImage('assets/world/grass-detail.png' + v);
     images.grassMap = await loadImage('assets/world/grass-map.png' + v);
     try { await document.fonts.load('700 16px Lexend'); await document.fonts.load('400 16px Lexend'); } catch (e) { /* a fallback font is used */ }
@@ -87,10 +87,11 @@
     return row;
   }
   // draws `img` with its bottom edge at world y = wyBottom and its left edge at world x = wx
+  // (with o.pivot: the picture's pivot, the middle of the BODY in picture pixels, is put at wx, and a flipped picture turns around that pivot)
   function blit(img, wx, wyBottom, o) {
     o = o || {};
     const s = V.S, iw = img.width, ih = img.height, extra = o.extra || 0;
-    const dx = sxOf(wx), top = syOf(wyBottom - ih - extra);
+    const dx = sxOf(o.pivot === undefined ? wx : wx - (o.flip ? iw - o.pivot : o.pivot)), top = syOf(wyBottom - ih - extra);
     if (o.alpha !== undefined && o.alpha !== 1) ctx.globalAlpha = o.alpha;
     if (o.flip) { ctx.save(); ctx.translate(dx + iw * s, 0); ctx.scale(-1, 1); }
     const x0 = o.flip ? 0 : dx;
@@ -121,12 +122,12 @@
 
   // ------------------------------------------------------------------ shadows: the sun is always in the same place
   // the picture's silhouette is laid flat on the ground, leaning away from the sun. (baseX, baseY) = the feet, in world pixels.
-  function castShadow(img, key, baseX, baseY, flip) {
+  function castShadow(img, key, baseX, baseY, flip, pivot) {
     const sil = silhouette(img, key, K.C('shadow.purple', '#957fae'));
     const iw = img.width, ih = img.height, ax = S('shadow.lean', -0.4), ay = S('shadow.length', 0.4);
     ctx.save();
     ctx.setTransform(V.S, 0, 0, V.S, V.ox, V.oy);
-    ctx.transform(1, 0, -ax, -ay, baseX - iw / 2 + ax * ih, baseY + ay * ih);
+    ctx.transform(1, 0, -ax, -ay, baseX - (pivot === undefined ? iw / 2 : flip ? iw - pivot : pivot) + ax * ih, baseY + ay * ih);
     if (flip) { ctx.translate(iw, 0); ctx.scale(-1, 1); }
     ctx.drawImage(sil, 0, 0, iw, ih, 0, 0, iw, ih);
     ctx.restore();
@@ -230,7 +231,7 @@
     ctx.globalAlpha = K.C('shadow.opacity', 1);
     for (const it of items) {
       if (it.k === 'tree') castShadow(images.tree, 'tree', it.px + 8, it.py + 15.5, treeFlip(it.ref));
-      else if (it.k === 'body') castShadow(images[it.ref.sprite], it.ref.sprite, it.px + 8, it.py + 15.5, it.ref.face < 0);
+      else if (it.k === 'body') castShadow(images[it.ref.sprite], it.ref.sprite, it.px + 8, it.py + 15.5, it.ref.face < 0, pivotOf(it.ref.sprite));
     }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
 
@@ -257,13 +258,15 @@
     blitLean(images.tree, it.px, it.py + 16, { alpha: tr.fade, flip: treeFlip(tr), lean });
   }
 
+  // the middle of a unit's body inside its picture (content/settings.json: sprite.pivot.<name>); the picture turns around it
+  const pivotOf = (name) => S('sprite.pivot.' + name, 8);
   function drawBody(it, t) {
     const b = it.ref;
     let extra;
     if (b.moving) extra = K.anim('hop').stretch * Math.sin(Math.PI * b.walkP);
     else if (b.talkUntil && t < b.talkUntil) { const an = K.anim('talk'); extra = an.stretch * wave(t, an.period, b.phase); }
     else { const an = K.anim('breathe'); extra = an.stretch * wave(t, an.period, b.phase); }
-    blit(images[b.sprite], it.px, it.py + 16 - it.lift, { flip: b.face < 0, extra });
+    blit(images[b.sprite], it.px + 8, it.py + 16 - it.lift, { flip: b.face < 0, extra, pivot: pivotOf(b.sprite) });
   }
 
   // ------------------------------------------------------------------ names and speech bubbles

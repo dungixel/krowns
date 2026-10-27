@@ -102,14 +102,20 @@
     return out;
   };
 
-  // speak one blip. gain 0..1 (quieter when far away). p = one entry of voice.plan (silent characters have none)
-  voice.say = function (ch, v, gain, p) {
+  // how loud a voice is for a listener `d` tiles away: full when close, nothing at voice.hearTiles and beyond
+  voice.hearing = function (d) { const x = Math.max(0, 1 - d / S('voice.hearTiles', 16)); return x * Math.sqrt(x); };
+
+  // speak one blip. gain 0..1 (from voice.hearing: quieter when far away), pan -1 (left) .. 1 (right) = where the speaker is.
+  // p = one entry of voice.plan (silent characters have none)
+  voice.say = function (ch, v, gain, p, pan) {
     const c = voice.ctx;
     if (!p || !c || voice.muted || voice.budget <= 0 || c.state !== 'running') return;
+    gain = gain === undefined ? 1 : gain;
+    if (gain < 0.015) return;      // too far away to be heard
     voice.budget--;
     const f0 = v.pitch * p.mult * (1 + (Math.random() * 2 - 1) * S('voice.randomness', 0.004));
     const now = c.currentTime, dur = S('voice.letterSeconds', 0.13) * p.dur, t1 = now + dur;
-    const vol = 0.3 * p.loud * Math.max(0.05, Math.min(1, gain === undefined ? 1 : gain));
+    const vol = 0.3 * p.loud * Math.min(1, gain);
     // a round little note: quick soft start, a body that stays, a gentle tail
     const env = c.createGain();
     env.gain.setValueAtTime(0.0001, now);
@@ -118,8 +124,10 @@
     env.gain.exponentialRampToValueAtTime(0.0001, t1);
     // a soft filter: this is the only thing the vowel changes
     const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.7;
-    lp.frequency.value = (VOWEL[p.vow] || 2500) * v.formant * v.bright;
-    lp.connect(env); env.connect(voice.master);
+    lp.frequency.value = (VOWEL[p.vow] || 2500) * v.formant * v.bright * (0.45 + 0.55 * Math.min(1, gain));      // far voices sound duller
+    lp.connect(env);
+    if (c.createStereoPanner && pan) { const sp = c.createStereoPanner(); sp.pan.value = Math.max(-1, Math.min(1, pan)); env.connect(sp); sp.connect(voice.master); }      // and come from their side
+    else env.connect(voice.master);
     // the note: a triangle wave (round and warm) plus a quiet octave above it (a bit of sparkle); the pitch glides as the plan says
     const o = c.createOscillator(); o.type = 'triangle';
     o.frequency.setValueAtTime(f0 * 0.985, now); o.frequency.linearRampToValueAtTime(f0, now + 0.025); o.frequency.linearRampToValueAtTime(f0 * p.glide, t1);

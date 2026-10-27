@@ -3,7 +3,7 @@
 A tiny meadow with trees. You are a knight (you choose the name), and one neighbour lives here.
 Live: https://dungixel.github.io/krowns/
 
-Move with **WASD / arrow keys** - mouse wheel or **+ / -** zooms - **1-9, 0** or the list at the bottom left pick what the neighbour says (**E** repeats it) - **M** mutes - **Esc** goes back to the menu.
+Move with **WASD / arrow keys** - mouse wheel or **+ / -** zooms - **1-9, 0** or the floating "Tero says..." button at the bottom left (it opens the list) pick what the neighbour says (**E** repeats it) - **M** mutes - **Esc** goes back to the menu.
 
 The earlier, much bigger version (kingdoms, jobs, wars, hunger...) is kept on the branch `v1-full`.
 
@@ -15,7 +15,7 @@ The earlier, much bigger version (kingdoms, jobs, wars, hunger...) is kept on th
 | `js/world.js` | The meadow (trees, grass) and how bodies walk (freely, sliding along trees) |
 | `js/npc.js` | The neighbour: strolls, and says the sentences you pick (his personality comes later) |
 | `js/voice.js` | The voice: every letter of a speech bubble makes a made-up sound, with intonation |
-| `js/render.js` | Drawing: ground, grass, trees, shadows, names, speech bubbles |
+| `js/render.js` | Drawing: ground, grass, trees, shadows (units turn around the middle of their body, `sprite.pivot.*`), names, speech bubbles |
 | `js/main.js` | Start, game loop, keyboard |
 | `js/names.js`, `js/data.js`, `js/util.js` | Name making, reading the game content, small helpers |
 | `content/*.json`, `data/game-data.js` | All numbers, colours, animations and speech lines (edit these), and the one file the game reads (generated) |
@@ -28,7 +28,7 @@ The whole page is about 100 KB to download.
 
 No recordings. Each letter is a short buzzing tone shaped by two filters so it sounds like "ah / eh / ee / oh / oo" (letters are "spelled out" like their names, so `b` is a pop + "ee"). The **pitch of a character is just a number** (`voice.npc.pitchHz`, `voice.npc.formant` in Settings) - nothing else decides it.
 The **melody** follows the sentence: statements slowly come down, questions go up at the end, exclamations start high and louder, **happy** speech is higher and bouncy, **sad** speech is lower, slower and sinks.
-Tero's sentences live in `content/speech.json` (`Text` and `Mood`: neutral, happy, sad or angry). In the game you pick which one he says from the list at the bottom left, as often as you like.
+Tero's sentences live in `content/speech.json` (`Text` and `Mood`: neutral, happy, sad or angry). In the game you pick which one he says from the floating "says..." button at the bottom left, as often as you like.
 
 ## Changing the game's numbers and words
 

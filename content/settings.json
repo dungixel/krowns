@@ -96,6 +96,30 @@
   "Guessed": true
  },
  {
+  "Key": "sprite.pivot.knight",
+  "Value": "4.5",
+  "Unit": "px",
+  "Group": "Units",
+  "Description": "Where the middle of the knight's body is inside its 16 pixel picture (it turns around this point).",
+  "Guessed": true
+ },
+ {
+  "Key": "sprite.pivot.base",
+  "Value": "4.5",
+  "Unit": "px",
+  "Group": "Units",
+  "Description": "Where the middle of the body is inside its 16 pixel picture (it turns around this point).",
+  "Guessed": true
+ },
+ {
+  "Key": "sprite.pivot.farmer",
+  "Value": "6.5",
+  "Unit": "px",
+  "Group": "Units",
+  "Description": "Where the middle of the farmer's body is inside its 16 pixel picture (it turns around this point).",
+  "Guessed": true
+ },
+ {
   "Key": "bubble.charsPerSecond",
   "Value": "14",
   "Unit": "letters/s",
@@ -176,6 +200,14 @@
   "Guessed": true
  },
  {
+  "Key": "npc.sprite",
+  "Value": "farmer",
+  "Unit": "text",
+  "Group": "Neighbour",
+  "Description": "Which picture the neighbour uses (assets/sprites/<name>.png).",
+  "Guessed": true
+ },
+ {
   "Key": "npc.walkTilesPerSecond",
   "Value": "1.3",
   "Unit": "tiles/s",
@@ -197,6 +229,14 @@
   "Unit": "0-1",
   "Group": "Voice",
   "Description": "Overall loudness of the voices.",
+  "Guessed": true
+ },
+ {
+  "Key": "voice.hearTiles",
+  "Value": "16",
+  "Unit": "tiles",
+  "Group": "Voice",
+  "Description": "How far away a voice can be heard at all. The closer you are, the louder, and far voices also sound duller and come from their side.",
   "Guessed": true
  },
  {

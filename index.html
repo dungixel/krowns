@@ -1,18 +1,21 @@
 <!doctype html>
-<html lang="en" data-v="8">
+<html lang="en" data-v="9">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Krowns</title>
 <meta name="description" content="Krowns - a tiny meadow.">
-<link rel="stylesheet" href="css/style.css?v=8">
+<link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
 <canvas id="game"></canvas>
 <button id="menu" class="card" title="Menu (Esc)">&larr; Menu</button>
-<div id="lines" class="card">
-  <button id="lines-head"><span id="lines-title">Neighbour</span> <span id="lines-arrow">&#9662;</span></button>
-  <div id="lines-list"></div>
+<div id="lines" class="closed">
+  <div id="lines-list" class="card"></div>
+  <button id="lines-head" class="card" title="Pick what the neighbour says">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg>
+    <span id="lines-title">Neighbour</span>
+  </button>
 </div>
 
 <div id="start" class="show">
@@ -32,14 +35,14 @@
   </div>
 </div>
 
-<script src="data/game-data.js?v=8"></script>
-<script src="js/util.js?v=8"></script>
-<script src="js/data.js?v=8"></script>
-<script src="js/names.js?v=8"></script>
-<script src="js/world.js?v=8"></script>
-<script src="js/voice.js?v=8"></script>
-<script src="js/npc.js?v=8"></script>
-<script src="js/render.js?v=8"></script>
-<script src="js/main.js?v=8"></script>
+<script src="data/game-data.js?v=9"></script>
+<script src="js/util.js?v=9"></script>
+<script src="js/data.js?v=9"></script>
+<script src="js/names.js?v=9"></script>
+<script src="js/world.js?v=9"></script>
+<script src="js/voice.js?v=9"></script>
+<script src="js/npc.js?v=9"></script>
+<script src="js/render.js?v=9"></script>
+<script src="js/main.js?v=9"></script>
 </body>
 </html>

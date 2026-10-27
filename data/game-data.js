@@ -1,7 +1,7 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-27T15:23:51.206Z",
+ "generatedAt": "2026-10-27T15:29:18.052Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -22,6 +22,9 @@ globalThis.Krowns.data = {
   "tree.fadeOpacity": 0.5,
   "tree.fadeSeconds": 0.25,
   "unit.hopHeightPx": 2,
+  "sprite.pivot.knight": 4.5,
+  "sprite.pivot.base": 4.5,
+  "sprite.pivot.farmer": 6.5,
   "bubble.charsPerSecond": 14,
   "names.syllables": [
    "na",
@@ -129,9 +132,11 @@ globalThis.Krowns.data = {
   "player.speedTilesPerSecond": 3.4,
   "npc.name": "Tero",
   "npc.job": "farmer",
+  "npc.sprite": "farmer",
   "npc.walkTilesPerSecond": 1.3,
   "bubble.lingerSeconds": 2.2,
   "voice.volume": 0.5,
+  "voice.hearTiles": 16,
   "voice.letterSeconds": 0.13,
   "voice.randomness": 0.004,
   "voice.npc.pitchHz": 280,

@@ -26,7 +26,7 @@
     game.W = W; game.player = player; game.npc = K.npc.create(W, player);
     R.follow = player; R.zoomTarget = null; R.view.S = R.fitScale(18); R.centerOn(player);
     keys.clear(); game.playing = true; game.last = 0; buildLines();
-    $('lines').classList.remove('closed');
+    $('lines').classList.add('closed');
     document.body.classList.add('playing');
     $('start').classList.remove('show', 'naming');
   }
@@ -40,7 +40,7 @@
   // the list of sentences the neighbour can say
   function buildLines() {
     const list = $('lines-list'), lines = K.lines();
-    $('lines-title').textContent = S('npc.name', 'Neighbour') + ' the ' + S('npc.job', 'neighbour') + ' says...';
+    $('lines-title').textContent = S('npc.name', 'Neighbour') + ' says...';
     list.textContent = '';
     lines.forEach((l, i) => {
       const b = document.createElement('button'); b.dataset.i = i;
@@ -58,12 +58,12 @@
     document.querySelectorAll('#lines-list button').forEach((b) => b.classList.toggle('on', Number(b.dataset.i) === i));
   }
 
-  // the distance makes a voice quieter
+  // proximity chat: every unit is heard by how far away it is (quieter, duller and from its side), and not at all beyond voice.hearTiles
   R.onChars = function (b, from, to) {
     if (!game.player || !b.voice || !b.bubble) return;
-    const d = Math.hypot(b.fx - game.player.fx, b.fy - game.player.fy);
-    const gain = Math.max(0.15, 1 - d / 22);
-    for (let i = from; i < to; i++) K.voice.say(b.bubble.text[i], b.voice, gain, b.bubble.plan[i]);
+    const dx = b.fx - game.player.fx, dy = b.fy - game.player.fy;
+    const gain = K.voice.hearing(Math.hypot(dx, dy)), pan = Math.max(-1, Math.min(1, dx / 10)) * 0.8;
+    for (let i = from; i < to; i++) K.voice.say(b.bubble.text[i], b.voice, gain, b.bubble.plan[i], pan);
   };
 
   function frame(now) {

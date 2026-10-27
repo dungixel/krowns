@@ -8,7 +8,7 @@
   npc.create = function (W, player) {
     const rng = W.rng;
     const [tx, ty] = K.world.freeTileNear(W, Math.round(player.fx) + 6, Math.round(player.fy) + 2, 12);
-    const b = K.world.addBody(W, { kind: 'npc', name: S('npc.name', 'Tero'), job: S('npc.job', 'farmer'), color: rng.int(1, 12), sprite: 'base', fx: tx, fy: ty, face: -1, voice: K.voice.npcVoice() });
+    const b = K.world.addBody(W, { kind: 'npc', name: S('npc.name', 'Tero'), job: S('npc.job', 'farmer'), color: rng.int(1, 12), sprite: S('npc.sprite', 'farmer'), fx: tx, fy: ty, face: -1, voice: K.voice.npcVoice() });
     b.ai = { mode: 'idle', until: W.t + rng.range(1, 3), goal: null };
     return b;
   };
