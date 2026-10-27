@@ -137,4 +137,91 @@ for (const l of K.lines()) {
   if (dodges < 4) fail('Tero hardly dodges');
   console.log('fighting: Tero killed ' + kills + ' slimes, dodged ' + dodges + ' times, was hit ' + hurt + ' times');
 }
+// the player can attack Tero, and he decides who is the bigger threat
+{
+  const mk = (seed) => {
+    const W = K.world.create(seed), [x, y] = K.world.freeTileNear(W, 48, 32, 10);
+    const p = K.world.addBody(W, { kind: 'player', name: 'P', fx: x, fy: y });
+    return { W, p, n: K.npc.create(W, p) };
+  };
+  const step = (W, n, p, secs) => { for (let i = 0; i < secs * 60; i++) { W.t += 1 / 60; K.npc.update(W, n, p, 1 / 60); K.combat.update(W, 1 / 60, p); } };
+  const clearAround = (W, p) => { for (let y = -4; y <= 4; y++) for (let x = -4; x <= 4; x++) { const tx = Math.round(p.fx) + x, ty = Math.round(p.fy) + y; if (tx >= 0 && ty >= 0 && tx < W.w && ty < W.h) W.blk[ty * W.w + tx] = 0; } };
+  const slime = (W, fx, fy) => { const s = K.combat.spawnSlime(W, { fx, fy }); s.fx = fx; s.fy = fy; return s; };
+  // 1. peaceful: Tero never hurts a player who never attacked him, even with slimes around
+  {
+    const { W, p, n } = mk(31); clearAround(W, p); n.fx = p.fx + 1.2; n.fy = p.fy;
+    const oh = K.combat.hurt; let hitYou = 0;
+    K.combat.hurt = function (w, t, ...a) { const r = oh.call(this, w, t, ...a); if (r && t === p) hitYou++; return r; };
+    step(W, n, p, 20);
+    K.combat.hurt = oh;
+    if (K.combat.angry(W, n)) fail('Tero should not be angry at a player who did nothing');
+  }
+  // 2. you slash Tero: he is hurt, and from then on you are an enemy
+  {
+    const { W, p, n } = mk(32); clearAround(W, p);
+    n.fx = p.fx + 0.9; n.fy = p.fy; n.ai.mode = 'idle'; n.ai.until = 1e9;
+    const hp0 = n.hp;
+    K.combat.slash(W, p, 0);
+    for (let i = 0; i < 40; i++) { W.t += 1 / 60; K.combat.update(W, 1 / 60, p); }
+    if (!(n.hp < hp0)) fail('your slash should hurt Tero');
+    if (!K.combat.angry(W, n)) fail('Tero should hold a grudge after you hurt him');
+    step(W, n, p, K.S('knight.grudgeSeconds', 12) + 30);
+    if (K.combat.angry(W, n) && !p.ko) { /* a fight may have renewed nothing: the grudge only renews on your attacks */ fail('Tero should forgive you after a while'); }
+  }
+  // 3. who does he go for? a close player beats a far slime; a close slime beats a far player
+  {
+    const { W, p, n } = mk(33); clearAround(W, p);
+    n.fx = p.fx + 2.5; n.fy = p.fy; K.combat.provoke(W, n, p, 3);
+    const s = slime(W, n.fx + 6.5, n.fy);
+    s.stunUntil = 1e9; s.hp = 99;
+    step(W, n, p, 0.5);
+    if (!n.cb || n.cb.tgt !== p) fail('Tero should go for the close player before the far slime');
+  }
+  {
+    const { W, p, n } = mk(34); clearAround(W, p);
+    n.fx = p.fx + 8; n.fy = p.fy; K.combat.provoke(W, n, p, 1);
+    const s = slime(W, n.fx - 1.2, n.fy + 0.3);
+    s.stunUntil = 1e9; s.hp = 99;
+    step(W, n, p, 0.5);
+    if (!n.cb || n.cb.tgt !== s) fail('Tero should deal with the slime next to him before the far player');
+  }
+  // 4. a duel: he fights back, and dodges your slashes only when they would hit him
+  {
+    let youHit = 0, heHit = 0, slashDodges = 0, hitYouByHim = 0;
+    for (const seed of [41, 42, 43, 44, 45, 46]) {
+      const { W, p, n } = mk(seed); clearAround(W, p);
+      n.fx = p.fx + 1.6; n.fy = p.fy; n.ai.mode = 'idle'; n.ai.until = 1e9;
+      K.combat.slash(W, p, 0); step(W, n, p, 0.5); // provoke him with a swing
+      if (!K.combat.angry(W, n)) fail('a swing at Tero should anger him');
+      const od = K.combat.dodge, oh = K.combat.hurt;
+      K.combat.dodge = function (...a) {
+        const r = od.apply(this, a);
+        if (r && a[1] === n) {
+          const slimeThreat = W.bodies.some((s) => s.kind === 'slime' && s.atk && s.atk.state === 'wind');
+          const swing = p.slash && K.combat.dist(n, p) <= K.S('slash.rangeTiles', 1.35) + 0.31;
+          if (!slimeThreat && !swing) fail('Tero dodged for no reason in a duel');
+          if (swing) slashDodges++;
+        }
+        return r;
+      };
+      K.combat.hurt = function (w, t, d, src, ...a) { const r = oh.call(this, w, t, d, src, ...a); if (r && t === n && src === p) youHit++; if (r && t === p && src === n) hitYouByHim++; return r; };
+      for (let i = 0; i < 40 * 60 && !K.combat.angry(W, n) === false; i++) {
+        W.t += 1 / 60;
+        // you chase him and swing at him whenever you can
+        if (!p.ko && !p.slash && !p.kb) {
+          const d = K.combat.dirTo(p, n), dd = K.combat.dist(p, n);
+          if (dd < 1.1 && K.combat.canSlash(W, p)) K.combat.slash(W, p, Math.atan2(d.y, d.x)); else if (dd > 0.9) K.world.moveBody(W, p, d.x, d.y, 1 / 60, 3.4);
+        }
+        K.npc.update(W, n, p, 1 / 60); K.combat.update(W, 1 / 60, p);
+        if (i % 60 === 0 && K.combat.angry(W, n) === false) break;
+      }
+      K.combat.dodge = od; K.combat.hurt = oh;
+    }
+    if (youHit < 2) fail('you should be able to land hits on Tero (landed ' + youHit + ')');
+    if (hitYouByHim < 2) fail('Tero should fight back and hit you (hit ' + hitYouByHim + ')');
+    if (slashDodges < 1) fail('Tero should sometimes dodge your slash');
+    console.log('duel: you hit Tero ' + youHit + ' times, he hit you ' + hitYouByHim + ' times, he dodged ' + slashDodges + ' of your slashes');
+  }
+}
+
 console.log('OK');

@@ -49,10 +49,30 @@
     if (!combat.canSlash(W, b)) return false;
     const wind = S('slash.windupSeconds', 0.14), dur = S('slash.seconds', 0.2);
     b.slash = { t0: W.t, ang, wind, dur, hit: [] };
+    // swinging at Tero (even if you miss) makes him treat you as an enemy
+    if (b.kind === 'player') for (const e of W.bodies) {
+      if (e.kind !== 'npc' || e.dead || e.ko || combat.dist(b, e) > S('slash.rangeTiles', 1.35) + 0.8) continue;
+      const to = Math.atan2(cy(e) - cy(b), cx(e) - cx(b));
+      if (Math.abs(angDiff(to, ang)) <= S('slash.arcDegrees', 90) * DEG / 2 + 25 * DEG) combat.provoke(W, e, b, 0.3);
+    }
     b.slashFx = { ang, t0: W.t + wind, dur };        // what is drawn (lives a little longer than the slash itself)
     b.slashReady = W.t + wind + dur + S('slash.cooldownSeconds', 0.7);
     if (Math.abs(Math.cos(ang)) > 0.15) b.face = Math.cos(ang) > 0 ? 1 : -1;
     return true;
+  };
+  // who a slash may hurt: slimes (by anyone who is not a slime), Tero (by you, any time), you (by Tero, only while he holds a grudge)
+  combat.canHarm = function (W, a, e) {
+    if (e === a || e.dead || e.ko || a.kind === 'slime') return false;
+    if (e.kind === 'slime') return true;
+    if (a.kind === 'player') return e.kind === 'npc';
+    return a.kind === 'npc' && e.kind === 'player' && combat.angry(W, a);
+  };
+  // Tero's grudge against the player: set by an attack, forgotten after knight.grudgeSeconds
+  combat.angry = (W, b) => !!(b.grudge && W.t < b.grudge.until);
+  combat.provoke = function (W, t, by, weight) {
+    if (t.kind !== 'npc' || !by || by.kind !== 'player') return;
+    const g = combat.angry(W, t) ? t.grudge : (t.grudge = { hits: 0, until: 0 });
+    g.until = W.t + S('knight.grudgeSeconds', 12); g.hits += weight;
   };
   // 0..1 how far the visible sweep is (null before it starts or after it ended)
   combat.slashProgress = function (W, b) {
@@ -74,7 +94,8 @@
     t.kb = { t0: W.t, dur: 0.18, dx: d.x, dy: d.y, dist: kbTiles === undefined ? S('hit.knockbackTiles', 0.9) : kbTiles, done: 0 };
     if (t.kind === 'slime') t.stunUntil = W.t + S('slime.stunSeconds', 0.4);
     const lethal = t.hp <= 0;
-    if (lethal) defeat(W, t, d);
+    if (src && src.kind === 'player') combat.provoke(W, t, src, 1);
+    if (lethal) { defeat(W, t, d); t.grudge = null; if (t.kind === 'player' && src) src.grudge = null; }
     if (combat.onHurt) combat.onHurt(t, src, lethal);
     return true;
   };
@@ -196,14 +217,14 @@
         K.world.slideBody(W, b, k.dx, k.dy, step); k.done = want; stopHopping(b);
         if (W.t >= k.t0 + k.dur) b.kb = null;
       }
-      // the slash: hurts every slime the sweep has passed over
+      // the slash: hurts everyone it may hurt (see canHarm) that the sweep has passed over
       const s = b.slash;
       if (s) {
         const p = combat.slashProgress(W, b);
         if (p !== null) {
           const half = S('slash.arcDegrees', 90) * DEG / 2, head = -half + 2 * half * Math.min(1, p);
           for (const e of W.bodies) {
-            if (e.kind !== 'slime' || e.dead || s.hit.includes(e)) continue;
+            if (s.hit.includes(e) || !combat.canHarm(W, b, e)) continue;
             if (combat.dist(b, e) > S('slash.rangeTiles', 1.35) + 0.25) continue;
             const off = angDiff(Math.atan2(cy(e) - cy(b), cx(e) - cx(b)), s.ang);
             if (Math.abs(off) <= half + 8 * DEG && off <= head + 4 * DEG && combat.hurt(W, e, S('slash.damage', 1), b, S('slash.knockbackTiles', 1.0))) s.hit.push(e);

@@ -1,7 +1,7 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-27T20:00:53.304Z",
+ "generatedAt": "2026-10-27T20:09:26.527Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -163,6 +163,9 @@ globalThis.Krowns.data = {
   "knight.reactionMinSeconds": 0.09,
   "knight.reactionMaxSeconds": 0.2,
   "knight.dodgeSkill": 0.9,
+  "knight.dodgeSkillVsPlayer": 0.7,
+  "knight.grudgeSeconds": 12,
+  "knight.playerThreat": 1,
   "npc.combatTilesPerSecond": 2.6,
   "slime.hearts": 3,
   "slime.walkTilesPerSecond": 0.9,
@@ -191,8 +194,8 @@ globalThis.Krowns.data = {
   "shake.hitPixels": 2.5,
   "shake.defeatMultiplier": 1.8,
   "shake.decaySeconds": 0.22,
-  "shake.others": 1,
-  "shake.whenPlayerHurt": 1
+  "shake.others": 0,
+  "shake.whenPlayerHurt": 0
  },
  "colors": {
   "shadow.purple": "#957fae",

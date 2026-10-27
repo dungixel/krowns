@@ -38,24 +38,59 @@
     return false;
   }
 
-  function fight(W, b, dt) {
+  // How dangerous is each one for me right now? (a number; the biggest is dealt with first)
+  //  - a slime: a little, more the closer it is, a lot when its jump is about to land on me
+  //  - you (only once you have attacked him): more the closer you are and the more you hit him, a lot when your slash is coming at him,
+  //    a bonus when you are nearly defeated (easy to finish) - all scaled by knight.playerThreat
+  function threatOf(W, b, who, sense) {
+    const C = K.combat, d = C.dist(b, who), prox = Math.max(0, 1 - d / sense);
+    if (who.kind === 'slime') {
+      let t = 0.6 + prox;
+      const a = who.atk;
+      if (a && a.state === 'wind' && a.dir && C.laneDistance(who, a.dir, S('slime.lungeDistanceTiles', 2.8), b) <= S('slime.hitRadiusTiles', 0.65) + 0.3) t += 1.5;
+      return t;
+    }
+    let t = 0.9 + 1.2 * prox + Math.min(1, (b.grudge ? b.grudge.hits : 0) / 3) * 0.6;
+    if (who.slash && d <= S('slash.rangeTiles', 1.35) + 0.6) t += 1.5;
+    if (who.hp <= 1) t += 0.8;
+    return t * S('knight.playerThreat', 1);
+  }
+
+  // the player's slash is coming at me: dodge it (only if it would really hit, with a reaction time, and not always)
+  function dodgePlayerSlash(W, b, p, cb) {
+    const C = K.combat, s = p.slash;
+    if (!s) { cb.ps = null; return false; }
+    const half = S('slash.arcDegrees', 90) * Math.PI / 360;
+    let off = Math.atan2(cy(b) - cy(p), cx(b) - cx(p)) - s.ang;
+    while (off > Math.PI) off -= 2 * Math.PI; while (off < -Math.PI) off += 2 * Math.PI;
+    if (C.dist(b, p) > S('slash.rangeTiles', 1.35) + 0.3 || Math.abs(off) > half + 0.2) { return false; }       // it would miss me anyway
+    if (!cb.ps || cb.ps.s !== s) cb.ps = { s, at: s.t0 + W.rng.range(S('knight.reactionMinSeconds', 0.09), S('knight.reactionMaxSeconds', 0.2)), skilled: W.rng() < S('knight.dodgeSkillVsPlayer', 0.7) };
+    if (!cb.ps.skilled || W.t < cb.ps.at || !C.canDodge(W, b)) return false;
+    cb.ps = { s, at: 1e9, skilled: false };
+    const away = C.dirTo(p, b), n = { x: -away.y, y: away.x }, side = off >= 0 ? 1 : -1;
+    const sd = { x: n.x * side, y: n.y * side }, od = { x: -sd.x, y: -sd.y };
+    return dodgeAny(W, b, [away, norm(away.x + sd.x, away.y + sd.y), norm(away.x + od.x, away.y + od.y), sd, od]);
+  }
+
+  function fight(W, b, dt, player) {
     const C = K.combat, rng = W.rng;
     if (b.ko || b.dead) { K.world.moveBody(W, b, 0, 0, dt, 1); return true; }
     if (b.dodge || b.kb) return true;
     if (b.slash) { K.world.moveBody(W, b, 0, 0, dt, 1); return true; }
     const sense = S('knight.senseTiles', 9);
-    let tgt = null, td = 1e9;
-    const slimes = [];
+    const slimes = [], foes = [];
     for (const s of W.bodies) {
-      if (s.kind !== 'slime' || s.dead) continue;
-      const d = C.dist(b, s);
-      if (d > sense) continue;
-      slimes.push(s);
-      if (d < td) { td = d; tgt = s; }
+      if (s.kind !== 'slime' || s.dead || C.dist(b, s) > sense) continue;
+      slimes.push(s); foes.push(s);
     }
-    if (!tgt) { b.cb = null; return false; }
-    const cb = b.cb || (b.cb = { seen: new Map(), nextTac: 0, mode: 'close', strafe: 1 });
+    const angry = C.angry(W, b) && player && !player.dead && !player.ko;
+    if (angry && C.dist(b, player) <= sense * 1.25) foes.push(player);
+    if (!foes.length) { b.cb = null; return false; }
+    const cb = b.cb || (b.cb = { seen: new Map(), nextTac: 0, mode: 'close', strafe: 1, tgt: null, nextPick: 0 });
     if (b.ai.mode === 'talk') { b.ai.mode = 'idle'; b.ai.until = W.t + 2; }
+
+    // 0. you are swinging at me: dodge it if it would hit
+    if (angry && dodgePlayerSlash(W, b, player, cb)) return true;
 
     // 1. a slime is winding up and its jump will pass close to me: dodge sideways just before it jumps
     for (const s of slimes) {
@@ -73,15 +108,25 @@
         if (dodgeAny(W, b, [sx, ox, norm(sx.x - a.dir.x, sx.y - a.dir.y), norm(ox.x - a.dir.x, ox.y - a.dir.y), { x: -a.dir.x, y: -a.dir.y }])) return true;
       }
     }
+
+    // 2. decide who to deal with first: the biggest threat. He sticks with his choice unless another one is clearly worse (no flip-flopping).
+    if (W.t >= cb.nextPick || !foes.includes(cb.tgt)) {
+      cb.nextPick = W.t + 0.3;
+      let best = null, bs = -1, cur = foes.includes(cb.tgt) ? threatOf(W, b, cb.tgt, sense) : -1;
+      for (const f of foes) { const t = threatOf(W, b, f, sense); if (t > bs) { bs = t; best = f; } }
+      if (cur < 0 || bs > cur * 1.2) cb.tgt = best;
+      b.target = cb.tgt;                                                       // (readable by tests)
+    }
+    const tgt = cb.tgt, td = C.dist(b, tgt);
     const to = C.dirTo(b, tgt);
     const face = () => { if (Math.abs(to.x) > 0.15) b.face = to.x > 0 ? 1 : -1; };
 
-    // 2. close enough and ready: slash (not at a slime that is mid-jump, it cannot be hurt then)
-    if (td <= S('slash.rangeTiles', 1.35) * 0.9 && C.canSlash(W, b) && !tgt.dodge) {
+    // 3. close enough and ready: slash (not at somebody who cannot be hurt right now: mid-jump, or just hit)
+    if (td <= S('slash.rangeTiles', 1.35) * 0.9 && C.canSlash(W, b) && !tgt.dodge && C.vulnerable(W, tgt)) {
       face();
       if (C.slash(W, b, Math.atan2(to.y, to.x))) return true;
     }
-    // 3. tactics, chosen every half second or so
+    // 4. tactics, chosen every half second or so
     if (W.t >= cb.nextTac) {
       cb.nextTac = W.t + rng.range(0.35, 0.8);
       cb.strafe = rng() < 0.5 ? 1 : -1;
@@ -100,7 +145,7 @@
   const cx = (b) => b.fx + 0.5, cy = (b) => b.fy + 0.62;
 
   npc.update = function (W, b, player, dt) {
-    if (fight(W, b, dt)) return;
+    if (fight(W, b, dt, player)) return;
     const a = b.ai, rng = W.rng;
     const dxp = player.fx - b.fx, dyp = player.fy - b.fy;
     if (a.mode === 'talk') {                           // stands still and looks at whoever is near

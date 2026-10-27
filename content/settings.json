@@ -448,6 +448,30 @@
   "Guessed": true
  },
  {
+  "Key": "knight.dodgeSkillVsPlayer",
+  "Value": "0.7",
+  "Unit": "chance 0 to 1",
+  "Group": "Combat",
+  "Description": "Chance that Tero sees YOUR slash coming and dodges it (lower than against slimes, so you can land hits).",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.grudgeSeconds",
+  "Value": "12",
+  "Unit": "seconds",
+  "Group": "Combat",
+  "Description": "How long Tero treats you as an enemy after you attacked him. Every new attack renews it. He forgives you when it runs out, or when one of you is defeated.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.playerThreat",
+  "Value": "1",
+  "Unit": "number",
+  "Group": "Combat",
+  "Description": "How dangerous Tero judges you compared to a slime. Higher = he goes for you before the slimes; 0.5 = he mostly ignores you while slimes are around.",
+  "Guessed": true
+ },
+ {
   "Key": "npc.combatTilesPerSecond",
   "Value": "2.6",
   "Unit": "tiles/s",
@@ -673,15 +697,15 @@
  },
  {
   "Key": "shake.others",
-  "Value": "1",
+  "Value": "0",
   "Unit": "0 or 1",
   "Group": "Combat",
-  "Description": "1 = every hit on screen shakes it. 0 = only hits you land (and hits on you, see shake.whenPlayerHurt).",
+  "Description": "1 = every hit on screen shakes it. 0 = only hits you land shake it (and hits on you if shake.whenPlayerHurt is 1).",
   "Guessed": true
  },
  {
   "Key": "shake.whenPlayerHurt",
-  "Value": "1",
+  "Value": "0",
   "Unit": "0 or 1",
   "Group": "Combat",
   "Description": "When shake.others is 0: 1 = you getting hit still shakes the screen, 0 = it does not.",
