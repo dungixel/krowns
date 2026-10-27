@@ -136,18 +136,18 @@
       fling(W, 'grass', g, g.x * 16 + 8 + g.ox, g.y * 16 + 13 + g.oy, rg);
     }
   }
-  // where a flung piece is at time t (game pixels): ground position, height, quarter turns, and whether it is still seen
+  // where a flung piece is at time t (game pixels): ground position, height, turning angle (radians, smooth), and whether it is still seen
   combat.debrisPose = function (t, d) {
     const e = t - d.t0, pf = Math.min(1, Math.max(0, e / d.dur)), ease = 1 - (1 - pf) * (1 - pf);
-    return { x: d.px + d.dx * d.dist * ease, y: d.py + d.dy * d.dist * ease, z: 8 * 4 * pf * (1 - pf), quarter: Math.floor(d.n * ease) * d.sign, visible: e < d.dur && (pf < 0.75 || Math.floor(e * 16) % 2 === 0) };
+    return { x: d.px + d.dx * d.dist * ease, y: d.py + d.dy * d.dist * ease, z: 8 * 4 * pf * (1 - pf), angle: d.n * ease * Math.PI / 2 * d.sign, visible: e < d.dur && (pf < 0.75 || Math.floor(e * 16) % 2 === 0) };
   };
-  // how a ragdoll looks at time t: z = height in pixels, quarter = turns in 90 degree steps (signed), visible (false while it flickers off or is gone)
+  // how a ragdoll looks at time t: z = height in pixels, angle = how far it has turned (radians, signed, smooth), visible (false while it flickers off or is gone)
   combat.ragPose = function (t, b) {
     const r = b.rag, e = t - r.t0, pf = Math.min(1, Math.max(0, e / r.fly)), ease = 1 - (1 - pf) * (1 - pf);
     let z = 0;
     if (pf < 0.65) { const u = pf / 0.65; z = 18 * 4 * u * (1 - u); } else if (pf < 1) { const u = (pf - 0.65) / 0.35; z = 5 * 4 * u * (1 - u); }
     const flicker = e >= r.fly + r.rest;
-    return { z, quarter: Math.floor(r.n * ease) * r.sign, visible: e < r.total && (!flicker || Math.floor((e - r.fly - r.rest) * 14) % 2 === 0), done: e >= r.total };
+    return { z, angle: r.n * ease * Math.PI / 2 * r.sign, visible: e < r.total && (!flicker || Math.floor((e - r.fly - r.rest) * 14) % 2 === 0), done: e >= r.total };
   };
 
   // ------------------------------------------------------------------ slimes

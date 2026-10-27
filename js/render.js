@@ -295,28 +295,43 @@
     const row = (ww, yy) => { const sx0 = Math.round(sxOf(x - ww / 2)), sy0 = Math.round(syOf(yy)); ctx.fillRect(sx0, sy0, Math.round(sxOf(x + ww / 2)) - sx0, Math.round(syOf(yy + 1)) - sy0); };
     row(w - 4, y); row(w, y + 1); row(w - 4, y + 2);
   }
-  // a defeated body tumbling: turns only in exact quarter turns, so every pixel stays a pixel (no slanted ones)
+  // Smooth spinning that keeps every pixel the same size and square: the picture is turned by any angle, but it is re-painted every frame
+  // onto the game-pixel grid (every game pixel takes the colour of the picture pixel that lands on it), so nothing is ever slanted or stretched.
+  const spinData = new WeakMap(), spinBuf = {};
+  function spinSource(img) {
+    let d = spinData.get(img);
+    if (!d) { const c = mkCanvas(img.width, img.height), g = c.getContext('2d'); g.drawImage(img, 0, 0); d = g.getImageData(0, 0, img.width, img.height); spinData.set(img, d); }
+    return d;
+  }
+  // (px, py) = the game pixel the turning point lands on; (pv, mid) = the turning point inside the picture; the picture mirrors if flip
+  function drawSpun(img, px, py, ang, pv, mid, flip) {
+    const src = spinSource(img), w = img.width, h = img.height, D = 2 * Math.ceil(Math.hypot(w, h) / 2 + 2), s = V.S;
+    const buf = spinBuf[D] || (spinBuf[D] = (() => { const c = mkCanvas(D, D); return { c, g: c.getContext('2d') }; })());
+    const out = buf.g.createImageData(D, D), cs = Math.cos(ang), sn = Math.sin(ang), sd = src.data, od = out.data;
+    for (let j = 0; j < D; j++) for (let i = 0; i < D; i++) {
+      const x = i + 0.5 - D / 2, y = j + 0.5 - D / 2;                       // this game pixel, around the turning point
+      const lx = x * cs + y * sn, ly = -x * sn + y * cs;                    // where it is in the un-turned picture
+      const u = Math.floor(pv + (flip ? -lx : lx) + 1e-4), v = Math.floor(mid + ly + 1e-4);
+      if (u < 0 || v < 0 || u >= w || v >= h) continue;
+      const k = (v * w + u) * 4;
+      if (!sd[k + 3]) continue;
+      const o = (j * D + i) * 4;
+      od[o] = sd[k]; od[o + 1] = sd[k + 1]; od[o + 2] = sd[k + 2]; od[o + 3] = sd[k + 3];
+    }
+    buf.g.putImageData(out, 0, 0);
+    ctx.drawImage(buf.c, 0, 0, D, D, Math.round(sxOf(Math.round(px) - D / 2)), Math.round(syOf(Math.round(py) - D / 2)), D * s, D * s);
+  }
+  // a defeated body tumbling (smooth spin, pixels stay square)
   function drawRagdoll(it, t) {
     const b = it.ref, pose = K.combat.ragPose(t, b);
     if (!pose.visible) return;
-    const img = images[b.sprite], pv = pivotOf(b.sprite), s = V.S, mid = (spriteTop(img) + img.height) / 2;
-    const q = ((pose.quarter % 4) + 4) % 4, c = [1, 0, -1, 0][q], sn = [0, 1, 0, -1][q];
-    ctx.save();
-    ctx.translate(Math.round(sxOf(it.px + 8)), Math.round(syOf(it.py + 16 - it.lift - (img.height - mid))));
-    ctx.transform(c, sn, -sn, c, 0, 0);
-    if (b.face < 0) ctx.scale(-1, 1);
-    ctx.drawImage(img, 0, 0, img.width, img.height, -Math.round(pv * s), -Math.round(mid * s), img.width * s, img.height * s);
-    ctx.restore();
+    const img = images[b.sprite], mid = (spriteTop(img) + img.height) / 2;
+    drawSpun(img, it.px + 8, it.py + 16 - it.lift - (img.height - mid), pose.angle, pivotOf(b.sprite), mid, b.face < 0);
   }
-  // a flung tree or grass tuft tumbling away: quarter turns only, like the ragdolls
+  // a flung tree or grass tuft tumbling away
   function drawDebris(it) {
-    const img = it.ref.kind === 'tree' ? images.tree : images.grassDetail, s = V.S, pv = img.width / 2, mid = (spriteTop(img) + img.height) / 2;
-    const q = ((it.pose.quarter % 4) + 4) % 4, c = [1, 0, -1, 0][q], sn = [0, 1, 0, -1][q];
-    ctx.save();
-    ctx.translate(Math.round(sxOf(it.px)), Math.round(syOf(it.py - it.lift - (img.height - mid))));
-    ctx.transform(c, sn, -sn, c, 0, 0);
-    ctx.drawImage(img, 0, 0, img.width, img.height, -Math.round(pv * s), -Math.round(mid * s), img.width * s, img.height * s);
-    ctx.restore();
+    const img = it.ref.kind === 'tree' ? images.tree : images.grassDetail, mid = (spriteTop(img) + img.height) / 2;
+    drawSpun(img, it.px, it.py - it.lift - (img.height - mid), it.pose.angle, img.width / 2, mid, false);
   }
   function drawBody(it, t) {
     if (it.ref.rag) { drawRagdoll(it, t); return; }
