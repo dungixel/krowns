@@ -241,7 +241,7 @@
  },
  {
   "Key": "voice.letterSeconds",
-  "Value": "0.13",
+  "Value": "0.2",
   "Unit": "seconds",
   "Group": "Voice",
   "Description": "How long a syllable (a vowel blip) sounds.",
@@ -257,7 +257,7 @@
  },
  {
   "Key": "voice.npc.pitchHz",
-  "Value": "280",
+  "Value": "330",
   "Unit": "Hz",
   "Group": "Voice",
   "Description": "The neighbour's voice pitch. Every character gets its own value (this is NOT tied to anything else).",
@@ -265,7 +265,7 @@
  },
  {
   "Key": "voice.npc.formant",
-  "Value": "1.2",
+  "Value": "1.3",
   "Unit": "x",
   "Group": "Voice",
   "Description": "1 = a grown-up mouth, higher = a smaller, cuter mouth.",

@@ -123,7 +123,7 @@
     // a smooth swell: quick soft start, stays, gentle tail (the next syllable starts while this one is still fading)
     const env = c.createGain();
     env.gain.setValueAtTime(0.0001, now);
-    env.gain.linearRampToValueAtTime(vol, now + 0.018);
+    env.gain.linearRampToValueAtTime(vol, now + 0.03);
     env.gain.linearRampToValueAtTime(vol * 0.85, now + dur * 0.6);
     env.gain.exponentialRampToValueAtTime(0.0001, t1);
     // the whole voice is softened (more when the speaker is far away)
@@ -134,10 +134,10 @@
     else soft.connect(voice.master);
     // the buzz: its pitch glides as the plan says
     const o = c.createOscillator(); o.setPeriodicWave(voice.wave);
-    o.frequency.setValueAtTime(f0 * 0.985, now); o.frequency.linearRampToValueAtTime(f0, now + 0.03); o.frequency.linearRampToValueAtTime(f0 * p.glide, t1);
+    o.frequency.setValueAtTime(f0 * 0.93, now); o.frequency.linearRampToValueAtTime(f0, now + 0.05); o.frequency.linearRampToValueAtTime(f0 * p.glide, t1);      // a little "boop" up at the start of every sound
     // the mouth: two resonances that make the vowel
     const f = VOWEL[p.vow] || VOWEL.a;
-    [[f[0], 1, 6], [f[1], 2.6, 8], [3300, 0.5 * v.bright, 6]].forEach(([hz, g, q]) => {
+    [[f[0], 1, 5], [f[1], 2.6, 7], [3300, 0.5 * v.bright, 6]].forEach(([hz, g, q]) => {
       const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = hz * v.formant; bp.Q.value = q;
       const gg = c.createGain(); gg.gain.value = g * 3;
       o.connect(bp); bp.connect(gg); gg.connect(env);
