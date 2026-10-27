@@ -40,4 +40,12 @@ for (const l of K.lines()) {
   if (!pl.some(Boolean)) fail('no sound at all in: ' + l.text);
   if (!['neutral', 'happy', 'sad', 'angry'].includes(l.mood)) fail('unknown mood for: ' + l.text);
 }
+{
+  const pl = notes('Hello there my friend', 'neutral');
+  for (let k = 0; k < pl.length - 2; k++) {
+    const nextHigher = pl[k + 1].mult > pl[k].mult * 1.01, nextLower = pl[k + 1].mult < pl[k].mult * 0.99;
+    if (nextHigher && !(pl[k].glide > 1)) fail('a sound should lean up toward a higher next sound (syllable ' + k + ')');
+    if (nextLower && !(pl[k].glide < 1)) fail('a sound should lean down toward a lower next sound (syllable ' + k + ')');
+  }
+}
 console.log('OK');

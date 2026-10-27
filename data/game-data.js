@@ -1,7 +1,7 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-27T15:38:39.034Z",
+ "generatedAt": "2026-10-27T15:40:28.751Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -139,6 +139,7 @@ globalThis.Krowns.data = {
   "voice.hearTiles": 16,
   "voice.letterSeconds": 0.2,
   "voice.randomness": 0.004,
+  "voice.glideToNext": 0.8,
   "voice.npc.pitchHz": 330,
   "voice.npc.formant": 1.3,
   "voice.npc.brightness": 1

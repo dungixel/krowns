@@ -96,10 +96,11 @@
       } else if (kind === 'q') { L.s -= 1.2; L.end = 1.06 + m.end; L.dur = 1.4; }   // "what / where / why" questions fall, then lift a little
       else if (kind === 'e') { L.s -= 1.5; L.end = 0.89; L.dur = 1.5; L.loud *= 1.05; }
       else { L.s -= 2.2; L.end = 0.9 + m.end; L.dur = trailing ? 2.2 : 1.6; if (trailing) { L.s -= 1.5; L.end = 0.86; } }
+      // every sound leans toward the pitch of the NEXT sound: up if the next one is higher, down if it is lower
+      const lean = S('voice.glideToNext', 0.8);
       syl.forEach((y, k) => {
         let glide = y.end;
-        if (glide === 1 && k < n - 1 && syl[k + 1].word === y.word) glide = Math.max(0.93, Math.min(1.07, semi(0.35 * (syl[k + 1].s - y.s))));   // glide toward the next syllable of the same word
-        else if (glide === 1 && k < n - 1) glide = Math.max(0.94, Math.min(1.06, semi(0.25 * (syl[k + 1].s - y.s))));
+        if (glide === 1 && k < n - 1) glide = semi(Math.max(-5, Math.min(5, lean * (syl[k + 1].s - y.s))));
         out[y.idx] = { mult: semi(m.base + y.s), glide, loud: y.loud * m.loud * (kind === 'e' ? 1.2 : 1), dur: y.dur * m.dur, vow: y.vow };
       });
     }
@@ -134,7 +135,7 @@
     else soft.connect(voice.master);
     // the buzz: its pitch glides as the plan says
     const o = c.createOscillator(); o.setPeriodicWave(voice.wave);
-    o.frequency.setValueAtTime(f0 * 0.93, now); o.frequency.linearRampToValueAtTime(f0, now + 0.05); o.frequency.linearRampToValueAtTime(f0 * p.glide, t1);      // a little "boop" up at the start of every sound
+    o.frequency.setValueAtTime(f0 * 0.96, now); o.frequency.linearRampToValueAtTime(f0, now + 0.05); o.frequency.setValueAtTime(f0, now + dur * 0.35); o.frequency.linearRampToValueAtTime(f0 * p.glide, t1 - 0.01);      // a little "boop" up at the start of every sound
     // the mouth: two resonances that make the vowel
     const f = VOWEL[p.vow] || VOWEL.a;
     [[f[0], 1, 5], [f[1], 2.6, 7], [3300, 0.5 * v.bright, 6]].forEach(([hz, g, q]) => {

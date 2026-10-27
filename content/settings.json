@@ -256,6 +256,14 @@
   "Guessed": true
  },
  {
+  "Key": "voice.glideToNext",
+  "Value": "0.8",
+  "Unit": "0-1",
+  "Group": "Voice",
+  "Description": "How much each sound leans toward the pitch of the next sound (0 = not at all, 1 = fully reaches it). Up if the next sound is higher, down if lower.",
+  "Guessed": true
+ },
+ {
   "Key": "voice.npc.pitchHz",
   "Value": "330",
   "Unit": "Hz",
