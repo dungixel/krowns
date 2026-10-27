@@ -97,7 +97,7 @@
     R.draw(W, now / 1000);
   }
 
-  // M: dodge toward the direction you hold (W A S D); if you hold nothing, toward the mouse pointer
+  // Shift: dodge toward the direction you hold (W A S D); if you hold nothing, toward the mouse pointer
   function playerDodge() {
     const p = game.player, W = game.W;
     let dx = (keys.has('d') ? 1 : 0) - (keys.has('a') ? 1 : 0);
@@ -130,7 +130,7 @@
       if (k === 'escape') { toMenu(); return; }
       if (k === '+' || k === '=') R.zoomStep(1); else if (k === '-') R.zoomStep(-1);
       else if (k === ' ') ev.preventDefault();
-      else if (k === 'm') { if (!ev.repeat) playerDodge(); }
+      else if (k === 'shift') { if (!ev.repeat) playerDodge(); }
       else if (k === 'e') say(game.last);                         // say the same sentence again
       else if (/^[0-9]$/.test(k)) say(k === '0' ? 9 : Number(k) - 1)
       else if (k === 'n') { K.voice.setMuted(!K.voice.muted); try { localStorage.setItem('krowns.muted', K.voice.muted ? '1' : '0'); } catch (e) { /* fine */ } }

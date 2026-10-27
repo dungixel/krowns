@@ -3,7 +3,7 @@
 A tiny meadow with trees. You are a knight (you choose the name), and one neighbour, Tero, lives here. He is a knight too. Every now and then a slime shows up.
 Live: https://dungixel.github.io/krowns/
 
-Move with **WASD** - mouse wheel or **+ / -** zooms - **1-9, 0** or the floating "Tero says..." button at the bottom left (it opens the list) pick what the neighbour says (**E** repeats it) - **click** slashes toward the mouse pointer - the **arrow keys** slash in their direction (hold two for a diagonal, hold one to keep slashing) - **M** dodges (toward the direction you hold with WASD, or toward the mouse pointer if you hold nothing) - **N** mutes - **Esc** goes back to the menu.
+Move with **WASD** - mouse wheel or **+ / -** zooms - **1-9, 0** or the floating "Tero says..." button at the bottom left (it opens the list) pick what the neighbour says (**E** repeats it) - **click** slashes toward the mouse pointer - the **arrow keys** slash in their direction (hold two for a diagonal, hold one to keep slashing) - **Shift** dodges (toward the direction you hold with WASD, or toward the mouse pointer if you hold nothing) - **N** mutes - **Esc** goes back to the menu.
 
 The earlier, much bigger version (kingdoms, jobs, wars, hunger...) is kept on the branch `v1-full`.
 
