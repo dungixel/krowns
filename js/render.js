@@ -356,16 +356,14 @@
     const b = it.ref;
     if (b.dead || !b.maxHp) return null;
     const img = images[b.sprite], ppx = S('hpbar.pixelsPerHeart', 2), h = S('hpbar.heightPx', 2), w = b.maxHp * ppx;
-    const x0 = Math.round(it.px + 8 - w / 2), y0 = Math.round(it.py + 16 - it.lift - img.height + spriteTop(img)) - 1 - h - 1;
-    const rect = (x, y, rw, rh, color) => {
-      ctx.fillStyle = color;
-      const sx0 = Math.round(sxOf(x)), sy0 = Math.round(syOf(y));
-      ctx.fillRect(sx0, sy0, Math.round(sxOf(x + rw)) - sx0, Math.round(syOf(y + rh)) - sy0);
-    };
-    const black = K.C('hp.empty', '#000000');
-    rect(x0 - 1, y0 - 1, w + 2, h + 2, black);                                   // the frame, and the part that is gone
-    if (b.hp > 0) rect(x0, y0, Math.max(0, b.hp) * ppx, h, K.C('hp.fill', '#e0453f'));
-    return syOf(y0 - 1);
+    // it glides with the unit exactly like the picture does (not snapped to the pixel grid and not hopping), and every game pixel of it
+    // is drawn the same whole number of screen pixels wide, so it never shivers
+    const u = Math.max(1, Math.round(V.S));
+    const L = Math.round(sxOf(it.px + 8 - w / 2)), T = Math.round(syOf(it.py + 16 - img.height + spriteTop(img) - 2 - h));
+    ctx.fillStyle = K.C('hp.empty', '#000000');
+    ctx.fillRect(L - u, T - u, (w + 2) * u, (h + 2) * u);                        // the frame, and the part that is gone
+    if (b.hp > 0) { ctx.fillStyle = K.C('hp.fill', '#e0453f'); ctx.fillRect(L, T, Math.max(0, b.hp) * ppx * u, h * u); }
+    return T - u;
   }
 
   function drawTexts(W, t) {

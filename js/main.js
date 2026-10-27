@@ -98,11 +98,14 @@
     if (p.slash) { p.slash = null; p.slashFx = null; }               // a dodge cancels a slash
     K.combat.dodge(W, p, dx, dy);
   }
-  // click: slash toward the mouse pointer. J: slash the way you face.
-  function playerSlash(useMouse) {
+  // click: slash toward the mouse pointer. M: slash toward the direction you hold (W A S D), else toward the pointer, else the way you face.
+  function playerSlash(fromClick) {
     const p = game.player;
     let dx = p.face, dy = 0;
-    if (useMouse && game.mouse) {
+    const kx = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
+    const ky = (keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0);
+    if (!fromClick && (kx || ky)) { dx = kx; dy = ky; }
+    else if (game.mouse) {
       const m = R.toWorld(game.mouse.x, game.mouse.y), mx = m.x - (p.fx + 0.5), my = m.y - (p.fy + 0.62);
       if (Math.hypot(mx, my) > 0.2) { dx = mx; dy = my; }
     }
@@ -117,10 +120,10 @@
       if (k === 'escape') { toMenu(); return; }
       if (k === '+' || k === '=') R.zoomStep(1); else if (k === '-') R.zoomStep(-1);
       else if (k === ' ') { ev.preventDefault(); if (!ev.repeat) playerDodge(); }
-      else if (k === 'j') { if (!ev.repeat) playerSlash(false); }
+      else if (k === 'm') { if (!ev.repeat) playerSlash(false); }
       else if (k === 'e') say(game.last);                         // say the same sentence again
       else if (/^[0-9]$/.test(k)) say(k === '0' ? 9 : Number(k) - 1)
-      else if (k === 'm') { K.voice.setMuted(!K.voice.muted); try { localStorage.setItem('krowns.muted', K.voice.muted ? '1' : '0'); } catch (e) { /* fine */ } }
+      else if (k === 'n') { K.voice.setMuted(!K.voice.muted); try { localStorage.setItem('krowns.muted', K.voice.muted ? '1' : '0'); } catch (e) { /* fine */ } }
       else if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) { ev.preventDefault(); keys.add(k); }
     });
     window.addEventListener('keyup', (ev) => keys.delete(ev.key.toLowerCase()));
