@@ -1,12 +1,13 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-27T20:10:16.710Z",
+ "generatedAt": "2026-10-27T20:38:17.096Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
   "world.treeDensity": 0.11,
   "world.grassDetailDensity": 0.24,
+  "grass.darken": 0.14,
   "render.zoomSteps": [
    1,
    2,
@@ -191,11 +192,16 @@ globalThis.Krowns.data = {
   "defeat.flySeconds": 0.9,
   "defeat.restSeconds": 0.35,
   "defeat.flickerSeconds": 0.8,
+  "defeat.smashScenery": 1,
+  "defeat.smashRadiusTiles": 0.85,
+  "defeat.debrisStrength": 0.3,
+  "defeat.grassRegrowSeconds": 30,
+  "defeat.treeRegrowSeconds": 0,
   "shake.hitPixels": 2.5,
   "shake.defeatMultiplier": 1.8,
   "shake.decaySeconds": 0.22,
   "shake.others": 0,
-  "shake.whenPlayerHurt": 0
+  "shake.whenPlayerHurt": 1
  },
  "colors": {
   "shadow.purple": "#957fae",

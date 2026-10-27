@@ -32,6 +32,14 @@
   "Guessed": true
  },
  {
+  "Key": "grass.darken",
+  "Value": "0.14",
+  "Unit": "0 to 1",
+  "Group": "World",
+  "Description": "How much darker the grass tufts are drawn than their picture (the ground itself is not changed). 0 = as painted, higher = darker.",
+  "Guessed": true
+ },
+ {
   "Key": "render.zoomSteps",
   "Value": "1,2,3,4,6,8",
   "Unit": "list",
@@ -672,6 +680,46 @@
   "Guessed": true
  },
  {
+  "Key": "defeat.smashScenery",
+  "Value": "1",
+  "Unit": "0 or 1",
+  "Group": "Combat",
+  "Description": "A defeated body flung through trees and grass smashes them: they are flung away too. 0 = bodies just stop at trees.",
+  "Guessed": true
+ },
+ {
+  "Key": "defeat.smashRadiusTiles",
+  "Value": "0.85",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "How wide the path of a flung body is (trees closer than this to its path are smashed; grass uses 80% of it).",
+  "Guessed": true
+ },
+ {
+  "Key": "defeat.debrisStrength",
+  "Value": "0.3",
+  "Unit": "0 to 1",
+  "Group": "Combat",
+  "Description": "How hard smashed trees and grass are launched compared to the defeated body (0.3 = about a third as far; they also turn only 2 or 3 quarter turns and fly lower).",
+  "Guessed": true
+ },
+ {
+  "Key": "defeat.grassRegrowSeconds",
+  "Value": "30",
+  "Unit": "seconds",
+  "Group": "Combat",
+  "Description": "Smashed grass grows back after this long. 0 = never.",
+  "Guessed": true
+ },
+ {
+  "Key": "defeat.treeRegrowSeconds",
+  "Value": "0",
+  "Unit": "seconds",
+  "Group": "Combat",
+  "Description": "Smashed trees grow back after this long (only where nobody stands). 0 = never: the forest stays broken.",
+  "Guessed": true
+ },
+ {
   "Key": "shake.hitPixels",
   "Value": "2.5",
   "Unit": "game px",
@@ -700,15 +748,15 @@
   "Value": "0",
   "Unit": "0 or 1",
   "Group": "Combat",
-  "Description": "1 = every hit on screen shakes it. 0 = only hits you land shake it (and hits on you if shake.whenPlayerHurt is 1).",
+  "Description": "1 = every hit on screen shakes it. 0 = only hits you land shake it (and hits on you, if shake.whenPlayerHurt is 1).",
   "Guessed": true
  },
  {
   "Key": "shake.whenPlayerHurt",
-  "Value": "0",
+  "Value": "1",
   "Unit": "0 or 1",
   "Group": "Combat",
-  "Description": "When shake.others is 0: 1 = you getting hit still shakes the screen, 0 = it does not.",
+  "Description": "1 = you getting hit shakes the screen. 0 = it does not (shake.others and your own hits are separate).",
   "Guessed": true
  }
 ]

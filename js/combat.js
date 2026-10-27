@@ -109,6 +109,38 @@
     if (t.kind === 'slime') { t.dead = true; t.deadAt = W.t; }
     else { t.ko = true; t.koUntil = W.t + t.rag.total + S('unit.knockedOutSeconds', 3); }
   }
+  // a body flung through the scenery smashes it: trees and grass tufts along its path are flung away too (Dragon Ball), tumbling off and
+  // flickering out. Grass grows back after defeat.grassRegrowSeconds, trees after defeat.treeRegrowSeconds (0 = never).
+  function distToSegment(px, py, x0, y0, x1, y1) {
+    const vx = x1 - x0, vy = y1 - y0, l2 = vx * vx + vy * vy;
+    const u = l2 ? Math.max(0, Math.min(1, ((px - x0) * vx + (py - y0) * vy) / l2)) : 0;
+    return Math.hypot(px - (x0 + vx * u), py - (y0 + vy * u));
+  }
+  function fling(W, kind, item, px, py, rg) {
+    const rng = W.rng, len = Math.hypot(rg.dx, rg.dy) || 1, a = Math.atan2(rg.dy / len, rg.dx / len) + rng.range(-0.5, 0.5);
+    (W.debris = W.debris || []).push({ kind, t0: W.t, dur: S('defeat.flySeconds', 0.9) * 0.7, px, py, dx: Math.cos(a), dy: Math.sin(a), dist: S('defeat.flyTiles', 5) * S('defeat.debrisStrength', 0.3) * 16 * rng.range(0.7, 1.2), n: rng() < 0.5 ? 2 : 3, sign: rng() < 0.5 ? 1 : -1 });
+    const secs = S(kind === 'tree' ? 'defeat.treeRegrowSeconds' : 'defeat.grassRegrowSeconds', kind === 'tree' ? 0 : 30);
+    if (secs > 0) (W.regrow = W.regrow || []).push({ at: W.t + secs, kind, item });
+  }
+  function smash(W, b, rg, step) {
+    const len = Math.hypot(rg.dx, rg.dy) || 1, x0 = cx(b), y0 = cy(b), x1 = x0 + rg.dx / len * step, y1 = y0 + rg.dy / len * step;
+    const rad = S('defeat.smashRadiusTiles', 0.85);
+    for (const tr of W.trees.slice()) {
+      if (distToSegment(tr.x + 0.5, tr.y + 0.5, x0, y0, x1, y1) > rad) continue;
+      W.trees.splice(W.trees.indexOf(tr), 1); W.blk[tr.y * W.w + tr.x] = 0;
+      fling(W, 'tree', tr, tr.x * 16 + 8, tr.y * 16 + 16, rg);
+    }
+    for (const g of W.grass.slice()) {
+      if (distToSegment(g.x + (8 + g.ox) / 16, g.y + (8 + g.oy) / 16, x0, y0, x1, y1) > rad * 0.8) continue;
+      W.grass.splice(W.grass.indexOf(g), 1);
+      fling(W, 'grass', g, g.x * 16 + 8 + g.ox, g.y * 16 + 13 + g.oy, rg);
+    }
+  }
+  // where a flung piece is at time t (game pixels): ground position, height, quarter turns, and whether it is still seen
+  combat.debrisPose = function (t, d) {
+    const e = t - d.t0, pf = Math.min(1, Math.max(0, e / d.dur)), ease = 1 - (1 - pf) * (1 - pf);
+    return { x: d.px + d.dx * d.dist * ease, y: d.py + d.dy * d.dist * ease, z: 8 * 4 * pf * (1 - pf), quarter: Math.floor(d.n * ease) * d.sign, visible: e < d.dur && (pf < 0.75 || Math.floor(e * 16) % 2 === 0) };
+  };
   // how a ragdoll looks at time t: z = height in pixels, quarter = turns in 90 degree steps (signed), visible (false while it flickers off or is gone)
   combat.ragPose = function (t, b) {
     const r = b.rag, e = t - r.t0, pf = Math.min(1, Math.max(0, e / r.fly)), ease = 1 - (1 - pf) * (1 - pf);
@@ -192,7 +224,7 @@
       const rg = b.rag;
       if (rg) {
         const e = W.t - rg.t0, pf = Math.min(1, e / rg.fly), want = (1 - (1 - pf) * (1 - pf)) * rg.dist, step = want - rg.done;
-        if (step > 0) { K.world.slideBody(W, b, rg.dx, rg.dy, step); rg.done = want; }
+        if (step > 0) { if (S('defeat.smashScenery', 1)) smash(W, b, rg, step); K.world.slideBody(W, b, rg.dx, rg.dy, step); rg.done = want; }
         stopHopping(b);
         if (e >= rg.total) b.hidden = true;
       }
@@ -232,6 +264,20 @@
         }
         if (W.t >= s.t0 + s.wind + s.dur) { b.slash = null; b.slashEnded = W.t; }
       }
+    }
+    // flung trees and grass: gone when done; they grow back later (a tree only where nobody stands)
+    if (W.debris && W.debris.length) W.debris = W.debris.filter((d) => W.t - d.t0 < d.dur);
+    if (W.regrow && W.regrow.length) {
+      const keep = [];
+      for (const r of W.regrow) {
+        if (W.t < r.at) { keep.push(r); continue; }
+        if (r.kind === 'tree') {
+          const x = r.item.x, y = r.item.y;
+          if (W.blk[y * W.w + x] || W.bodies.some((o) => !o.dead && Math.hypot(cx(o) - (x + 0.5), cy(o) - (y + 0.5)) < 1.1)) { r.at = W.t + 2; keep.push(r); continue; }
+          W.blk[y * W.w + x] = 1; r.item.fade = 1; W.trees.push(r.item);
+        } else W.grass.push(r.item);
+      }
+      W.regrow = keep;
     }
     // slimes that died have faded
     if (W.bodies.some((b) => b.dead && W.t - b.deadAt > (b.rag ? b.rag.total : 0.5))) W.bodies = W.bodies.filter((b) => !(b.dead && W.t - b.deadAt > (b.rag ? b.rag.total : 0.5)));

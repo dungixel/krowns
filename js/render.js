@@ -14,10 +14,19 @@
   R.loadAssets = async function (version) {
     const v = version ? '?v=' + version : '';
     await Promise.all(['knight', 'base', 'farmer', 'slime', 'tree'].map(async (n) => { images[n] = await loadImage('assets/sprites/' + n + '.png' + v); }));
-    images.grassDetail = await loadImage('assets/world/grass-detail.png' + v);
+    images.grassDetail = darken(await loadImage('assets/world/grass-detail.png' + v), S('grass.darken', 0.14));   // tufts a little darker than the ground, so they show
     images.grassMap = await loadImage('assets/world/grass-map.png' + v);
     try { await document.fonts.load('700 16px Lexend'); await document.fonts.load('400 16px Lexend'); } catch (e) { /* a fallback font is used */ }
   };
+  // the same picture with every colour darker by `amount` (0..1), pixel for pixel (no new colours are invented beyond the darker shade)
+  function darken(img, amount) {
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height), f = 1 - amount;
+    for (let i = 0; i < d.data.length; i += 4) { d.data[i] = Math.round(d.data[i] * f); d.data[i + 1] = Math.round(d.data[i + 1] * f); d.data[i + 2] = Math.round(d.data[i + 2] * f); }
+    g.putImageData(d, 0, 0);
+    return c;
+  }
   const mkCanvas = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
   const silCache = {};
   function silhouette(src, key, color) {
@@ -238,6 +247,7 @@
       items.push({ k: 'tree', y: py + 16, px, py, ref: tr });
     }
     for (const b of W.bodies) { if (b.hidden) continue; const p = bodyPos(b, W.t); items.push({ k: 'body', y: p.py + 16.1, px: p.px, py: p.py, lift: p.lift, ref: b }); }
+    for (const d of W.debris || []) { const pz = K.combat.debrisPose(t, d); if (pz.visible) items.push({ k: 'debris', y: pz.y, px: pz.x, py: pz.y, lift: pz.z, ref: d, pose: pz }); }
     items.sort((a, b) => a.y - b.y);
 
     // 3. shadows (multiply, desaturated purple), before the things that cast them
@@ -246,6 +256,7 @@
     ctx.globalAlpha = K.C('shadow.opacity', 1);
     for (const it of items) {
       if (it.k === 'tree') castShadow(images.tree, 'tree', it.px + 8, it.py + 15.5, treeFlip(it.ref));
+      else if (it.k === 'debris') { if (it.ref.kind === 'tree') groundBlob({ px: it.px - 8, py: it.py - 16, lift: it.lift }); }
       else if (it.k === 'body' && it.ref.rag) { if (K.combat.ragPose(t, it.ref).visible) groundBlob(it); }
       else if (it.k === 'body') castShadow(images[it.ref.sprite], it.ref.sprite, it.px + 8, it.py + 15.5, it.ref.face < 0, pivotOf(it.ref.sprite));
     }
@@ -255,6 +266,7 @@
     for (const it of items) {
       if (it.k === 'grass') blit(images.grassDetail, it.px, it.py + 10, { extra: grassExtra(it.ref) });
       else if (it.k === 'tree') drawTree(W, it, dt, t);
+      else if (it.k === 'debris') drawDebris(it);
       else drawBody(it, t);
     }
     drawSlashes(W, t);
@@ -293,6 +305,16 @@
     ctx.translate(Math.round(sxOf(it.px + 8)), Math.round(syOf(it.py + 16 - it.lift - (img.height - mid))));
     ctx.transform(c, sn, -sn, c, 0, 0);
     if (b.face < 0) ctx.scale(-1, 1);
+    ctx.drawImage(img, 0, 0, img.width, img.height, -Math.round(pv * s), -Math.round(mid * s), img.width * s, img.height * s);
+    ctx.restore();
+  }
+  // a flung tree or grass tuft tumbling away: quarter turns only, like the ragdolls
+  function drawDebris(it) {
+    const img = it.ref.kind === 'tree' ? images.tree : images.grassDetail, s = V.S, pv = img.width / 2, mid = (spriteTop(img) + img.height) / 2;
+    const q = ((it.pose.quarter % 4) + 4) % 4, c = [1, 0, -1, 0][q], sn = [0, 1, 0, -1][q];
+    ctx.save();
+    ctx.translate(Math.round(sxOf(it.px)), Math.round(syOf(it.py - it.lift - (img.height - mid))));
+    ctx.transform(c, sn, -sn, c, 0, 0);
     ctx.drawImage(img, 0, 0, img.width, img.height, -Math.round(pv * s), -Math.round(mid * s), img.width * s, img.height * s);
     ctx.restore();
   }

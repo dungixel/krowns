@@ -224,4 +224,25 @@ for (const l of K.lines()) {
   }
 }
 
+// a body flung through trees and grass smashes them, but the pieces fly much weaker than the body
+{
+  const W = K.world.create(51), [x, y] = K.world.freeTileNear(W, 48, 32, 10);
+  const p = K.world.addBody(W, { kind: 'player', name: 'P', fx: x, fy: y });
+  for (let i = 1; i <= 5; i++) { const tx = Math.round(p.fx) + i; if (tx < W.w - 1 && !W.blk[Math.round(p.fy) * W.w + tx]) { W.trees.push({ x: tx, y: Math.round(p.fy), fade: 1 }); W.blk[Math.round(p.fy) * W.w + tx] = 1; } }
+  for (let i = 1; i <= 4; i++) W.grass.push({ x: Math.round(p.fx) + i, y: Math.round(p.fy), ox: 0, oy: 0, phase: 0, period: 3, cycles: 0 });
+  const trees0 = W.trees.length, grass0 = W.grass.length;
+  p.hp = 1; p.invulUntil = 0;
+  const x0 = p.fx;
+  K.combat.hurt(W, p, 1, { fx: p.fx - 1, fy: p.fy, kind: 'slime' });
+  let maxDebris = 0;
+  for (let i = 0; i < 70; i++) { W.t += 1 / 60; K.combat.update(W, 1 / 60, null); maxDebris = Math.max(maxDebris, (W.debris || []).length); }
+  if (W.trees.length >= trees0) fail('a flung body should smash the trees in its way');
+  if (W.grass.length >= grass0) fail('a flung body should smash grass in its way');
+  if (!(p.fx - x0 > 2)) fail('the body should fly through where the trees were (flew ' + (p.fx - x0).toFixed(2) + ')');
+  for (const d of W.debris || []) if (d.dist > K.S('defeat.flyTiles', 5) * 16 * 0.45) fail('smashed pieces should fly much weaker than the body');
+  for (let i = 0; i < 120; i++) { W.t += 1 / 60; K.combat.update(W, 1 / 60, null); }
+  if ((W.debris || []).length) fail('flung pieces should be gone after a moment');
+  console.log('smash: body flew ' + (p.fx - x0).toFixed(1) + ' tiles, smashed ' + (trees0 - W.trees.length) + ' trees and ' + (grass0 - W.grass.length) + ' grass tufts');
+}
+
 console.log('OK');
