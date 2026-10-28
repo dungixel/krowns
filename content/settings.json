@@ -288,6 +288,14 @@
   "Guessed": true
  },
  {
+  "Key": "voice.questionRise",
+  "Value": "1.4",
+  "Unit": "number (1 = gentle)",
+  "Group": "Voice",
+  "Description": "How much the voice rises at the end of a question. 1 = the original gentle rise, 1.4 = a little more, 2.5 = very exaggerated.",
+  "Guessed": true
+ },
+ {
   "Key": "voice.npc.pitchHz",
   "Value": "330",
   "Unit": "Hz",

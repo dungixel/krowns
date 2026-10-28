@@ -37,7 +37,7 @@ Every unit has a small pixel health bar over its head (red = hearts left, black 
 ## The voice
 
 No recordings, and nothing human-like. Every letter that appears makes one very soft, round little beep (spaces and punctuation are silent). The **pitch of a character's voice is just a number** (`voice.npc.pitchHz` in `content/settings.json`) - nothing else decides it. Proximity chat: voices fade out with distance (`voice.hearTiles`), get duller and come from their side.
-The **melody** follows the sentence and runs smoothly through all its letters: statements slowly come down, questions go up at the end, exclamations start high and louder, **happy** speech is higher and bouncy, **sad** speech is lower, slower and sinks.
+The **melody** follows the sentence and runs smoothly through all its letters: statements slowly come down, questions go up at the end (`voice.questionRise`: 1 = gentle, 1.4 = default, higher = more), exclamations start high and louder, **happy** speech is higher and bouncy, **sad** speech is lower, slower and sinks.
 Tero's sentences live in `content/speech.json` (`Text` and `Mood`: neutral, happy, sad or angry). In the game you pick which one he says from the floating "says..." button at the bottom left, as often as you like.
 
 ## Changing the game's numbers and words

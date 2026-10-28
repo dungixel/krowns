@@ -8,12 +8,21 @@
   const S = K.S;
   const voice = (K.voice = { ctx: null, master: null, muted: false, budget: 0 });
 
+  // Safari only starts sound from inside a click or key press, keeps the context 'suspended' (or 'interrupted') until resume() is called in
+  // one, and wants a (silent) sound played in that same moment. So: every click / key press tries again until the context really runs.
+  function kick(c) {
+    try {
+      if (c.state !== 'running') { const r = c.resume(); if (r && r.catch) r.catch(() => {}); }
+      const b = c.createBuffer(1, 1, 22050), src = c.createBufferSource(); src.buffer = b; src.connect(c.destination); src.start(0);
+    } catch (e) { /* fine */ }
+  }
   voice.unlock = function () {
-    if (voice.ctx) { if (voice.ctx.state === 'suspended') voice.ctx.resume(); return; }
+    if (voice.ctx) { if (voice.ctx.state !== 'running') kick(voice.ctx); return; }
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
       const c = (voice.ctx = new AC());
+      kick(c);
       voice.master = c.createGain(); voice.master.gain.value = voice.muted ? 0 : S('voice.volume', 0.5);
       const comp = c.createDynamicsCompressor();                                                        // beeps overlap a little: keep them from getting loud
       voice.master.connect(comp); comp.connect(c.destination);
@@ -85,11 +94,12 @@
         if (y.wd.endsPhrase && lastOfWord) { y.s += 1.2; y.end = 1.06; }          // a comma: lifts a little, "more to come"
       });
       const L = syl[n - 1];
+      const qx = Math.max(1, S('voice.questionRise', 1.6));             // 1 = the original gentle question tune, higher = a bigger rise
       if (kind === 'q' && !wh) {
         const lw = syl.filter((y) => y.word === lastWord);
-        lw.forEach((y, i) => { if (i < lw.length - 1) y.s += 0.5; });
-        L.s += 5; L.end = 1.22;                                       // a yes/no question climbs on its last syllable
-      } else if (kind === 'q') { L.s -= 1.2; L.end = 1.06 + m.end; }   // "what / where / why" questions fall, then lift a little
+        lw.forEach((y, i) => { if (i < lw.length - 1) y.s += 0.5 * qx; });
+        L.s += 5 * qx; L.end = 1.22 + 0.2 * (qx - 1);                  // a yes/no question climbs on its last syllable
+      } else if (kind === 'q') { L.s += -1.2 + 3 * (qx - 1); L.end = 1.06 + m.end + 0.2 * (qx - 1); }   // "what / where / why" questions fall, then lift (a clear lift now)
       else if (kind === 'e') { L.s -= 1.5; L.end = 0.89; L.loud *= 1.05; }
       else { L.s -= 2.2; L.end = 0.9 + m.end; if (trailing) { L.s -= 1.5; L.end = 0.86; } }
       // every sound leans toward the pitch of the NEXT sound: up if the next one is higher, down if it is lower
@@ -126,6 +136,7 @@
   // p = one entry of voice.plan (spaces and punctuation have none, so they stay silent)
   voice.say = function (ch, v, gain, p, pan) {
     const c = voice.ctx;
+    if (c && c.state !== 'running') kick(c);                          // (only works inside a click or key press, which is what Safari wants)
     if (!p || !c || voice.muted || voice.budget <= 0 || c.state !== 'running') return;
     gain = gain === undefined ? 1 : gain;
     if (gain < 0.015) return;      // too far away to be heard
@@ -153,5 +164,6 @@
     o.start(now); o2.start(now); o.stop(t1 + 0.02); o2.stop(t1 + 0.02);
   };
 
+  if (typeof document !== 'undefined') for (const ev of ['pointerdown', 'keydown', 'touchend', 'click']) document.addEventListener(ev, () => { if (voice.ctx && voice.ctx.state !== 'running') kick(voice.ctx); }, true);
   try { voice.muted = localStorage.getItem('krowns.muted') === '1'; } catch (e) { /* not important */ }
 })();
