@@ -1,14 +1,14 @@
 <!doctype html>
-<html lang="en" data-v="35">
+<html lang="en" data-v="37">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Krowns</title>
 <meta name="description" content="Krowns - a tiny meadow.">
-<link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=35">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png?v=35">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=35">
-<link rel="stylesheet" href="css/style.css?v=35">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=37">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png?v=37">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=37">
+<link rel="stylesheet" href="css/style.css?v=37">
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -19,6 +19,14 @@
     <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="currentColor"/></svg>
     <span id="lines-title">Neighbour</span>
   </button>
+</div>
+
+<div id="touch" aria-hidden="true">
+  <div id="stick-move" class="stick" title="Move"><div class="knob"></div></div>
+  <button id="btn-dodge" type="button" title="Dodge">
+    <svg viewBox="0 0 24 24" width="30" height="30"><path d="M5 6l7 6-7 6M12 6l7 6-7 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"/></svg>
+  </button>
+  <div id="stick-aim" class="stick" title="Slash: drag toward where you want to slash"><div class="knob"></div></div>
 </div>
 
 <div id="start" class="show">
@@ -36,20 +44,20 @@
       <p>Pick a name for your knight.</p>
       <input id="name" maxlength="12" autocomplete="off" spellcheck="false" placeholder="Your name">
       <button id="btn-go" class="go" disabled>Walk into the meadow</button>
-      <div class="hint">Move with WASD &middot; slash with the arrow keys or a click &middot; dodge with Shift &middot; mouse wheel zooms &middot; pick what your neighbour says in the list (keys 1-9, 0; E repeats)</div>
+      <div class="hint" id="hint">Move with WASD &middot; slash with the arrow keys or a click &middot; dodge with Shift &middot; mouse wheel zooms &middot; pick what your neighbour says in the list (keys 1-9, 0; E repeats)</div>
     </div>
   </div>
 </div>
 
-<script src="data/game-data.js?v=35"></script>
-<script src="js/util.js?v=35"></script>
-<script src="js/data.js?v=35"></script>
-<script src="js/names.js?v=35"></script>
-<script src="js/world.js?v=35"></script>
-<script src="js/combat.js?v=35"></script>
-<script src="js/voice.js?v=35"></script>
-<script src="js/npc.js?v=35"></script>
-<script src="js/render.js?v=35"></script>
-<script src="js/main.js?v=35"></script>
+<script src="data/game-data.js?v=37"></script>
+<script src="js/util.js?v=37"></script>
+<script src="js/data.js?v=37"></script>
+<script src="js/names.js?v=37"></script>
+<script src="js/world.js?v=37"></script>
+<script src="js/combat.js?v=37"></script>
+<script src="js/voice.js?v=37"></script>
+<script src="js/npc.js?v=37"></script>
+<script src="js/render.js?v=37"></script>
+<script src="js/main.js?v=37"></script>
 </body>
 </html>

@@ -5,6 +5,9 @@
   const $ = (id) => document.getElementById(id);
   const game = (K.game = { W: null, player: null, npc: null, playing: false });
   const keys = new Set();
+  // touch screens: the left stick moves, the right stick slashes (drag toward where you want to slash; hold to keep slashing), the button dodges
+  const touch = { on: false, move: { x: 0, y: 0 }, aim: { x: 0, y: 0 } };
+  const stickDir = (st) => (Math.hypot(st.x, st.y) > 0.22 ? st : null);
   let last = 0;
 
   function applyColors() {
@@ -25,7 +28,7 @@
     const player = K.world.addBody(W, { kind: 'player', name, color: W.rng.int(1, 12), sprite: 'knight', fx: tx, fy: ty, face: 1 });
     game.W = W; game.player = player; game.npc = K.npc.create(W, player);
     K.npc.populate(W, player, game.npc); K.combat.populate(W, player);
-    R.follow = player; R.zoomTarget = null; R.view.S = R.fitScale(18); R.centerOn(player);
+    R.follow = player; R.zoomTarget = null; R.view.S = touch.on ? R.fitScaleMin(S('mobile.tilesAcross', 9)) : R.fitScale(18); R.centerOn(player);
     keys.clear(); game.playing = true; game.last = 0; buildLines();
     $('lines').classList.add('closed');
     document.body.classList.add('playing');
@@ -82,15 +85,18 @@
     W.t += dt;
     if (game.playing) {
       const p = game.player;
-      const dx = (keys.has('d') ? 1 : 0) - (keys.has('a') ? 1 : 0);
-      const dy = (keys.has('s') ? 1 : 0) - (keys.has('w') ? 1 : 0);
+      let dx = (keys.has('d') ? 1 : 0) - (keys.has('a') ? 1 : 0), dy = (keys.has('s') ? 1 : 0) - (keys.has('w') ? 1 : 0), mag = 1;
+      const ms = stickDir(touch.move);
+      if (ms && !dx && !dy) { dx = ms.x; dy = ms.y; mag = Math.min(1, Math.hypot(dx, dy)); }                // the stick walks slower when pushed only a little
       // arrow keys attack: hold an arrow (or two for a diagonal) and you slash that way as often as the slash is ready
-      const ax = (keys.has('arrowright') ? 1 : 0) - (keys.has('arrowleft') ? 1 : 0), ay = (keys.has('arrowdown') ? 1 : 0) - (keys.has('arrowup') ? 1 : 0);
+      let ax = (keys.has('arrowright') ? 1 : 0) - (keys.has('arrowleft') ? 1 : 0), ay = (keys.has('arrowdown') ? 1 : 0) - (keys.has('arrowup') ? 1 : 0);
+      const as = stickDir(touch.aim);
+      if (as && !ax && !ay) { ax = as.x; ay = as.y; }
       if (ax || ay) {
         if (!game.aimSince) game.aimSince = now;
         if (now - game.aimSince >= 50 && !p.ko && K.combat.canSlash(W, p)) K.combat.slash(W, p, Math.atan2(ay, ax));     // 50 ms so two arrows pressed together make a diagonal
       } else game.aimSince = 0;
-      if (!p.dodge && !p.kb && !p.ko && !p.slash) K.world.moveBody(W, p, dx, dy, dt, S('player.speedTilesPerSecond', 3.4));
+      if (!p.dodge && !p.kb && !p.ko && !p.slash) K.world.moveBody(W, p, dx, dy, dt, S('player.speedTilesPerSecond', 3.4) * mag);
       for (const k of K.npc.all(W)) K.npc.update(W, k, p, dt);
       K.world.growTrees(W);
       K.combat.update(W, dt, p);
@@ -104,7 +110,10 @@
     const p = game.player, W = game.W;
     let dx = (keys.has('d') ? 1 : 0) - (keys.has('a') ? 1 : 0);
     let dy = (keys.has('s') ? 1 : 0) - (keys.has('w') ? 1 : 0);
-    if (!dx && !dy && game.mouse) {
+    const ms = stickDir(touch.move), as = stickDir(touch.aim);
+    if (!dx && !dy && ms) { dx = ms.x; dy = ms.y; }
+    else if (!dx && !dy && touch.on && as) { dx = as.x; dy = as.y; }
+    if (!dx && !dy && game.mouse && !touch.on) {
       const m = R.toWorld(game.mouse.x, game.mouse.y);
       dx = m.x - (p.fx + 0.5); dy = m.y - (p.fy + 0.62);
       if (Math.hypot(dx, dy) < 0.3) { dx = p.face; dy = 0; }
@@ -122,6 +131,31 @@
       if (Math.hypot(mx, my) > 0.2) { dx = mx; dy = my; }
     }
     K.combat.slash(game.W, p, Math.atan2(dy, dx));
+  }
+
+  // a round stick: drag inside it, the direction (-1..1 on both axes) goes to `out`; letting go centres it again
+  function makeStick(el, out) {
+    const knob = el.querySelector('.knob'); let id = null, cx = 0, cy = 0, rad = 1;
+    const upd = (ev) => {
+      let x = (ev.clientX - cx) / rad, y = (ev.clientY - cy) / rad; const l = Math.hypot(x, y);
+      if (l > 1) { x /= l; y /= l; }
+      knob.style.transform = 'translate(' + (x * rad * 0.5) + 'px,' + (y * rad * 0.5) + 'px)'; out.x = x; out.y = y;
+    };
+    const end = (ev) => { if (ev.pointerId !== id) return; id = null; knob.style.transform = ''; out.x = 0; out.y = 0; };
+    el.addEventListener('pointerdown', (ev) => {
+      if (id !== null) return; id = ev.pointerId; try { el.setPointerCapture(id); } catch (e) { /* fine */ }
+      const r = el.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; rad = r.width / 2;
+      K.voice.unlock(); upd(ev); ev.preventDefault();
+    });
+    el.addEventListener('pointermove', (ev) => { if (ev.pointerId === id) { upd(ev); ev.preventDefault(); } });
+    for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(t, end);
+  }
+  function bindTouch() {
+    makeStick($('stick-move'), touch.move); makeStick($('stick-aim'), touch.aim);
+    const b = $('btn-dodge');
+    b.addEventListener('pointerdown', (ev) => { ev.preventDefault(); b.classList.add('down'); K.voice.unlock(); if (game.playing) playerDodge(); });
+    for (const t of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(t, () => b.classList.remove('down'));
+    $('hint').textContent = 'Left stick moves \u00b7 right stick slashes (hold it to keep slashing) \u00b7 the button dodges \u00b7 pinch to zoom \u00b7 tap the list to pick what your neighbour says';
   }
 
   function bindInput() {
@@ -142,12 +176,23 @@
     window.addEventListener('keyup', (ev) => keys.delete(ev.key.toLowerCase()));
     window.addEventListener('blur', () => keys.clear());
     window.addEventListener('resize', () => R.resize());
+    const fingers = new Map(); let pinch = 0;
+    const spread = () => { const a = [...fingers.values()]; return a.length === 2 ? Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) : 0; };
     $('game').addEventListener('pointerdown', (ev) => {
+      if (ev.pointerType === 'touch') { fingers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY }); pinch = spread(); return; }
       if (!game.playing || ev.button !== 0) return;
       const r = ev.target.getBoundingClientRect(), d = R.view.dpr; game.mouse = { x: (ev.clientX - r.left) * d, y: (ev.clientY - r.top) * d };
       playerSlash();
     });
-    $('game').addEventListener('pointermove', (ev) => { const r = ev.target.getBoundingClientRect(), d = R.view.dpr; game.mouse = { x: (ev.clientX - r.left) * d, y: (ev.clientY - r.top) * d }; });
+    $('game').addEventListener('pointermove', (ev) => {
+      if (ev.pointerType === 'touch') {
+        if (!fingers.has(ev.pointerId)) return;
+        fingers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+        const d = spread();
+        if (d && pinch && game.playing) { if (d / pinch > 1.3) { R.zoomStep(1); pinch = d; } else if (d / pinch < 0.77) { R.zoomStep(-1); pinch = d; } }      // pinch to zoom
+        return;
+      } const r = ev.target.getBoundingClientRect(), d = R.view.dpr; game.mouse = { x: (ev.clientX - r.left) * d, y: (ev.clientY - r.top) * d }; });
+    for (const ev of ['pointerup', 'pointercancel']) $('game').addEventListener(ev, (e) => { fingers.delete(e.pointerId); pinch = spread(); });
     let wheel = 0;
     $('game').addEventListener('wheel', (ev) => {
       ev.preventDefault();
@@ -158,6 +203,9 @@
   }
 
   async function boot() {
+    const q0 = new URLSearchParams(location.search);
+    touch.on = q0.has('touch') || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
+    if (touch.on) { document.body.classList.add('touch'); bindTouch(); }
     applyColors();
     $('ver').textContent = 'v' + (document.documentElement.dataset.v || '');
     R.init($('game'));

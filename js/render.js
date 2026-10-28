@@ -64,6 +64,13 @@
     for (const s of zoomSteps()) if (s <= want * 1.15) best = s;
     return best;
   };
+  // the same, but counted across the SHORTER side of the screen (phones: the player sees about `tiles` tiles in the narrow direction)
+  R.fitScaleMin = function (tiles) {
+    const want = Math.min(R.view.w, R.view.h) / (tiles * TILE);
+    let best = zoomSteps()[0];
+    for (const s of zoomSteps()) if (s <= want * 1.15) best = s;
+    return best;
+  };
   R.zoomStep = function (dir) {         // glides to the next whole-number zoom
     const steps = zoomSteps(), cur = R.zoomTarget || R.view.S;
     let i = 0, bd = 1e9;

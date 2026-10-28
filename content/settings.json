@@ -216,6 +216,14 @@
   "Guessed": true
  },
  {
+  "Key": "mobile.tilesAcross",
+  "Value": "9",
+  "Unit": "tiles",
+  "Group": "Player",
+  "Description": "On phones and tablets the screen shows about this many tiles across its shorter side (smaller = more zoomed in than on a computer). Pinch to zoom.",
+  "Guessed": true
+ },
+ {
   "Key": "npc.name",
   "Value": "Tero",
   "Unit": "text",

@@ -39,3 +39,21 @@ body.playing #lines { display: flex; }
 #lines-list button { display: flex; gap: 10px; width: 100%; border: 0; background: none; padding: 9px 8px; border-radius: 10px; font-size: 13px; line-height: 1.35; text-align: left; cursor: pointer; }
 #lines-list button:hover, #lines-list button.on { background: var(--line); }
 #lines-list b { flex: none; width: 1.2em; color: var(--accent); }
+
+/* ---- touch screens: two sticks and a dodge button (body.touch is set by js/main.js on phones and tablets) */
+#touch { display: none; position: fixed; inset: 0; z-index: 4; pointer-events: none; }
+body.touch.playing #touch { display: block; }
+body.touch { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.stick { position: absolute; bottom: calc(22px + env(safe-area-inset-bottom)); width: 136px; height: 136px; border-radius: 50%; background: rgba(255, 255, 255, .13); border: 2px solid rgba(255, 255, 255, .38); pointer-events: auto; touch-action: none; }
+#stick-move { left: calc(22px + env(safe-area-inset-left)); }
+#stick-aim { right: calc(22px + env(safe-area-inset-right)); border-color: color-mix(in srgb, var(--crown) 70%, transparent); background: color-mix(in srgb, var(--crown) 14%, transparent); }
+.knob { position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; background: rgba(255, 255, 255, .6); box-shadow: 0 2px 8px rgba(0, 0, 0, .25); pointer-events: none; }
+#stick-aim .knob { background: color-mix(in srgb, var(--crown) 80%, #fff); }
+#btn-dodge { position: absolute; right: calc(22px + 136px + 16px + env(safe-area-inset-right)); bottom: calc(40px + env(safe-area-inset-bottom)); width: 78px; height: 78px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .5); background: rgba(255, 255, 255, .22); color: #fff; display: grid; place-items: center; padding: 0; pointer-events: auto; touch-action: none; }
+#btn-dodge:active, #btn-dodge.down { background: rgba(255, 255, 255, .5); }
+body.touch #lines { left: auto; right: 12px; top: 12px; bottom: auto; flex-direction: column-reverse; align-items: flex-end; }
+body.touch #lines-list { max-height: min(60vh, 420px); }
+/* narrow screens (phones held upright): the dodge button sits above the slash stick so the two sticks and the button never overlap */
+@media (max-width: 560px) {
+  #btn-dodge { right: calc(22px + 29px + env(safe-area-inset-right)); bottom: calc(22px + 136px + 14px + env(safe-area-inset-bottom)); }
+}

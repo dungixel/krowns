@@ -1,7 +1,7 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-28T13:54:08.582Z",
+ "generatedAt": "2026-10-28T13:57:01.328Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -134,6 +134,7 @@ globalThis.Krowns.data = {
   "names.threeSyllableChance": 33,
   "names.twoWithEndingChance": 33,
   "player.speedTilesPerSecond": 3.4,
+  "mobile.tilesAcross": 9,
   "npc.name": "Tero",
   "npc.job": "knight",
   "npc.sprite": "knight",
