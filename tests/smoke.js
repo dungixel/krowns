@@ -162,9 +162,19 @@ for (const l of K.lines()) {
     n.fx = p.fx + 0.9; n.fy = p.fy; n.ai.mode = 'idle'; n.ai.until = 1e9;
     const hp0 = n.hp;
     K.combat.slash(W, p, 0);
-    for (let i = 0; i < 40; i++) { W.t += 1 / 60; K.combat.update(W, 1 / 60, p); }
+    // he does not hit back in the same moment: first a "!" (alert), only then he is angry and fights
+    let sawAlert = false, slashedWhileAlert = false, angryAt = -1;
+    const t0 = W.t;
+    for (let i = 0; i < 90; i++) {
+      W.t += 1 / 60; K.npc.update(W, n, p, 1 / 60); K.combat.update(W, 1 / 60, p);
+      if (K.combat.alerted(W, n)) { sawAlert = true; if (n.slash || K.combat.angry(W, n)) slashedWhileAlert = true; }
+      if (angryAt < 0 && K.combat.angry(W, n)) angryAt = W.t - t0;
+    }
+    if (!sawAlert) fail('a knight that was hit should show an alert (!) first');
+    if (slashedWhileAlert) fail('a knight must not fight back while he is still realizing (alert)');
+    if (!(angryAt >= K.S('knight.alertMinSeconds', 0.35) - 0.02)) fail('a knight became angry too fast (' + angryAt.toFixed(2) + ' s)');
     if (!(n.hp < hp0)) fail('your slash should hurt Tero');
-    if (!K.combat.angry(W, n)) fail('Tero should hold a grudge after you hurt him');
+    if (!n.grudge) fail('Tero should hold a grudge after you hurt him');
     step(W, n, p, K.S('knight.grudgeSeconds', 12) + 30);
     if (K.combat.angry(W, n) && !p.ko) { /* a fight may have renewed nothing: the grudge only renews on your attacks */ fail('Tero should forgive you after a while'); }
   }
@@ -172,6 +182,7 @@ for (const l of K.lines()) {
   {
     const { W, p, n } = mk(33); clearAround(W, p);
     n.fx = p.fx + 2.5; n.fy = p.fy; K.combat.provoke(W, n, p, 3);
+    W.t += 1;
     const s = slime(W, n.fx + 6.5, n.fy);
     s.stunUntil = 1e9; s.hp = 99;
     step(W, n, p, 0.5);
@@ -179,7 +190,7 @@ for (const l of K.lines()) {
   }
   {
     const { W, p, n } = mk(34); clearAround(W, p);
-    n.fx = p.fx + 8; n.fy = p.fy; K.combat.provoke(W, n, p, 1);
+    n.fx = p.fx + 8; n.fy = p.fy; K.combat.provoke(W, n, p, 1); W.t += 1;
     const s = slime(W, n.fx - 1.2, n.fy + 0.3);
     s.stunUntil = 1e9; s.hp = 99;
     step(W, n, p, 0.5);
@@ -187,11 +198,11 @@ for (const l of K.lines()) {
   }
   // 4. a duel: he fights back, and dodges your slashes only when they would hit him
   {
-    let youHit = 0, heHit = 0, slashDodges = 0, hitYouByHim = 0;
-    for (const seed of [41, 42, 43, 44, 45, 46]) {
+    let youHit = 0, heHit = 0, slashDodges = 0, hitYouByHim = 0, feints = 0, swingsN = 0;
+    for (const seed of [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56]) {
       const { W, p, n } = mk(seed); clearAround(W, p);
       n.fx = p.fx + 1.6; n.fy = p.fy; n.ai.mode = 'idle'; n.ai.until = 1e9;
-      K.combat.slash(W, p, 0); step(W, n, p, 0.5); // provoke him with a swing
+      K.combat.slash(W, p, 0); step(W, n, p, 1.0); // provoke him with a swing, and let him realize
       if (!K.combat.angry(W, n)) fail('a swing at Tero should anger him');
       const od = K.combat.dodge, oh = K.combat.hurt;
       K.combat.dodge = function (...a) {
@@ -199,18 +210,23 @@ for (const l of K.lines()) {
         if (r && a[1] === n) {
           const slimeThreat = W.bodies.some((s) => s.kind === 'slime' && s.atk && s.atk.state === 'wind');
           const swing = p.slash && K.combat.dist(n, p) <= K.S('slash.rangeTiles', 1.35) + 0.31;
-          if (!slimeThreat && !swing) fail('Tero dodged for no reason in a duel');
+          if (!slimeThreat && !swing && n.lastFeint !== W.t) fail('Tero dodged for no reason in a duel');
           if (swing) slashDodges++;
+          if (n.lastFeint === W.t) feints++;
         }
         return r;
       };
       K.combat.hurt = function (w, t, d, src, ...a) { const r = oh.call(this, w, t, d, src, ...a); if (r && t === n && src === p) youHit++; if (r && t === p && src === n) hitYouByHim++; return r; };
       for (let i = 0; i < 40 * 60 && !K.combat.angry(W, n) === false; i++) {
         W.t += 1 / 60;
-        // you chase him and swing at him whenever you can
-        if (!p.ko && !p.slash && !p.kb) {
+        // you (a careful bot) chase him, swing when you are in reach, and dodge his slash after a human reaction time
+        if (!p.ko && !p.slash && !p.kb && !p.dodge) {
           const d = K.combat.dirTo(p, n), dd = K.combat.dist(p, n);
-          if (dd < 1.1 && K.combat.canSlash(W, p)) K.combat.slash(W, p, Math.atan2(d.y, d.x)); else if (dd > 0.9) K.world.moveBody(W, p, d.x, d.y, 1 / 60, 3.4);
+          if (n.slash && !p.seenSlash) p.seenSlash = { at: W.t + 0.13, s: n.slash };
+          if (p.seenSlash && p.seenSlash.s !== n.slash) p.seenSlash = null;
+          if (p.seenSlash && W.t >= p.seenSlash.at && dd < 1.7 && K.combat.canDodge(W, p)) { K.combat.dodge(W, p, -d.x, -d.y); p.seenSlash = null; }
+          else if (dd < 1.3 && K.combat.canSlash(W, p)) { swingsN++; K.combat.slash(W, p, Math.atan2(d.y, d.x)); }
+          else if (dd > 0.9) K.world.moveBody(W, p, d.x, d.y, 1 / 60, 3.4);
         }
         K.npc.update(W, n, p, 1 / 60); K.combat.update(W, 1 / 60, p);
         if (i % 60 === 0 && K.combat.angry(W, n) === false) break;
@@ -219,30 +235,111 @@ for (const l of K.lines()) {
     }
     if (youHit < 2) fail('you should be able to land hits on Tero (landed ' + youHit + ')');
     if (hitYouByHim < 2) fail('Tero should fight back and hit you (hit ' + hitYouByHim + ')');
-    if (slashDodges < 1) fail('Tero should sometimes dodge your slash');
-    console.log('duel: you hit Tero ' + youHit + ' times, he hit you ' + hitYouByHim + ' times, he dodged ' + slashDodges + ' of your slashes');
+    if (feints < 1) fail('knights should feint in a fight');
+    console.log('duel: feints ' + feints + ', you hit Tero ' + youHit + ' times, he hit you ' + hitYouByHim + ' times');
   }
 }
 
-// a body flung through trees and grass smashes them, but the pieces fly much weaker than the body
+// he does not dodge all of your slashes: he reads some of them (not instantly), and the rest land
+{
+  const W = K.world.create(81); W.blk.fill(0); W.trees = [];
+  const p = K.world.addBody(W, { kind: 'player', name: 'P', fx: 40, fy: 30 }), n = K.npc.create(W, p);
+  n.fx = 41.2; n.fy = 30; n.ai.mode = 'idle'; n.ai.until = 1e9;
+  K.combat.provoke(W, n, p, 3); W.t += 1; W.combat = { nextSpawn: 1e9 };
+  let swings = 0, landed = 0, readIt = 0, firstSwingDodge = 0;
+  const od = K.combat.dodge, oh = K.combat.hurt;
+  K.combat.dodge = function (...a) { const r = od.apply(this, a); if (r && a[1] === n && p.slash && n.lastFeint !== W.t) { readIt++; if (W.t - p.slash.t0 < 0.1 - 1e-6) firstSwingDodge++; } return r; };
+  K.combat.hurt = function (w, t, d, src, ...a) { const r = oh.call(this, w, t, d, src, ...a); if (r && t === n && src === p) landed++; return r; };
+  for (let i = 0; i < 90 * 60; i++) {
+    W.t += 1 / 60; p.hp = 5; p.invulUntil = W.t + 1; n.hp = 5;
+    const d = K.combat.dirTo(p, n);
+    if (K.combat.canSlash(W, p) && K.combat.dist(p, n) < 1.3 && !p.kb) { swings++; K.combat.slash(W, p, Math.atan2(d.y, d.x)); }
+    else if (K.combat.dist(p, n) > 1.0 && !p.slash) K.world.moveBody(W, p, d.x, d.y, 1 / 60, 3.4);
+    K.npc.update(W, n, p, 1 / 60); K.combat.update(W, 1 / 60, p);
+  }
+  K.combat.dodge = od; K.combat.hurt = oh;
+  if (readIt < 3) fail('Tero should read some of your slashes and dodge them (' + readIt + ' of ' + swings + ')');
+  if (landed < swings * 0.35) fail('too many of your slashes were dodged: ' + landed + ' landed of ' + swings);
+  if (firstSwingDodge > 0) fail('he must not dodge the instant you start a slash');
+  console.log('slashes: ' + landed + ' of ' + swings + ' landed, he read ' + readIt);
+}
+
+// a defeated body flung into trees bounces off them (and the grass in its way flies off, weaker than the body)
 {
   const W = K.world.create(51), [x, y] = K.world.freeTileNear(W, 48, 32, 10);
   const p = K.world.addBody(W, { kind: 'player', name: 'P', fx: x, fy: y });
-  for (let i = 1; i <= 5; i++) { const tx = Math.round(p.fx) + i; if (tx < W.w - 1 && !W.blk[Math.round(p.fy) * W.w + tx]) { W.trees.push({ x: tx, y: Math.round(p.fy), fade: 1 }); W.blk[Math.round(p.fy) * W.w + tx] = 1; } }
-  for (let i = 1; i <= 4; i++) W.grass.push({ x: Math.round(p.fx) + i, y: Math.round(p.fy), ox: 0, oy: 0, phase: 0, period: 3, cycles: 0 });
+  const row = Math.round(p.fy);
+  for (let i = 1; i <= 5; i++) for (const dy of [-1, 0, 1]) { const tx = Math.round(p.fx) + 2 + i * 0, ty = row + dy; if (!W.blk[ty * W.w + tx]) { W.trees.push({ x: tx, y: ty, fade: 1 }); W.blk[ty * W.w + tx] = 1; } break; }
+  for (let i = 0; i <= 1; i++) for (const dy of [-1, 0, 1]) { const tx = Math.round(p.fx) + 3, ty = row + dy; if (!W.blk[ty * W.w + tx]) { W.trees.push({ x: tx, y: ty, fade: 1 }); W.blk[ty * W.w + tx] = 1; } }
+  for (let i = 1; i <= 2; i++) W.grass.push({ x: Math.round(p.fx) + i, y: row, ox: 0, oy: 0, phase: 0, period: 3, cycles: 0 });
   const trees0 = W.trees.length, grass0 = W.grass.length;
   p.hp = 1; p.invulUntil = 0;
   const x0 = p.fx;
   K.combat.hurt(W, p, 1, { fx: p.fx - 1, fy: p.fy, kind: 'slime' });
-  let maxDebris = 0;
-  for (let i = 0; i < 70; i++) { W.t += 1 / 60; K.combat.update(W, 1 / 60, null); maxDebris = Math.max(maxDebris, (W.debris || []).length); }
-  if (W.trees.length >= trees0) fail('a flung body should smash the trees in its way');
-  if (W.grass.length >= grass0) fail('a flung body should smash grass in its way');
-  if (!(p.fx - x0 > 2)) fail('the body should fly through where the trees were (flew ' + (p.fx - x0).toFixed(2) + ')');
-  for (const d of W.debris || []) if (d.dist > K.S('defeat.flyTiles', 5) * 16 * 0.45) fail('smashed pieces should fly much weaker than the body');
-  for (let i = 0; i < 120; i++) { W.t += 1 / 60; K.combat.update(W, 1 / 60, null); }
-  if ((W.debris || []).length) fail('flung pieces should be gone after a moment');
-  console.log('smash: body flew ' + (p.fx - x0).toFixed(1) + ' tiles, smashed ' + (trees0 - W.trees.length) + ' trees and ' + (grass0 - W.grass.length) + ' grass tufts');
+  let maxX = x0;
+  for (let i = 0; i < 80; i++) { W.t += 1 / 60; K.combat.update(W, 1 / 60, null); maxX = Math.max(maxX, p.fx); }
+  if (W.trees.length !== trees0) fail('trees must not be smashed any more (bodies bounce off them)');
+  if (!(p.rag.bounces >= 1)) fail('a body flung into trees should bounce off them');
+  if (!(maxX < Math.round(x0) + 3 - 0.2)) fail('the body went through the trees (reached ' + maxX.toFixed(2) + ')');
+  if (!(p.fx < maxX - 0.1)) fail('the body should bounce back from the trees');
+  if (W.grass.length >= grass0) fail('grass in the way should fly off');
+  for (const d of W.debris || []) if (d.dist > K.S('defeat.flyTiles', 5) * 16 * 0.45) fail('flung grass should fly much weaker than the body');
+  console.log('bounce: reached x+' + (maxX - x0).toFixed(1) + ', bounced ' + p.rag.bounces + ' time(s), ended x+' + (p.fx - x0).toFixed(1));
+}
+
+// the "!" shows only when a fight begins: once, then never again before each attack
+{
+  const W = K.world.create(72); W.blk.fill(0); W.trees = [];
+  const p = K.world.addBody(W, { kind: 'player', name: 'P', fx: 60, fy: 5 });
+  const n = K.npc.create(W, p); n.fx = 30; n.fy = 30; n.ai.mode = 'idle'; n.ai.until = 1e9;
+  const s = K.combat.spawnSlimeAt(W, 33, 30); s.fx = 33; s.fy = 30; s.hp = 99; s.stunUntil = 1e9;
+  let alerts = 0, last = null, alertTime = 0;
+  for (let i = 0; i < 20 * 60; i++) {
+    W.t += 1 / 60; K.npc.update(W, n, p, 1 / 60); K.combat.update(W, 1 / 60, p);
+    if (n.alert && n.alert !== last) { alerts++; last = n.alert; }
+    if (K.combat.alerted(W, n)) { alertTime += 1 / 60; if (n.slash) fail('he attacked during the alert'); }
+    s.stunUntil = 1e9; s.hp = 99;
+  }
+  if (alerts !== 1) fail('the "!" should show once at the start of a fight, not before each attack (' + alerts + ')');
+  if (!(alertTime > 0.3 && alertTime < 0.8)) fail('the "!" should last a moment (' + alertTime.toFixed(2) + ' s)');
+}
+
+// hitboxes are squares: a trunk is only as wide as its square, units are solid, a dodge pushes units, units go around obstacles
+{
+  const W = K.world.create(71); W.blk.fill(0); W.trees = []; W.grass = [];
+  const mkb = (fx, fy, kind) => K.world.addBody(W, { kind: kind || 'npc', name: 'X', fx, fy });
+  // a tree trunk
+  W.trees.push({ x: 20, y: 20, fade: 1 }); W.blk[20 * W.w + 20] = 1;
+  const a = mkb(16, 20.16);
+  for (let i = 0; i < 300; i++) K.world.moveBody(W, a, 1, 0, 1 / 60, 3);
+  const ratio = (a.fx + 0.5 + K.S('hitbox.unitHalfTiles', 0.22));
+  if (!(ratio < 20 + K.world.TREE_CX - K.S('hitbox.treeHalfTiles', 0.22) + 0.05)) fail('a body should stop at the trunk square (stopped at ' + a.fx.toFixed(2) + ')');
+  // beside the trunk, within the same tile but outside the square, it passes (the leaves are only decoration)
+  const c = mkb(19, 19.58);
+  const cy0 = c.fy; for (let i = 0; i < 200; i++) K.world.moveBody(W, c, 1, 0, 1 / 60, 3);
+  if (!(c.fx > 20.9)) fail('a body below the trunk square should walk past the tree (stopped at ' + c.fx.toFixed(2) + ')');
+  // units are solid
+  const u1 = mkb(30, 30), u2 = mkb(31.5, 30);
+  for (let i = 0; i < 200; i++) K.world.moveBody(W, u1, 1, 0, 1 / 60, 3);
+  if (!(u2.fx - u1.fx >= 2 * K.S('hitbox.unitHalfTiles', 0.22) - 0.01)) fail('units should be solid for each other');
+  // a dodge shoves a unit that is in the way
+  const d1 = mkb(40, 40), d2 = mkb(41, 40), x2 = d2.fx;
+  K.combat.dodge(W, d1, 1, 0, { distance: 2.2 });
+  for (let i = 0; i < 40; i++) { W.t += 1 / 60; K.combat.update(W, 1 / 60, null); }
+  if (!(d2.fx > x2 + 0.5)) fail('a dodge should push the unit in the way (it moved ' + (d2.fx - x2).toFixed(2) + ')');
+  if (!(d1.fx > 41.5)) fail('the dodger should get through after pushing (at ' + d1.fx.toFixed(2) + ')');
+  // going around: a wall of trees with a gap far away, a unit standing in the only straight line
+  W.bodies.length = 0; W.trees = []; W.blk.fill(0);
+  for (let y = 10; y <= 30; y++) { if (y === 28) continue; W.trees.push({ x: 50, y, fade: 1 }); W.blk[y * W.w + 50] = 1; }
+  const w1 = mkb(45, 20), blocker = mkb(55, 20);
+  let t = 0; while (t < 25 && Math.hypot(w1.fx - 56, w1.fy - 20) > 0.7) { t += 1 / 60; W.t += 1 / 60; K.world.steer(W, w1, 56, 20, 1 / 60, 3); }
+  if (!(Math.hypot(w1.fx - 56, w1.fy - 20) <= 1.1)) fail('a unit should find its way around a wall of trees (stuck at ' + w1.fx.toFixed(1) + ',' + w1.fy.toFixed(1) + ' after ' + t.toFixed(1) + ' s)');
+  // and around a unit standing in the way
+  W.bodies.length = 0; W.trees = []; W.blk.fill(0);
+  const s1 = mkb(10, 10), s2 = mkb(13, 10);
+  s1.face = 1; let tt = 0; while (tt < 10 && s1.fx < 17) { tt += 1 / 60; W.t += 1 / 60; K.world.steer(W, s1, 18, 10, 1 / 60, 3); }
+  if (!(s1.fx >= 16.5)) fail('a unit should walk around another unit in its way (stuck at ' + s1.fx.toFixed(1) + ')');
+  console.log('hitboxes: ok (walks around walls in ' + t.toFixed(1) + ' s)');
 }
 
 // a living world: 10 knights, 10 slimes (a defeated one is replaced), trees grow at random

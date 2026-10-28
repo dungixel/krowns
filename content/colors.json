@@ -138,6 +138,12 @@
   "Description": "Colour of the knight slash sweep."
  },
  {
+  "Key": "fx.alert",
+  "Hex": "#ffd23f",
+  "Group": "Effects",
+  "Description": "The yellow \"!\" over a head when somebody decides to fight."
+ },
+ {
   "Key": "hp.fill",
   "Hex": "#e0453f",
   "Group": "UI",

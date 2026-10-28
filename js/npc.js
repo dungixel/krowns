@@ -47,9 +47,9 @@
   const norm = (x, y) => { const l = Math.hypot(x, y) || 1; return { x: x / l, y: y / l }; };
   const free = (W, b, vx, vy, dist) => !K.world.blocked(W, b.fx + vx * dist, b.fy + vy * dist) && !K.world.blocked(W, b.fx + vx * dist * 0.5, b.fy + vy * dist * 0.5);
   // dodge in one of the given directions, the first one that is not blocked by a tree
-  function dodgeAny(W, b, dirs) {
-    const dist = S('dodge.distanceTiles', 2.2);
-    for (const d of dirs) if (free(W, b, d.x, d.y, dist)) return K.combat.dodge(W, b, d.x, d.y);
+  function dodgeAny(W, b, dirs, dist) {
+    dist = dist || S('dodge.distanceTiles', 2.2);
+    for (const d of dirs) if (free(W, b, d.x, d.y, dist)) return K.combat.dodge(W, b, d.x, d.y, { distance: dist });
     return false;
   }
 
@@ -79,7 +79,7 @@
     let off = Math.atan2(cy(b) - cy(p), cx(b) - cx(p)) - s.ang;
     while (off > Math.PI) off -= 2 * Math.PI; while (off < -Math.PI) off += 2 * Math.PI;
     if (C.dist(b, p) > S('slash.rangeTiles', 1.35) + 0.3 || Math.abs(off) > half + 0.2) { return false; }       // it would miss me anyway
-    if (!cb.ps || cb.ps.s !== s) cb.ps = { s, at: s.t0 + W.rng.range(S('knight.reactionMinSeconds', 0.09), S('knight.reactionMaxSeconds', 0.2)), skilled: W.rng() < S('knight.dodgeSkillVsPlayer', 0.7) };
+    if (!cb.ps || cb.ps.s !== s) cb.ps = { s, at: s.t0 + W.rng.range(S('knight.playerReactionMinSeconds', 0.1), S('knight.playerReactionMaxSeconds', 0.3)), skilled: W.rng() < S('knight.dodgeSkillVsPlayer', 0.5) };
     if (!cb.ps.skilled || W.t < cb.ps.at || !C.canDodge(W, b)) return false;
     cb.ps = { s, at: 1e9, skilled: false };
     const away = C.dirTo(p, b), n = { x: -away.y, y: away.x }, side = off >= 0 ? 1 : -1;
@@ -92,6 +92,11 @@
     if (b.ko || b.dead) { K.world.moveBody(W, b, 0, 0, dt, 1); return true; }
     if (b.dodge || b.kb) return true;
     if (b.slash) { K.world.moveBody(W, b, 0, 0, dt, 1); return true; }
+    if (C.alerted(W, b)) {                                           // you just hit him (or swung at him): he needs a moment to realize it
+      K.world.moveBody(W, b, 0, 0, dt, 1);
+      if (player && Math.abs(player.fx - b.fx) > 0.2) b.face = player.fx > b.fx ? 1 : -1;
+      return true;
+    }
     const sense = S('knight.senseTiles', 9);
     const slimes = [], foes = [];
     for (const s of W.bodies) {
@@ -100,8 +105,11 @@
     }
     const angry = C.angry(W, b) && player && !player.dead && !player.ko;
     if (angry && C.dist(b, player) <= sense * 1.25) foes.push(player);
-    if (!foes.length) { b.cb = null; return false; }
+    if (!foes.length) { b.cb = null; if (b.engaged && W.t - (b.engagedLast || 0) > S('knight.calmSeconds', 2.5)) b.engaged = false; return false; }
     const cb = b.cb || (b.cb = { seen: new Map(), nextTac: 0, mode: 'close', strafe: 1, tgt: null, nextPick: 0 });
+    // the "!": only at the very beginning, when he decides to fight something (it goes away by itself, it is NOT a warning before each attack)
+    b.engagedLast = W.t;
+    if (!b.engaged) { b.engaged = true; if (!C.alerted(W, b)) { C.alert(W, b); return true; } }
     if (b.ai.mode === 'talk') { b.ai.mode = 'idle'; b.ai.until = W.t + 2; }
 
     // 0. you are swinging at me: dodge it if it would hit
@@ -141,6 +149,12 @@
       face();
       if (C.slash(W, b, Math.atan2(to.y, to.x))) return true;
     }
+    // 3b. in a fight with you he sometimes feints: a quick dodge sideways (or back and aside) to throw you off, then he comes in again
+    if (tgt === player && td > 1.0 && td < 2.8 && C.canDodge(W, b) && rng() < S('knight.feintsPerSecond', 0.45) * dt) {
+      const n = { x: -to.y, y: to.x }, side = rng() < 0.5 ? 1 : -1, sd = { x: n.x * side, y: n.y * side }, od = { x: -sd.x, y: -sd.y };
+      b.lastFeint = W.t;
+      if (dodgeAny(W, b, rng() < 0.7 ? [sd, od, norm(sd.x - to.x, sd.y - to.y)] : [norm(sd.x - to.x, sd.y - to.y), sd, od], S('knight.feintTiles', 1.3))) return true;
+    }
     // 4. tactics, chosen every half second or so
     if (W.t >= cb.nextTac) {
       cb.nextTac = W.t + rng.range(0.35, 0.8);
@@ -152,7 +166,7 @@
       const tang = { x: -to.y * cb.strafe, y: to.x * cb.strafe };
       const push = td < 1.5 ? -0.7 : td > 2.1 ? 0.5 : 0;
       K.world.moveBody(W, b, tang.x + to.x * push, tang.y + to.y * push, dt, speed * 0.8);
-    } else if (td > 1.0) K.world.moveBody(W, b, to.x, to.y, dt, speed);
+    } else if (td > 1.0) K.world.steer(W, b, tgt.fx, tgt.fy, dt, speed, tgt);
     else K.world.moveBody(W, b, 0, 0, dt, 1);
     face();
     return true;
@@ -169,17 +183,14 @@
       // Tero (the one who talks) never goes far from you: he only hunts slimes that are near you, and walks back when he has strayed
       if (b.speaker && Math.hypot(dxp, dyp) > leash + 1) {
         a.mode = 'idle'; a.until = W.t + 0.5;
-        const moved = K.world.moveBody(W, b, dxp, dyp, dt, S('npc.huntTilesPerSecond', 2.2));
-        if (moved < 1e-4) K.world.moveBody(W, b, -dyp, dxp, dt, S('npc.huntTilesPerSecond', 2.2));
+        K.world.steer(W, b, player.fx, player.fy, dt, S('npc.huntTilesPerSecond', 2.2), player);
         return;
       }
       let prey = null, pd = S('knight.huntTiles', 14);
       for (const s of W.bodies) { if (s.kind !== 'slime' || s.dead) continue; if (b.speaker && K.combat.dist(player, s) > leash) continue; const d = K.combat.dist(b, s); if (d < pd) { pd = d; prey = s; } }
       if (prey) {
         a.mode = 'hunt';
-        const to = K.combat.dirTo(b, prey);
-        const moved = K.world.moveBody(W, b, to.x, to.y, dt, S('npc.huntTilesPerSecond', 2.2));
-        if (moved < 1e-4) K.world.moveBody(W, b, -to.y, to.x, dt, S('npc.huntTilesPerSecond', 2.2));       // a tree in the way: slide along it
+        K.world.steer(W, b, prey.fx, prey.fy, dt, S('npc.huntTilesPerSecond', 2.2), prey);                       // around trees and other units
         return;
       }
       if (a.mode === 'hunt') { a.mode = 'idle'; a.until = W.t + rng.range(1, 3); }
@@ -198,7 +209,7 @@
       }
     } else if (a.mode === 'walk') {
       const gx = a.goal[0] - b.fx, gy = a.goal[1] - b.fy;
-      const moved = K.world.moveBody(W, b, gx, gy, dt, S('npc.walkTilesPerSecond', 1.3));
+      const moved = K.world.steer(W, b, a.goal[0], a.goal[1], dt, S('npc.walkTilesPerSecond', 1.3));
       if (Math.hypot(gx, gy) < 0.25 || W.t >= a.until || moved < 1e-4) { a.mode = 'idle'; a.until = W.t + rng.range(2, 6); }
     }
   };

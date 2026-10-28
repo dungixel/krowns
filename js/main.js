@@ -133,6 +133,7 @@
       if (k === '+' || k === '=') R.zoomStep(1); else if (k === '-') R.zoomStep(-1);
       else if (k === ' ') ev.preventDefault();
       else if (k === 'shift') { if (!ev.repeat) playerDodge(); }
+      else if (k === 'h') R.showHitboxes = !R.showHitboxes;           // show / hide the hitbox squares
       else if (k === 'e') say(game.last);                         // say the same sentence again
       else if (/^[0-9]$/.test(k)) say(k === '0' ? 9 : Number(k) - 1)
       else if (k === 'n') { K.voice.setMuted(!K.voice.muted); try { localStorage.setItem('krowns.muted', K.voice.muted ? '1' : '0'); } catch (e) { /* fine */ } }

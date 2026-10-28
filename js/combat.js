@@ -53,7 +53,7 @@
     if (b.kind === 'player') for (const e of W.bodies) {
       if (e.kind !== 'npc' || e.dead || e.ko || combat.dist(b, e) > S('slash.rangeTiles', 1.35) + 0.8) continue;
       const to = Math.atan2(cy(e) - cy(b), cx(e) - cx(b));
-      if (Math.abs(angDiff(to, ang)) <= S('slash.arcDegrees', 90) * DEG / 2 + 25 * DEG) combat.provoke(W, e, b, 0.3);
+      if (Math.abs(angDiff(to, ang)) <= S('slash.arcDegrees', 90) * DEG / 2 + 25 * DEG) combat.provoke(W, e, b, 0.3);        // a feint at him counts
     }
     b.slashFx = { ang, t0: W.t + wind, dur };        // what is drawn (lives a little longer than the slash itself)
     b.slashReady = W.t + wind + dur + S('slash.cooldownSeconds', 0.7);
@@ -67,12 +67,22 @@
     if (a.kind === 'player') return e.kind === 'npc';
     return a.kind === 'npc' && e.kind === 'player' && combat.angry(W, a);
   };
-  // Tero's grudge against the player: set by an attack, forgotten after knight.grudgeSeconds
-  combat.angry = (W, b) => !!(b.grudge && W.t < b.grudge.until);
+  // A knight's grudge against the player. Being hit (or swung at) is a surprise: first he stands there with a "!" over his head for a moment
+  // (knight.alertMinSeconds .. knight.alertMaxSeconds), only then is he angry and fights back. The grudge ends after knight.grudgeSeconds.
+  combat.angry = (W, b) => !!(b.grudge && W.t >= b.grudge.armedAt && W.t < b.grudge.until);
+  combat.alerted = (W, b) => !!(b.alert && W.t < b.alert.until);
+  // the "!" over a head for a moment (knight.alertMinSeconds .. MaxSeconds): somebody has decided to fight. He stands still meanwhile.
+  combat.alert = function (W, b) {
+    b.alert = { t0: W.t, until: W.t + W.rng.range(S('knight.alertMinSeconds', 0.35), S('knight.alertMaxSeconds', 0.6)) };
+    b.engaged = true; b.engagedLast = W.t;
+    return b.alert;
+  };
   combat.provoke = function (W, t, by, weight) {
-    if (t.kind !== 'npc' || !by || by.kind !== 'player') return;
-    const g = combat.angry(W, t) ? t.grudge : (t.grudge = { hits: 0, until: 0 });
-    g.until = W.t + S('knight.grudgeSeconds', 12); g.hits += weight;
+    if (t.kind !== 'npc' || !by || by.kind !== 'player' || t.ko || t.dead) return;
+    const keep = S('knight.grudgeSeconds', 12), g = t.grudge && W.t < t.grudge.until ? t.grudge : null;
+    if (g) { g.hits += weight; g.until = Math.max(g.until, Math.max(W.t, g.armedAt) + keep); return; }
+    const until = combat.alert(W, t).until;
+    t.grudge = { hits: weight, armedAt: until, until: until + keep };
   };
   // 0..1 how far the visible sweep is (null before it starts or after it ended)
   combat.slashProgress = function (W, b) {
@@ -95,7 +105,7 @@
     if (t.kind === 'slime') t.stunUntil = W.t + S('slime.stunSeconds', 0.4);
     const lethal = t.hp <= 0;
     if (src && src.kind === 'player') combat.provoke(W, t, src, 1);
-    if (lethal) { defeat(W, t, d); t.grudge = null; if (t.kind === 'player' && src) src.grudge = null; }
+    if (lethal) { defeat(W, t, d); t.grudge = null; t.alert = null; if (t.kind === 'player' && src) src.grudge = null; }
     if (combat.onHurt) combat.onHurt(t, src, lethal);
     return true;
   };
@@ -109,8 +119,8 @@
     if (t.kind === 'slime') { t.dead = true; t.deadAt = W.t; }
     else { t.ko = true; t.koUntil = W.t + t.rag.total + S('unit.knockedOutSeconds', 3); }
   }
-  // a body flung through the scenery smashes it: trees and grass tufts along its path are flung away too (Dragon Ball), tumbling off and
-  // flickering out. Grass grows back after defeat.grassRegrowSeconds, trees after defeat.treeRegrowSeconds (0 = never).
+  // a body flung through the grass sends the tufts flying (they tumble off and flicker out, and grow back after defeat.grassRegrowSeconds).
+  // Trees and units are not smashed: the body bounces off them (see bounce).
   function distToSegment(px, py, x0, y0, x1, y1) {
     const vx = x1 - x0, vy = y1 - y0, l2 = vx * vx + vy * vy;
     const u = l2 ? Math.max(0, Math.min(1, ((px - x0) * vx + (py - y0) * vy) / l2)) : 0;
@@ -125,16 +135,25 @@
   function smash(W, b, rg, step) {
     const len = Math.hypot(rg.dx, rg.dy) || 1, x0 = cx(b), y0 = cy(b), x1 = x0 + rg.dx / len * step, y1 = y0 + rg.dy / len * step;
     const rad = S('defeat.smashRadiusTiles', 0.85);
-    for (const tr of W.trees.slice()) {
-      if (distToSegment(tr.x + 0.5, tr.y + 0.5, x0, y0, x1, y1) > rad) continue;
-      W.trees.splice(W.trees.indexOf(tr), 1); W.blk[tr.y * W.w + tr.x] = 0;
-      fling(W, 'tree', tr, tr.x * 16 + 8, tr.y * 16 + 16, rg);
-    }
     for (const g of W.grass.slice()) {
       if (distToSegment(g.x + (8 + g.ox) / 16, g.y + (8 + g.oy) / 16, x0, y0, x1, y1) > rad * 0.8) continue;
       W.grass.splice(W.grass.indexOf(g), 1);
       fling(W, 'grass', g, g.x * 16 + 8 + g.ox, g.y * 16 + 13 + g.oy, rg);
     }
+  }
+  // a flung body hits a tree, the edge of the map or another unit: it bounces off (and a unit it hits is bumped away, not hurt)
+  function bounce(W, b, rg, info) {
+    let nx = info.nx || 0, ny = info.ny || 0;
+    if (info.body && !nx && !ny) { nx = b.fx - info.body.fx; ny = b.fy - info.body.fy; }
+    const l = Math.hypot(nx, ny) || 1; nx /= l; ny /= l;
+    const dot = rg.dx * nx + rg.dy * ny;
+    if (dot >= 0) return;                                                        // already moving away
+    const o = info.body;
+    if (o && !o.dodge && !o.kb && W.t - (rg.lastBump || -9) > 0.1) { o.kb = { t0: W.t, dur: 0.18, dx: rg.dx, dy: rg.dy, dist: 0.9 * (rg.scale || 1), done: 0 }; o.stunUntil = Math.max(o.stunUntil || 0, W.t + 0.25); rg.lastBump = W.t; }
+    rg.dx -= 2 * dot * nx; rg.dy -= 2 * dot * ny;
+    const l2 = Math.hypot(rg.dx, rg.dy) || 1; rg.dx /= l2; rg.dy /= l2;
+    rg.scale = (rg.scale || 1) * S('defeat.bounceKeep', 0.6);
+    rg.bounces = (rg.bounces || 0) + 1;
   }
   // where a flung piece is at time t (game pixels): ground position, height, turning angle (radians, smooth), and whether it is still seen
   combat.debrisPose = function (t, d) {
@@ -207,19 +226,23 @@
     }
     const speed = S('slime.walkTilesPerSecond', 0.9);
     if (tgt && td <= S('slime.senseTiles', 12)) {
+      s.engagedLast = W.t;
+      if (!s.engaged) { combat.alert(W, s); return; }                                    // "!" once, when it notices somebody
+      if (combat.alerted(W, s)) { K.world.moveBody(W, s, 0, 0, dt, 1); return; }
       if (td <= S('slime.lungeRangeTiles', 2.6) && W.t >= (s.cd || 0)) {
         const w = S('slime.windupSeconds', 0.55);
         s.atk = { state: 'wind', target: tgt, t0: W.t, until: W.t + w, lockAt: W.t + w - S('slime.aimLockSeconds', 0.15), dir: combat.dirTo(s, tgt) };
-      } else if (td > 0.9) K.world.moveBody(W, s, cx(tgt) - cx(s), cy(tgt) - cy(s), dt, speed);
+      } else if (td > 0.9) K.world.steer(W, s, tgt.fx, tgt.fy, dt, speed, tgt);
       else K.world.moveBody(W, s, 0, 0, dt, 1);
     } else {                                                           // nobody near: creeps around
+      if (s.engaged && W.t - (s.engagedLast || 0) > S('knight.calmSeconds', 2.5)) s.engaged = false;
       const ai = s.ai;
       if (!ai.goal) {
         K.world.moveBody(W, s, 0, 0, dt, 1);
         if (W.t >= ai.until) { const ang = rng() * Math.PI * 2, r = rng.range(1.5, 4); ai.goal = [s.fx + Math.cos(ang) * r, s.fy + Math.sin(ang) * r]; ai.until = W.t + 5; }
       } else {
         const gx = ai.goal[0] - s.fx, gy = ai.goal[1] - s.fy;
-        const moved = K.world.moveBody(W, s, gx, gy, dt, speed * 0.7);
+        const moved = K.world.steer(W, s, ai.goal[0], ai.goal[1], dt, speed * 0.7);
         if (Math.hypot(gx, gy) < 0.25 || W.t >= ai.until || moved < 1e-4) { ai.goal = null; ai.until = W.t + rng.range(2, 6); }
       }
     }
@@ -245,7 +268,13 @@
       const rg = b.rag;
       if (rg) {
         const e = W.t - rg.t0, pf = Math.min(1, e / rg.fly), want = (1 - (1 - pf) * (1 - pf)) * rg.dist, step = want - rg.done;
-        if (step > 0) { if (S('defeat.smashScenery', 1)) smash(W, b, rg, step); K.world.slideBody(W, b, rg.dx, rg.dy, step); rg.done = want; }
+        if (step > 0) {
+          rg.done = want;
+          const real = step * (rg.scale || 1), info = {};                      // every bounce takes some of the power away
+          if (S('defeat.smashScenery', 1)) smash(W, b, rg, real);
+          K.world.slideBody(W, b, rg.dx, rg.dy, real, false, info);
+          if (info.tree || info.body) bounce(W, b, rg, info);
+        }
         stopHopping(b);
         if (e >= rg.total) b.hidden = true;
       }
@@ -255,11 +284,11 @@
       const d = b.dodge;
       if (d) {
         const want = Math.min(1, (W.t - d.t0) / d.dur) * d.dist, step = want - d.done;
-        K.world.slideBody(W, b, d.dx, d.dy, step); d.done = want; stopHopping(b);
+        K.world.slideBody(W, b, d.dx, d.dy, step, true); d.done = want; stopHopping(b);      // a dodge shoves units in the way
         (b.trail = b.trail || []).push({ fx: b.fx, fy: b.fy, t: W.t, face: b.face }); if (b.trail.length > 12) b.trail.shift();
         if (d.harm) for (const o of W.bodies) {
           if (o === b || o.kind === b.kind || d.hit.includes(o)) continue;
-          if (combat.dist(b, o) <= S('slime.hitRadiusTiles', 0.65) && combat.hurt(W, o, d.dmg, b)) d.hit.push(o);
+          if (K.world.overlap(b, o, S('hit.jumpReachTiles', 0.1)) && combat.hurt(W, o, d.dmg, b)) d.hit.push(o);
         }
         if (W.t >= d.t0 + d.dur) { b.dodge = null; b.dodgeEnded = W.t; }
       }
@@ -278,8 +307,10 @@
           const half = S('slash.arcDegrees', 90) * DEG / 2, head = -half + 2 * half * Math.min(1, p);
           for (const e of W.bodies) {
             if (s.hit.includes(e) || !combat.canHarm(W, b, e)) continue;
-            if (combat.dist(b, e) > S('slash.rangeTiles', 1.35) + 0.25) continue;
-            const off = angDiff(Math.atan2(cy(e) - cy(b), cx(e) - cx(b)), s.ang);
+            const sq = K.world.squareOf(e), ax = cx(b), ay = cy(b);                          // the nearest point of its square decides
+            const px = Math.max(sq.x - sq.h, Math.min(sq.x + sq.h, ax)), py = Math.max(sq.y - sq.h, Math.min(sq.y + sq.h, ay)), dd = Math.hypot(px - ax, py - ay);
+            if (dd > S('slash.rangeTiles', 1.35) + 0.1) continue;
+            const off = dd < 0.05 ? 0 : angDiff(Math.atan2(py - ay, px - ax), s.ang);
             if (Math.abs(off) <= half + 8 * DEG && off <= head + 4 * DEG && combat.hurt(W, e, S('slash.damage', 1), b, S('slash.knockbackTiles', 1.0))) s.hit.push(e);
           }
         }

@@ -5,7 +5,7 @@
   const S = K.S;
   const { clamp } = K.util;
   const TILE = 16;
-  const FEET = 8;      // bodies stand with their feet half a tile lower than their tile, so they can walk behind the upper half of trees
+  const FEET = -2.5;   // where a body's picture sits: its feet end at the bottom of its hitbox square (centre fy + 0.62 tiles, half side 0.22), so what you see is what collides
   const R = (K.render = {});
 
   // ------------------------------------------------------------------ pictures
@@ -270,6 +270,7 @@
       else drawBody(it, t);
     }
     drawSlashes(W, t);
+    if (R.showHitboxes) drawHitboxes(W);
 
     // 5. words: names and speech bubbles
     drawTexts(W, t);
@@ -448,6 +449,32 @@
     return T - u;
   }
 
+  // the "!" over a head when somebody has decided to fight (only at the start of a fight, never as a warning before an attack):
+  // made of whole game pixels like everything else, yellow with a black frame, it pops up a few pixels and settles. Returns its top (screen y).
+  const BANG = ['.XX.', 'XXXX', 'XXXX', 'XXXX', '.XX.', '.XX.', '....', '.XX.', 'XXXX', '.XX.'];
+  function drawAlert(b, cx, bottomY, now) {
+    const u = Math.max(1, Math.round(V.S)), age = now - b.alert.t0, pop = age < 0.18 ? Math.round(3 * (1 - age / 0.18)) : 0;
+    const w = 4, h = BANG.length, L = Math.round(cx - w * u / 2), T = Math.round(bottomY - h * u - pop * u);
+    const fill = K.C('fx.alert', '#ffd23f'), edge = K.C('hp.empty', '#000000');
+    for (let pass = 0; pass < 2; pass++) for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (BANG[y][x] !== 'X') continue;
+      if (pass === 0) { ctx.fillStyle = edge; ctx.fillRect(L + (x - 1) * u, T + (y - 1) * u, 3 * u, 3 * u); }      // the frame: one pixel around every filled pixel
+      else { ctx.fillStyle = fill; ctx.fillRect(L + x * u, T + y * u, u, u); }
+    }
+    return T - u;
+  }
+  // press H to see the hitboxes: every one is a square (bodies lime, slimes yellow, tree trunks red), and the feet point
+  function drawHitboxes(W) {
+    const u = Math.max(1, Math.round(V.S)), th = S('hitbox.treeHalfTiles', 0.22);
+    ctx.lineWidth = u; ctx.setLineDash([]);
+    const box = (cxT, cyT, hT, color) => { ctx.strokeStyle = color; ctx.strokeRect(Math.round(sxOf((cxT - hT) * TILE)) + u / 2, Math.round(syOf((cyT - hT) * TILE)) + u / 2, Math.round(2 * hT * TILE * V.S) - u, Math.round(2 * hT * TILE * V.S) - u); };
+    for (const tr of W.trees) {
+      const px = tr.x * TILE, py = tr.y * TILE;
+      if (sxOf(px + 16) < 0 || sxOf(px) > V.w || syOf(py + 16) < 0 || syOf(py) > V.h) continue;
+      box(tr.x + K.world.TREE_CX, tr.y + K.world.TREE_CY, th, '#ff4d4d');
+    }
+    for (const b of W.bodies) { if (b.hidden || b.rag) continue; const q = K.world.squareOf(b); box(q.x, q.y, q.h, b.kind === 'slime' ? '#ffe14d' : '#7dff4d'); }
+  }
   function drawTexts(W, t) {
     const s = V.S, outline = K.C('ui.nameOutline', '#2a2433');
     const namePx = Math.max(S('render.nameFontMinPx', 9), Math.round(S('render.nameFontWorldPx', 5.5) * s));
@@ -463,6 +490,7 @@
       ctx.font = '700 ' + namePx + 'px Lexend, system-ui, sans-serif';
       outlinedText(b.name, cx, nameY, K.C('name.pastel.' + b.color, '#ffffff'), outline, Math.max(2, s * 0.8));
       nameY -= Math.round(namePx * 1.05);
+      if (b.alert && W.t < b.alert.until) nameY = drawAlert(b, cx, nameY + Math.round(namePx * 0.2), W.t) - Math.round(s);
       if (b.bubble && t - b.bubble.t0 < b.bubble.dur) bubbles.push({ b, cx, y: nameY });
     }
     // speech bubbles, typed out letter by letter

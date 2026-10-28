@@ -360,6 +360,38 @@
   "Guessed": true
  },
  {
+  "Key": "hitbox.unitHalfTiles",
+  "Value": "0.22",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "Hitboxes are squares. A knight's square is centred on its feet and is this big from the middle to the side (0.22 = 0.44 tiles wide). Units and trees are solid for each other; press H in the game to see the squares.",
+  "Guessed": true
+ },
+ {
+  "Key": "hitbox.slimeHalfTiles",
+  "Value": "0.25",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "The same for a slime's square.",
+  "Guessed": true
+ },
+ {
+  "Key": "hitbox.treeHalfTiles",
+  "Value": "0.22",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "The same for a tree: its square is the trunk (the leaves are only decoration you can walk behind).",
+  "Guessed": true
+ },
+ {
+  "Key": "hit.jumpReachTiles",
+  "Value": "0.1",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "A slime jump hurts whoever's square it touches, this much bigger than the squares themselves.",
+  "Guessed": true
+ },
+ {
   "Key": "unit.healEverySeconds",
   "Value": "10",
   "Unit": "s",
@@ -489,10 +521,42 @@
  },
  {
   "Key": "knight.dodgeSkillVsPlayer",
-  "Value": "0.7",
+  "Value": "0.5",
   "Unit": "chance 0 to 1",
   "Group": "Combat",
-  "Description": "Chance that Tero sees YOUR slash coming and dodges it (lower than against slimes, so you can land hits).",
+  "Description": "Chance that a knight reads YOUR slash and dodges it. Lower = you hit more often.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.playerReactionMinSeconds",
+  "Value": "0.1",
+  "Unit": "seconds",
+  "Group": "Combat",
+  "Description": "How long after you start a slash a knight needs (at least) to react to it. Your slash takes about a third of a second, so slower reactions mean it often lands.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.playerReactionMaxSeconds",
+  "Value": "0.3",
+  "Unit": "seconds",
+  "Group": "Combat",
+  "Description": "...and at most.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.feintsPerSecond",
+  "Value": "0.45",
+  "Unit": "per second",
+  "Group": "Combat",
+  "Description": "In a fight with you a knight feints (a quick dodge sideways) about this often while he circles you. 0 = never.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.feintTiles",
+  "Value": "1.3",
+  "Unit": "tiles",
+  "Group": "Combat",
+  "Description": "How far a feint dodge goes.",
   "Guessed": true
  },
  {
@@ -501,6 +565,30 @@
   "Unit": "seconds",
   "Group": "Combat",
   "Description": "How long Tero treats you as an enemy after you attacked him. Every new attack renews it. He forgives you when it runs out, or when one of you is defeated.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.alertMinSeconds",
+  "Value": "0.35",
+  "Unit": "seconds",
+  "Group": "Combat",
+  "Description": "The \"!\" over a head when somebody decides to fight (a knight you hit or swung at, a knight that sees a slime, a slime that notices somebody): he stands still this long (at least) and then fights. It shows only at the start of a fight, never before an attack.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.alertMaxSeconds",
+  "Value": "0.6",
+  "Unit": "seconds",
+  "Group": "Combat",
+  "Description": "...and at most this long.",
+  "Guessed": true
+ },
+ {
+  "Key": "knight.calmSeconds",
+  "Value": "2.5",
+  "Unit": "seconds",
+  "Group": "Combat",
+  "Description": "Knights and slimes show the \"!\" only when they start fighting. After this long with nothing to fight they are calm again, and the next fight starts with a new \"!\".",
   "Guessed": true
  },
  {
@@ -756,7 +844,7 @@
   "Value": "1",
   "Unit": "0 or 1",
   "Group": "Combat",
-  "Description": "A defeated body flung through trees and grass smashes them: they are flung away too. 0 = bodies just stop at trees.",
+  "Description": "A defeated body flung through grass sends the tufts flying. 0 = the grass stays. (Trees and units are never smashed: bodies bounce off them.)",
   "Guessed": true
  },
  {
@@ -764,7 +852,7 @@
   "Value": "0.85",
   "Unit": "tiles",
   "Group": "Combat",
-  "Description": "How wide the path of a flung body is (trees closer than this to its path are smashed; grass uses 80% of it).",
+  "Description": "How wide the path of a flung body is for grass (grass closer than this to its path is flung away).",
   "Guessed": true
  },
  {
@@ -773,6 +861,14 @@
   "Unit": "0 to 1",
   "Group": "Combat",
   "Description": "How hard smashed trees and grass are launched compared to the defeated body (0.3 = about a third as far; they also turn only 2 or 3 quarter turns and fly lower).",
+  "Guessed": true
+ },
+ {
+  "Key": "defeat.bounceKeep",
+  "Value": "0.6",
+  "Unit": "0 to 1",
+  "Group": "Combat",
+  "Description": "A flung body that hits a tree, a unit or the map edge bounces off and keeps this share of its speed.",
   "Guessed": true
  },
  {
@@ -789,14 +885,6 @@
   "Unit": "seconds",
   "Group": "Combat",
   "Description": "Smashed grass grows back after this long. 0 = never.",
-  "Guessed": true
- },
- {
-  "Key": "defeat.treeRegrowSeconds",
-  "Value": "0",
-  "Unit": "seconds",
-  "Group": "Combat",
-  "Description": "Smashed trees grow back after this long (only where nobody stands). 0 = never: the forest stays broken.",
   "Guessed": true
  },
  {
