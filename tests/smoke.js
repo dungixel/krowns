@@ -257,7 +257,7 @@ for (const l of K.lines()) {
   if (new Set(knights().map((k) => k.name)).size !== knights().length) fail('knights should have different names');
   const trees0 = W.trees.length;
   for (const t of W.trees.splice(0, 25)) W.blk[t.y * W.w + t.x] = 0;          // 25 trees are gone (smashed)
-  let kills = 0, minSlimes = 99, ko = 0;
+  let kills = 0, minSlimes = 99, ko = 0, farTero = 0, teroFar = 0;
   const oh = K.combat.hurt;
   K.combat.hurt = function (w, t, ...a) { const r = oh.call(this, w, t, ...a); if (r && t.kind === 'slime' && t.dead) kills++; if (r && t.kind === 'npc' && t.ko) ko++; return r; };
   const t0 = Date.now();
@@ -265,10 +265,12 @@ for (const l of K.lines()) {
     W.t += 1 / 60;
     for (const k of K.npc.all(W)) K.npc.update(W, k, p, 1 / 60);
     K.combat.update(W, 1 / 60, p); K.world.growTrees(W);
+    if (i > 30 * 60 && K.combat.dist(n, p) > K.S('npc.leashTiles', 7) + 4) farTero++;
     if (i > 30 * 60) minSlimes = Math.min(minSlimes, slimes().length);
     if (i % 600 === 0) for (const b of W.bodies) if (!(b.fx >= 0 && b.fy >= 0 && b.fx <= W.w - 1 && b.fy <= W.h - 1)) fail('body left the world');
   }
   K.combat.hurt = oh;
+  if (farTero > 60 * 10) fail('Tero should stay near the player so he can be heard (he was far away for ' + (farTero / 60).toFixed(0) + ' s)');
   if (knights().length !== 10) fail('knights should never be lost, there are ' + knights().length);
   if (kills < 10) fail('the knights should keep defeating slimes (' + kills + ')');
   if (slimes().length < 8) fail('defeated slimes should be replaced (' + slimes().length + ' alive, ' + kills + ' defeated)');

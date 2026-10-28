@@ -9,6 +9,7 @@
     const rng = W.rng;
     const [tx, ty] = K.world.freeTileNear(W, Math.round(player.fx) + 6, Math.round(player.fy) + 2, 12);
     const b = K.world.addBody(W, { kind: 'npc', name: S('npc.name', 'Tero'), job: S('npc.job', 'farmer'), color: rng.int(1, 12), sprite: S('npc.sprite', 'farmer'), fx: tx, fy: ty, face: -1, voice: K.voice.npcVoice() });
+    b.speaker = true;                                              // the one you talk to: he stays near you so you can hear him
     b.ai = { mode: 'idle', until: W.t + rng.range(1, 3), goal: null };
     return b;
   };
@@ -163,9 +164,17 @@
     const a = b.ai, rng = W.rng;
     const dxp = player.fx - b.fx, dyp = player.fy - b.fy;
     // no slime close enough to fight, but one somewhere not too far: go and find it
+    const leash = S('npc.leashTiles', 7);
     if (a.mode !== 'talk') {
+      // Tero (the one who talks) never goes far from you: he only hunts slimes that are near you, and walks back when he has strayed
+      if (b.speaker && Math.hypot(dxp, dyp) > leash + 1) {
+        a.mode = 'idle'; a.until = W.t + 0.5;
+        const moved = K.world.moveBody(W, b, dxp, dyp, dt, S('npc.huntTilesPerSecond', 2.2));
+        if (moved < 1e-4) K.world.moveBody(W, b, -dyp, dxp, dt, S('npc.huntTilesPerSecond', 2.2));
+        return;
+      }
       let prey = null, pd = S('knight.huntTiles', 14);
-      for (const s of W.bodies) { if (s.kind !== 'slime' || s.dead) continue; const d = K.combat.dist(b, s); if (d < pd) { pd = d; prey = s; } }
+      for (const s of W.bodies) { if (s.kind !== 'slime' || s.dead) continue; if (b.speaker && K.combat.dist(player, s) > leash) continue; const d = K.combat.dist(b, s); if (d < pd) { pd = d; prey = s; } }
       if (prey) {
         a.mode = 'hunt';
         const to = K.combat.dirTo(b, prey);

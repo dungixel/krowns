@@ -1,7 +1,7 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-27T20:55:06.969Z",
+ "generatedAt": "2026-10-28T08:11:36.724Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -173,6 +173,7 @@ globalThis.Krowns.data = {
   "knight.spawnRadiusTiles": 6,
   "knight.huntTiles": 14,
   "npc.huntTilesPerSecond": 2.2,
+  "npc.leashTiles": 7,
   "knight.playerThreat": 1,
   "npc.combatTilesPerSecond": 2.6,
   "slime.hearts": 3,

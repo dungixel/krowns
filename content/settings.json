@@ -528,6 +528,14 @@
   "Guessed": true
  },
  {
+  "Key": "npc.leashTiles",
+  "Value": "7",
+  "Unit": "tiles",
+  "Group": "Neighbour",
+  "Description": "Tero (the one you talk to) does not hunt slimes farther than this from you, and walks back to you when he has strayed farther, so you can always hear him. The other knights roam freely.",
+  "Guessed": true
+ },
+ {
   "Key": "knight.playerThreat",
   "Value": "1",
   "Unit": "number",
