@@ -2,7 +2,7 @@
 @font-face { font-family: 'Lexend'; font-weight: 400; font-style: normal; font-display: swap; src: url('../assets/fonts/lexend-latin-400-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Lexend'; font-weight: 700; font-style: normal; font-display: swap; src: url('../assets/fonts/lexend-latin-700-normal.woff2') format('woff2'); }
 
-:root { --panel: #ffffff; --text: #2f2c36; --soft: #8a8593; --line: #ece8f0; --accent: #957fae; --radius: 16px; --shadow: 0 6px 22px rgba(47, 44, 54, .18); }
+:root { --panel: #ffffff; --text: #2f2c36; --soft: #8a8593; --line: #ece8f0; --accent: #957fae; --crown: #f28c28; --radius: 16px; --shadow: 0 6px 22px rgba(47, 44, 54, .18); }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #221c30; font-family: 'Lexend', system-ui, sans-serif; color: var(--text); touch-action: none; }
 #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; touch-action: none; }
@@ -16,6 +16,9 @@ body.playing #menu { display: block; }
 #start.show { display: flex; }
 #start .box { width: min(92vw, 380px); padding: 28px 26px 24px; text-align: center; }
 #start h1 { margin: 0 0 4px; font-size: 38px; letter-spacing: .02em; }
+#start h1.logo { display: flex; align-items: baseline; justify-content: center; gap: 10px; }
+#start .crown { width: 1em; height: .75em; fill: var(--crown); stroke: var(--crown); align-self: center; }
+#start .logo small { font-size: 12px; font-weight: 400; letter-spacing: 0; color: var(--soft); opacity: .8; margin-left: -2px; }
 #start p { margin: 4px 0 18px; color: var(--soft); font-size: 14px; line-height: 1.5; }
 #start input { width: 100%; border: 2px solid var(--line); border-radius: 12px; padding: 11px 12px; margin-bottom: 14px; font: inherit; font-size: 16px; color: var(--text); background: var(--panel); text-align: center; }
 #start input:focus { outline: none; border-color: var(--accent); }

@@ -36,6 +36,12 @@
   "Description": "Thin separators."
  },
  {
+  "Key": "ui.crown",
+  "Hex": "#f28c28",
+  "Group": "UI",
+  "Description": "The orange of the little crown next to the Krowns logotype and in the browser tab (the tab icon file assets/favicon.svg has the same orange written in it)."
+ },
+ {
   "Key": "ui.bubble",
   "Hex": "#ffffff",
   "Group": "UI",

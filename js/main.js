@@ -9,7 +9,7 @@
 
   function applyColors() {
     const r = document.documentElement.style;
-    const map = { '--panel': 'ui.panel', '--text': 'ui.text', '--soft': 'ui.textSoft', '--line': 'ui.line' };
+    const map = { '--panel': 'ui.panel', '--text': 'ui.text', '--soft': 'ui.textSoft', '--line': 'ui.line', '--crown': 'ui.crown' };
     for (const k in map) r.setProperty(k, K.C(map[k]));
   }
 
@@ -158,6 +158,7 @@
 
   async function boot() {
     applyColors();
+    $('ver').textContent = 'v' + (document.documentElement.dataset.v || '');
     R.init($('game'));
     bindInput();
     $('btn-play').textContent = 'Loading...';

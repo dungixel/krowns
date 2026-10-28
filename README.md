@@ -45,5 +45,5 @@ Tero's sentences live in `content/speech.json` (`Text` and `Mood`: neutral, happ
 Everything lives in GitHub, in the `content/` folder (Notion is no longer used).
 
 1. Change a value in `content/settings.json`, `colors.json`, `animations.json` or `speech.json` (or ask Claude to).
-2. Run `node tools/build-data.js` (Claude does this for you), raise the `?v=N` number in `index.html`, and push.
+2. Run `node tools/build-data.js` (Claude does this for you), raise the version number `N` in `index.html` (`data-v="N"` and every `?v=N`), and push. The number is shown small and gray next to the logo on the title screen ("v33"), so you can see which version of the game you are running; Claude tells you the number with every update.
 3. After about a minute the live page shows the new values.

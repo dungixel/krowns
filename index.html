@@ -1,11 +1,14 @@
 <!doctype html>
-<html lang="en" data-v="20">
+<html lang="en" data-v="33">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Krowns</title>
 <meta name="description" content="Krowns - a tiny meadow.">
-<link rel="stylesheet" href="css/style.css?v=32">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=33">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.png?v=33">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=33">
+<link rel="stylesheet" href="css/style.css?v=33">
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -21,7 +24,10 @@
 <div id="start" class="show">
   <div class="box card">
     <div id="step-title">
-      <h1>Krowns</h1>
+      <h1 class="logo">
+        <svg class="crown" viewBox="0 0 16 12" aria-hidden="true"><polygon points="1,11 1,3 5,7 8,1.5 11,7 15,3 15,11" stroke-width="0.8" stroke-linejoin="round"/></svg>
+        <span>Krowns</span><small id="ver" title="version"></small>
+      </h1>
       <p>A quiet meadow with trees. Somebody lives here.</p>
       <button id="btn-play" class="go" disabled>Loading...</button>
     </div>
@@ -30,20 +36,20 @@
       <p>Pick a name for your knight.</p>
       <input id="name" maxlength="12" autocomplete="off" spellcheck="false" placeholder="Your name">
       <button id="btn-go" class="go" disabled>Walk into the meadow</button>
-      <div class="hint">Move with WASD or the arrow keys &middot; mouse wheel zooms &middot; pick what your neighbour says in the list (keys 1-9, 0; E repeats)</div>
+      <div class="hint">Move with WASD &middot; slash with the arrow keys or a click &middot; dodge with Shift &middot; mouse wheel zooms &middot; pick what your neighbour says in the list (keys 1-9, 0; E repeats)</div>
     </div>
   </div>
 </div>
 
-<script src="data/game-data.js?v=32"></script>
-<script src="js/util.js?v=32"></script>
-<script src="js/data.js?v=32"></script>
-<script src="js/names.js?v=32"></script>
-<script src="js/world.js?v=32"></script>
-<script src="js/combat.js?v=32"></script>
-<script src="js/voice.js?v=32"></script>
-<script src="js/npc.js?v=32"></script>
-<script src="js/render.js?v=32"></script>
-<script src="js/main.js?v=32"></script>
+<script src="data/game-data.js?v=33"></script>
+<script src="js/util.js?v=33"></script>
+<script src="js/data.js?v=33"></script>
+<script src="js/names.js?v=33"></script>
+<script src="js/world.js?v=33"></script>
+<script src="js/combat.js?v=33"></script>
+<script src="js/voice.js?v=33"></script>
+<script src="js/npc.js?v=33"></script>
+<script src="js/render.js?v=33"></script>
+<script src="js/main.js?v=33"></script>
 </body>
 </html>
