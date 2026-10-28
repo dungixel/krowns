@@ -153,7 +153,7 @@
  },
  {
   "Key": "bubble.charsPerSecond",
-  "Value": "14",
+  "Value": "17",
   "Unit": "letters/s",
   "Group": "Units",
   "Description": "How many letters of a speech bubble appear per second (each one makes a sound).",

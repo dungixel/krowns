@@ -1,7 +1,7 @@
 // GENERATED from content/*.json by tools/build-data.js - do not edit by hand.
 globalThis.Krowns = globalThis.Krowns || {};
 globalThis.Krowns.data = {
- "generatedAt": "2026-10-28T08:19:16.831Z",
+ "generatedAt": "2026-10-28T08:25:41.144Z",
  "settings": {
   "world.width": 96,
   "world.height": 64,
@@ -29,7 +29,7 @@ globalThis.Krowns.data = {
   "sprite.pivot.knight": 4.5,
   "sprite.pivot.base": 4.5,
   "sprite.pivot.farmer": 6.5,
-  "bubble.charsPerSecond": 14,
+  "bubble.charsPerSecond": 17,
   "names.syllables": [
    "na",
    "sa",
